@@ -32,6 +32,9 @@ function patternToRegex(pattern) {
 }
 
 function needsConversionToRegex(pattern) {
+    if(pattern instanceof RegExp) {
+        return false;
+    }
     if(pattern === '*' || pattern === '/*') {
         return false;
     }
@@ -40,6 +43,7 @@ function needsConversionToRegex(pattern) {
 }
 
 const methods = [
+    'all',
     'get', 'post', 'put', 'delete', 'patch', 'options', 'head', 'trace', 'connect',
     'checkout', 'copy', 'lock', 'mkcol', 'move', 'purge', 'propfind', 'proppatch',
     'search', 'subscribe', 'unsubscribe', 'report', 'mkactivity', 'checkout', 'merge',
@@ -59,15 +63,21 @@ export default class Router {
             };
         });
     }
-    #createRoute(method, path, callback) {
-        const route = {
-            method,
-            path,
-            pattern: needsConversionToRegex(path) ? patternToRegex(path) : path,
-            callback,
-        };
-        
-        this.#routes.push(route);
+    #createRoute(method, path, ...callbacks) {
+        for(let callback of callbacks) {
+            const paths = Array.isArray(path) ? path : [path];
+            const routes = [];
+            for(let path of paths) {
+                const route = {
+                    method,
+                    path,
+                    pattern: needsConversionToRegex(path) ? patternToRegex(path) : path,
+                    callback,
+                };
+                routes.push(route);
+            }
+            this.#routes.push(...routes);
+        }
     }
 
     #extractParams(pattern, path) {
@@ -103,8 +113,5 @@ export default class Router {
             }
             resolve(false);
         });
-    }
-    all(path, callback) {
-        this.#createRoute('ALL', path, callback);
     }
 }
