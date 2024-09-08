@@ -1,11 +1,7 @@
 export default class Response {
-    #app;
     #res;
-    #req;
-    constructor(app, req, res) {
-        this.#app = app;
+    constructor(res) {
         this.#res = res;
-        this.#req = req;
         this.sent = false;
         this.statusCode = 200;
         this.headers = {

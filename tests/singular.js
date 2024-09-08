@@ -21,7 +21,7 @@ if (u) {
     fs.writeFileSync(path, code.replace(/import express from ['"]express['"];/g, 'import express from "../../src/index.js";'));
 } else {
     let code = fs.readFileSync(path, 'utf8');
-    fs.writeFileSync(path, code.replace("import express from '../../src/index.js';", `import express from "express";`));
+    fs.writeFileSync(path, code.replace(`import express from "../../src/index.js";`, `import express from "express";`));
     console.log('Running as normal Express');
 }
 
@@ -37,5 +37,5 @@ node.stderr.on('data', data => {
 
 exitHook(() => {
     let code = fs.readFileSync(path, 'utf8');
-    fs.writeFileSync(path, code.replaceAll("import express from '../../src/index.js';", "import express from 'express';"));
+    fs.writeFileSync(path, code.replaceAll(`import express from "../../src/index.js";`, `import express from "express";`));
 });

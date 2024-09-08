@@ -21,8 +21,9 @@ app.listen(13333, async () => {
 
     let r1 = await fetch('http://localhost:13333/').then(res => res.text());
     let r2 = await fetch('http://localhost:13333/test').then(res => res.text());
-    let r3 = await fetch('http://localhost:13333/test/testy').then(res => res.text());
+    let r3 = await fetch('http://localhost:13333/testy').then(res => res.text());
+    let r4 = await fetch('http://localhost:13333/test/testy').then(res => res.text());
 
-    console.log(r1, r2, r3);
+    console.log(r1, r2, r3, r4);
     process.exit(0);
 });

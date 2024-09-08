@@ -22,14 +22,10 @@ function pathMatches(pattern, path) {
 
 function patternToRegex(pattern) {
     let regexPattern = pattern
-        .replace(/\//g, '\\/') // Escape forward slashes
-        .replace(/\?/g, '\\?') // Escape question marks
-        .replace(/\+/g, '.+') // Convert + to .+
         .replace(/\*/g, '.*') // Convert * to .*
-        .replace(/\(([^)]+)\)\?/g, '(?:$1)?') // Handle optional groups
         .replace(/:(\w+)/g, '([^/]+)'); // Convert :param to capture group
 
-    return new RegExp(`^${regexPattern}$`);
+    return new RegExp(`^${regexPattern}`);
 }
 
 function needsConversionToRegex(pattern) {
@@ -40,12 +36,25 @@ function needsConversionToRegex(pattern) {
     return pattern.includes('*') || pattern.includes('?') || pattern.includes('+') || pattern.includes('(') || pattern.includes(')' || pattern.includes(':'));
 }
 
+const methods = [
+    'get', 'post', 'put', 'delete', 'patch', 'options', 'head', 'trace', 'connect',
+    'checkout', 'copy', 'lock', 'mkcol', 'move', 'purge', 'propfind', 'proppatch',
+    'search', 'subscribe', 'unsubscribe', 'report', 'mkactivity', 'checkout', 'merge',
+    'm-search', 'notify', 'subscribe', 'unsubscribe', 'search'
+];
+
 export default class Router {
     #app;
     #routes;
     constructor(app) {
         this.#app = app;
         this.#routes = [];
+
+        methods.forEach(method => {
+            this[method] = (path, callback) => {
+                this.#createRoute(method.toUpperCase(), path, callback);
+            };
+        });
     }
     #createRoute(method, path, callback) {
         this.#routes.push({
@@ -67,13 +76,14 @@ export default class Router {
                     if(!calledNext) {
                         resolve(true);
                     }
+                    return;
                 }
                 i++;
             }
             resolve(false);
         });
     }
-    get(path, callback) {
-        this.#createRoute('GET', path, callback);
+    all(path, callback) {
+        this.#createRoute('ALL', path, callback);
     }
 }

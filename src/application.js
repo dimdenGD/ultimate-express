@@ -11,14 +11,13 @@ class Application extends Router {
     }
 
     #createRequestHandler() {
-        this.uwsApp.get('/*', async (res, req) => {
+        this.uwsApp.any('/*', async (res, req) => {
             const request = new Request(req);
-            const response = new Response(this, request, res);
+            const response = new Response(res);
             let matchedRoute = await this.route(request, response);
 
             if(!matchedRoute) {
                 response.status(404);
-                response.set('Content-Type', 'text/html');
                 response.send(
                     '<!DOCTYPE html>\n' +
                     '<html lang="en">\n' +
@@ -27,7 +26,7 @@ class Application extends Router {
                     '<title>Error</title>\n' +
                     '</head>\n' +
                     '<body>\n' +
-                    `<pre>Cannot GET ${req.getUrl()}</pre>\n` +
+                    `<pre>Cannot ${request.method} ${request.path}</pre>\n` +
                     '</body>\n' +
                     '</html>\n'
                 );
