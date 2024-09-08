@@ -20,7 +20,7 @@ app.get('/test(abc)?test', (req, res) => {
     res.send('4');
 });
 
-app.all('*', (req, res) => {
+app.get('/*', (req, res) => {
     res.send('5');
 });
 

@@ -22,10 +22,13 @@ function pathMatches(pattern, path) {
 
 function patternToRegex(pattern) {
     let regexPattern = pattern
+        .replace(/\//g, '\\/') // Escape slashes
         .replace(/\*/g, '.*') // Convert * to .*
-        .replace(/:(\w+)/g, '([^/]+)'); // Convert :param to capture group
+        .replace(/:(\w+)/g, (match, param) => {
+            return `(?<${param}>[^/]+)`;
+        }); // Convert :param to capture group
 
-    return new RegExp(`^${regexPattern}`);
+    return new RegExp(`^${regexPattern}$`);
 }
 
 function needsConversionToRegex(pattern) {
@@ -33,7 +36,7 @@ function needsConversionToRegex(pattern) {
         return false;
     }
 
-    return pattern.includes('*') || pattern.includes('?') || pattern.includes('+') || pattern.includes('(') || pattern.includes(')' || pattern.includes(':'));
+    return pattern.includes('*') || pattern.includes('?') || pattern.includes('+') || pattern.includes('(') || pattern.includes(')') || pattern.includes(':');
 }
 
 const methods = [
@@ -57,18 +60,36 @@ export default class Router {
         });
     }
     #createRoute(method, path, callback) {
-        this.#routes.push({
+        const route = {
             method,
+            path,
             pattern: needsConversionToRegex(path) ? patternToRegex(path) : path,
             callback,
-        });
+        };
+        
+        this.#routes.push(route);
     }
+
+    #extractParams(pattern, path) {
+        let match = pattern.exec(path);
+        return match.groups;
+    }
+
+    #preprocessRequest(req, route) {
+        if(route.pattern instanceof RegExp) {
+            req.params = this.#extractParams(route.pattern, req.path);
+        } else {
+            req.params = {};
+        }
+    }
+
     async route(req, res, i = 0) {
         return new Promise(async (resolve, reject) => {
             while (i < this.#routes.length) {
                 const route = this.#routes[i];
-                if ((route.method === 'ALL' || route.method === req.method) && pathMatches(route.pattern, req.path)) {
+                if ((route.method === req.method || route.method === 'ALL') && pathMatches(route.pattern, req.path)) {
                     let calledNext = false;
+                    this.#preprocessRequest(req, route);
                     await route.callback(req, res, function next() {
                         calledNext = true;
                         resolve(this.route(req, res, i + 1));
