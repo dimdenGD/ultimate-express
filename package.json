@@ -1,0 +1,34 @@
+{
+  "name": "u-express",
+  "version": "1.0.0",
+  "description": "The Ultimate Express. Fastest http server with full Express compatibility, based on uWebSockets.",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node tests/index.js"
+  },
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dimdenGD/u-express.git"
+  },
+  "keywords": [
+    "express",
+    "http",
+    "fast",
+    "server",
+    "uwebsockets"
+  ],
+  "author": "dimden.dev",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/dimdenGD/u-express/issues"
+  },
+  "homepage": "https://github.com/dimdenGD/u-express#readme",
+  "dependencies": {
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.48.0"
+  },
+  "devDependencies": {
+    "exit-hook": "^4.0.0",
+    "express": "^4.19.2"
+  }
+}
