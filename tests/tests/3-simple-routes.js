@@ -1,6 +1,6 @@
 // must support simple routes
 
-import express from "../../src/index.js";
+import express from "express";
 
 const app = express();
 

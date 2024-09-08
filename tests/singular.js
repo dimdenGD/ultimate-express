@@ -23,6 +23,8 @@ if (u) {
         fs.writeFileSync(path, code);
     }, 1000);
 } else {
+    let code = fs.readFileSync(path, 'utf8');
+    fs.writeFileSync(path, code.replace(/import express from 'express';/g, 'import express from "../../src/index.js";'));
     console.log('Running as normal Express');
 }
 
