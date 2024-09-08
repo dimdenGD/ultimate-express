@@ -19,12 +19,9 @@ if (u) {
     console.log('Running as µExpress');
     let code = fs.readFileSync(path, 'utf8');
     fs.writeFileSync(path, code.replace(/import express from 'express';/g, 'import express from "../../src/index.js";'));
-    setTimeout(() => {
-        fs.writeFileSync(path, code);
-    }, 1000);
 } else {
     let code = fs.readFileSync(path, 'utf8');
-    fs.writeFileSync(path, code.replace(/import express from 'express';/g, 'import express from "../../src/index.js";'));
+    fs.writeFileSync(path, code.replace("import express from '../../src/index.js';", "import express from 'express';"));
     console.log('Running as normal Express');
 }
 
