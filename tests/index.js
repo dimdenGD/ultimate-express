@@ -12,7 +12,7 @@ const tests = fs.readdirSync(path.join(__dirname, 'tests'));
 for (const testName of tests) {
     let testPath = path.join(__dirname, 'tests', testName);
     let testCode = fs.readFileSync(testPath, 'utf8');
-    let testDescription = testCode.split('\n')[0].slice(1, -1);
+    let testDescription = testCode.split('\n')[0].slice(2, -1).trim();
 
     await new Promise(resolve => {
         test(testDescription, () => {
