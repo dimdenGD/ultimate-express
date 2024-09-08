@@ -20,7 +20,7 @@ for (const testName of tests) {
             try {
                 let expressOutput = childProcess.execSync(`node ${testPath}`).toString();
 
-                fs.writeFileSync(testPath, testCode.replace(`import express from 'express';`, `import express from '../../src/index.js';`));
+                fs.writeFileSync(testPath, testCode.replace(`import express from "express";`, `import express from "../../src/index.js";`));
                 let uExpressOutput = childProcess.execSync(`node ${testPath}`).toString();
 
                 assert.strictEqual(expressOutput, uExpressOutput);
