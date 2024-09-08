@@ -4,14 +4,14 @@ import Request from './request.js';
 import Router from './router.js';
 
 class Application extends Router {
-    #app;
     constructor(options = {}) {
         super();
-        this.#app = uWS.App(options);
+        this.uwsApp = uWS.App(options);
+        this.port = undefined;
     }
 
     #createRequestHandler() {
-        this.#app.get('/*', async (res, req) => {
+        this.uwsApp.get('/*', async (res, req) => {
             const request = new Request(req);
             const response = new Response(this, request, res);
             let matchedRoute = await this.route(request, response);
@@ -37,7 +37,19 @@ class Application extends Router {
 
     listen(port, callback) {
         this.#createRequestHandler();
-        this.#app.listen(port, callback);
+        if(!callback && typeof port === 'function') {
+            callback = port;
+            port = 0;
+        }
+        this.uwsApp.listen(port, socket => {
+            this.port = uWS.us_socket_local_port(socket);
+            if(!socket) {
+                let err = new Error('EADDRINUSE: address already in use ' + this.port);
+                err.code = 'EADDRINUSE';
+                throw err;
+            }
+            callback(this.port);
+        });
     }
 }
 
