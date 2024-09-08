@@ -13,7 +13,7 @@ for (const testName of tests) {
     let testPath = path.join(__dirname, 'tests', testName);
     let testCode = fs.readFileSync(testPath, 'utf8').replace(`import express from "../../src/index.js";`, 'import express from "express";');
     fs.writeFileSync(testPath, testCode);
-    let testDescription = testCode.split('\n')[0].slice(2, 0).trim();
+    let testDescription = testCode.split('\n')[0].slice(2).trim();
 
     await new Promise(resolve => {
         test(testDescription, () => {
