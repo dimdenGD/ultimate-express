@@ -3,7 +3,10 @@ import uWS from 'uWebSockets.js';
 const app = uWS.App();
 
 app.get('/', (res, req) => {
-    res.end('Hello World');
+    res.cork(() => {
+        res.write('Hello World');
+        res.end();
+    });
 });
 
 app.listen(13333, () => {
