@@ -14,18 +14,21 @@ for (const testName of tests) {
     let testCode = fs.readFileSync(testPath, 'utf8');
     let testDescription = testCode.split('\n')[0].slice(1, -1);
 
-    test(testDescription, () => {
-        try {
-            let expressOutput = childProcess.execSync(`node ${testPath}`).toString();
+    await new Promise(resolve => {
+        test(testDescription, () => {
+            try {
+                let expressOutput = childProcess.execSync(`node ${testPath}`).toString();
 
-            fs.writeFileSync(testPath, testCode.replace(`import express from 'express';`, `import express from '../../src/index.js';`));
-            let uExpressOutput = childProcess.execSync(`node ${testPath}`).toString();
+                fs.writeFileSync(testPath, testCode.replace(`import express from 'express';`, `import express from '../../src/index.js';`));
+                let uExpressOutput = childProcess.execSync(`node ${testPath}`).toString();
 
-            assert.strictEqual(expressOutput, uExpressOutput);
-        } catch (error) {
-            throw error;
-        } finally {
-            fs.writeFileSync(testPath, testCode);
-        }
+                assert.strictEqual(expressOutput, uExpressOutput);
+            } catch (error) {
+                throw error;
+            } finally {
+                fs.writeFileSync(testPath, testCode);
+                resolve();
+            }
+        });
     });
 }
