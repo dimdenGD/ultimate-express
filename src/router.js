@@ -36,9 +36,10 @@ const methods = [
 
 export default class Router {
     #routes;
-    constructor(mountpath = "/") {
+    constructor() {
         this.#routes = [];
-        this.mountpath = mountpath;
+        this.mountpath = '/';
+        this.fullmountpath = '/';
 
         methods.forEach(method => {
             this[method] = (path, callback) => {
@@ -58,7 +59,7 @@ export default class Router {
         // /test/* - /test/a, /test/b, /test/c, /test/a/b/c, and so on
         // /test/:test - /test/a, /test/b, /test/c, /test/a/b/c, and so on
     
-        path = removeDuplicateSlashes('/' + path.replace(this.mountpath, ''));
+        path = removeDuplicateSlashes('/' + path.replace(this.fullmountpath, ''));
         if(pattern instanceof RegExp) {
             return pattern.test(path);
         }
@@ -93,7 +94,7 @@ export default class Router {
     }
 
     #preprocessRequest(req, route) {
-        let path = removeDuplicateSlashes('/' + req.path.replace(this.mountpath, ''));
+        let path = removeDuplicateSlashes('/' + req.path.replace(this.fullmountpath, ''));
         if(route.pattern instanceof RegExp) {
             req.params = this.#extractParams(route.pattern, path);
         } else {
@@ -141,13 +142,14 @@ export default class Router {
         }
         for(let callback of callbacks) {
             if(callback instanceof Router) {
-                let mountpath = removeDuplicateSlashes(this.mountpath + path);
-                callback.mountpath = needsConversionToRegex(mountpath) ? patternToRegex(mountpath, true) : mountpath;
+                let fullmountpath = removeDuplicateSlashes(this.fullmountpath + path);
+                callback.mountpath = removeDuplicateSlashes('/' + path);
+                callback.fullmountpath = needsConversionToRegex(fullmountpath) ? patternToRegex(fullmountpath, true) : fullmountpath;
                 for(let route of callback.#routes) {
                     let nestedRouter = route.callback;
                     if(nestedRouter instanceof Router) {
-                        let nestedMountpath = removeDuplicateSlashes(mountpath + nestedRouter.mountpath);
-                        nestedRouter.mountpath = needsConversionToRegex(nestedMountpath) ? patternToRegex(nestedMountpath, true) : nestedMountpath;
+                        let nestedMountpath = removeDuplicateSlashes(fullmountpath + nestedRouter.fullmountpath);
+                        nestedRouter.fullmountpath = needsConversionToRegex(nestedMountpath) ? patternToRegex(nestedMountpath, true) : nestedMountpath;
                     }
                 }
             }

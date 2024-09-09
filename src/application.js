@@ -55,7 +55,7 @@ class Application extends Router {
     }
 
     path() {
-        return this.mountpath === '/' ? '' : this.mountpath;
+        return this.fullmountpath === '/' ? '' : this.fullmountpath;
     }
 }
 
