@@ -7,7 +7,7 @@ import assert from 'node:assert';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const tests = fs.readdirSync(path.join(__dirname, 'tests'));
+const tests = fs.readdirSync(path.join(__dirname, 'tests')).sort((a, b) => parseInt(a) - parseInt(b));
 
 for (const testName of tests) {
     let testPath = path.join(__dirname, 'tests', testName);
