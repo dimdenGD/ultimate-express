@@ -42,8 +42,8 @@ export default class Router {
         this.fullmountpath = '/';
 
         methods.forEach(method => {
-            this[method] = (path, callback) => {
-                this.#createRoute(method.toUpperCase(), path, callback);
+            this[method] = (path, ...callbacks) => {
+                this.#createRoute(method.toUpperCase(), path, this, ...callbacks);
             };
         });
     }
@@ -71,7 +71,7 @@ export default class Router {
         return pattern === path;
     }
 
-    #createRoute(method, path, ...callbacks) {
+    #createRoute(method, path, routeObj = this, ...callbacks) {
         for(let callback of callbacks) {
             const paths = Array.isArray(path) ? path : [path];
             const routes = [];
@@ -86,6 +86,8 @@ export default class Router {
             }
             this.#routes.push(...routes);
         }
+
+        return routeObj;
     }
 
     #extractParams(pattern, path) {
@@ -102,7 +104,7 @@ export default class Router {
         }
     }
 
-    async route(req, res, i = 0) {
+    async _routeRequest(req, res, i = 0) {
         return new Promise(async (resolve, reject) => {
             while (i < this.#routes.length) {
                 if(res.aborted) {
@@ -114,15 +116,15 @@ export default class Router {
                     let calledNext = false;
                     this.#preprocessRequest(req, route);
                     if(route.callback instanceof Router) {
-                        if(await route.callback.route(req, res, 0)) {
+                        if(await route.callback._routeRequest(req, res, 0)) {
                             resolve(true);
                         } else {
-                            resolve(this.route(req, res, i + 1));
+                            resolve(this._routeRequest(req, res, i + 1));
                         }
                     } else {
                         await route.callback(req, res, () => {
                             calledNext = true;
-                            resolve(this.route(req, res, i + 1));
+                            resolve(this._routeRequest(req, res, i + 1));
                         });
                     }
                     if(!calledNext) {
@@ -154,6 +156,17 @@ export default class Router {
                 }
             }
         }
-        this.#createRoute('USE', path, ...callbacks);
+        this.#createRoute('USE', path, this, ...callbacks);
+    }
+    
+    
+    route(path) {
+        let fns = {};
+        for(let method of methods) {
+            fns[method] = (...callbacks) => {
+                return this.#createRoute(method.toUpperCase(), path, fns, ...callbacks);
+            };
+        }
+        return fns;
     }
 }

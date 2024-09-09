@@ -15,9 +15,10 @@ class Application extends Router {
             res.onAborted(() => {
                 res.aborted = true;
             });
+
             const request = new Request(req);
             const response = new Response(res);
-            let matchedRoute = await this.route(request, response);
+            let matchedRoute = await this._routeRequest(request, response);
 
             if(!matchedRoute && !res.aborted) {
                 response.status(404);

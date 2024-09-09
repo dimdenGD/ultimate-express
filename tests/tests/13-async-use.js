@@ -1,4 +1,4 @@
-// must support simple "use"
+// must support async "use"
 
 import express from "express";
 
