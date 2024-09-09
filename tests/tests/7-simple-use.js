@@ -5,22 +5,22 @@ import express from "express";
 const app = express();
 
 app.use((req, res, next) => {
-    console.log('use 1');
+    console.log('u1');
     next();
 });
 
 app.use('/', (req, res, next) => {
-    console.log('use 2');
+    console.log('u2');
     next();
 });
 
 app.use('/tes', (req, res, next) => {
-    console.log('use 3');
+    console.log('u3');
     next();
 });
 
 app.use('/test', (req, res, next) => {
-    console.log('use 4');
+    console.log('u4');
     next();
 });
 
@@ -29,7 +29,7 @@ app.get('/test', (req, res) => {
 });
 
 app.use('/asdf', (req, res, next) => {
-    console.log('use 5');
+    console.log('u5');
     next();
 });
 

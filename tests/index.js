@@ -14,6 +14,9 @@ for (const testName of tests) {
     let testCode = fs.readFileSync(testPath, 'utf8').replace(`import express from "../../src/index.js";`, 'import express from "express";');
     fs.writeFileSync(testPath, testCode);
     let testDescription = testCode.split('\n')[0].slice(2).trim();
+    if(testDescription.endsWith('OFF')) {
+        continue;
+    }
 
     await new Promise(resolve => {
         test(testDescription, () => {

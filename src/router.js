@@ -1,24 +1,4 @@
-function pathMatches(pattern, path) {
-    // /abcd - /abcd
-    // /abc?d - /abcd, /abd
-    // /ab+cd - /abcd, /abbcd, /abbbbbcd, and so on
-    // /ab*cd -  /abcd, /abxcd, /abFOOcd, /abbArcd, and so on
-    // /a(bc)?d - /ad and /abcd
-    // /:test - /a, /b, /c as query params
-    // /* - anything
-    // /test/* - /test/a, /test/b, /test/c, /test/a/b/c, and so on
-    // /test/:test - /test/a, /test/b, /test/c, /test/a/b/c, and so on
-
-    if(pattern instanceof RegExp) {
-        return pattern.test(path);
-    }
-    
-    if(pattern === '*' || pattern === '/*') {
-        return true;
-    }
-
-    return pattern === path;
-}
+import { removeDuplicateSlashes } from "./utils.js";
 
 function patternToRegex(pattern, isPrefix = false) {
     if(isPrefix && pattern === '/') {
@@ -55,11 +35,10 @@ const methods = [
 ];
 
 export default class Router {
-    #app;
     #routes;
-    constructor(app) {
-        this.#app = app;
+    constructor(mountpath = "/") {
         this.#routes = [];
+        this.mountpath = mountpath;
 
         methods.forEach(method => {
             this[method] = (path, callback) => {
@@ -67,6 +46,32 @@ export default class Router {
             };
         });
     }
+
+    #pathMatches(pattern, path) {
+        // /abcd - /abcd
+        // /abc?d - /abcd, /abd
+        // /ab+cd - /abcd, /abbcd, /abbbbbcd, and so on
+        // /ab*cd -  /abcd, /abxcd, /abFOOcd, /abbArcd, and so on
+        // /a(bc)?d - /ad and /abcd
+        // /:test - /a, /b, /c as query params
+        // /* - anything
+        // /test/* - /test/a, /test/b, /test/c, /test/a/b/c, and so on
+        // /test/:test - /test/a, /test/b, /test/c, /test/a/b/c, and so on
+    
+        if(pattern instanceof RegExp) {
+            if(this.mountpath instanceof RegExp) {
+                path = path.replace(this.mountpath, '');
+            }
+            return pattern.test(path);
+        }
+        
+        if(pattern === '*' || pattern === '/*') {
+            return true;
+        }
+    
+        return removeDuplicateSlashes(this.mountpath + pattern) === path;
+    }
+
     #createRoute(method, path, ...callbacks) {
         for(let callback of callbacks) {
             const paths = Array.isArray(path) ? path : [path];
@@ -101,13 +106,21 @@ export default class Router {
         return new Promise(async (resolve, reject) => {
             while (i < this.#routes.length) {
                 const route = this.#routes[i];
-                if ((route.method === req.method || route.method === 'ALL') && pathMatches(route.pattern, req.path)) {
+                if ((route.method === req.method || route.method === 'ALL') && this.#pathMatches(route.pattern, req.path)) {
                     let calledNext = false;
                     this.#preprocessRequest(req, route);
-                    await route.callback(req, res, () => {
-                        calledNext = true;
-                        resolve(this.route(req, res, i + 1));
-                    });
+                    if(route.callback instanceof Router) {
+                        if(await route.callback.route(req, res, 0)) {
+                            resolve(true);
+                        } else {
+                            resolve(this.route(req, res, i + 1));
+                        }
+                    } else {
+                        await route.callback(req, res, () => {
+                            calledNext = true;
+                            resolve(this.route(req, res, i + 1));
+                        });
+                    }
                     if(!calledNext) {
                         resolve(true);
                     }
@@ -122,6 +135,11 @@ export default class Router {
         if(typeof path === 'function') {
             callbacks.unshift(path);
             path = '/';
+        }
+        for(let callback of callbacks) {
+            if(callback instanceof Router) {
+                callback.mountpath = removeDuplicateSlashes(this.mountpath + path);
+            }
         }
         this.#createRoute('USE', path, ...callbacks);
     }
