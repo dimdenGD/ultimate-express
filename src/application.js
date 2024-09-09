@@ -50,6 +50,10 @@ class Application extends Router {
             callback(this.port);
         });
     }
+
+    path() {
+        return this.mountpath === '/' ? '' : this.mountpath;
+    }
 }
 
 export default function(options) {

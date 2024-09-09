@@ -5,6 +5,7 @@ import express from "express";
 const app = express();
 const app2 = express();
 const app3 = express();
+const router = express.Router();
 
 app.use('/abc', app2);
 app2.use('/def', app3);
@@ -16,4 +17,5 @@ app.use((req, res, next) => {
 console.log(app.path());
 console.log(app2.path());
 console.log(app3.path());
+console.log(router?.path?.());
 

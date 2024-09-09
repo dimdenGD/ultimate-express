@@ -5,7 +5,7 @@ import express from "express";
 const app = express();
 const router = new express.Router();
 const router2 = new express.Router();
-const router3 = new express.Router();
+const router3 = express.Router();
 
 router.get('/test', (req, res) => {
     res.send('test');

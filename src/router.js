@@ -150,8 +150,4 @@ export default class Router {
         }
         this.#createRoute('USE', path, ...callbacks);
     }
-
-    path() {
-        return this.mountpath === '/' ? '' : this.mountpath;
-    }
 }
