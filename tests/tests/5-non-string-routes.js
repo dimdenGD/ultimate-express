@@ -1,4 +1,4 @@
-// must support non-string routes (array and regex)
+// must support array and regex routes
 
 import express from "express";
 

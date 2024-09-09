@@ -20,7 +20,11 @@ function pathMatches(pattern, path) {
     return pattern === path;
 }
 
-function patternToRegex(pattern) {
+function patternToRegex(pattern, isPrefix = false) {
+    if(isPrefix && pattern === '/') {
+        return new RegExp(`^(?=$|\/)`);
+    }
+
     let regexPattern = pattern
         .replace(/\//g, '\\/') // Escape slashes
         .replace(/\*/g, '.*') // Convert * to .*
@@ -28,7 +32,7 @@ function patternToRegex(pattern) {
             return `(?<${param}>[^/]+)`;
         }); // Convert :param to capture group
 
-    return new RegExp(`^${regexPattern}$`);
+    return new RegExp(`^${regexPattern}${isPrefix ? '(?=$|\/)' : '$'}`);
 }
 
 function needsConversionToRegex(pattern) {
@@ -69,9 +73,9 @@ export default class Router {
             const routes = [];
             for(let path of paths) {
                 const route = {
-                    method,
+                    method: method === 'USE' ? 'ALL' : method.toUpperCase(),
                     path,
-                    pattern: needsConversionToRegex(path) ? patternToRegex(path) : path,
+                    pattern: method === 'USE' || needsConversionToRegex(path) ? patternToRegex(path, method === 'USE') : path,
                     callback,
                 };
                 routes.push(route);
@@ -100,7 +104,7 @@ export default class Router {
                 if ((route.method === req.method || route.method === 'ALL') && pathMatches(route.pattern, req.path)) {
                     let calledNext = false;
                     this.#preprocessRequest(req, route);
-                    await route.callback(req, res, function next() {
+                    await route.callback(req, res, () => {
                         calledNext = true;
                         resolve(this.route(req, res, i + 1));
                     });
@@ -113,5 +117,12 @@ export default class Router {
             }
             resolve(false);
         });
+    }
+    use(path, ...callbacks) {
+        if(typeof path === 'function') {
+            callbacks.unshift(path);
+            path = '/';
+        }
+        this.#createRoute('USE', path, ...callbacks);
     }
 }
