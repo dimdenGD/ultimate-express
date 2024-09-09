@@ -131,7 +131,7 @@ export default class Router {
         });
     }
     use(path, ...callbacks) {
-        if(typeof path === 'function') {
+        if(typeof path !== 'string') {
             callbacks.unshift(path);
             path = '/';
         }
