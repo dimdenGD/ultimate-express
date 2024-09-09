@@ -20,6 +20,9 @@ export default class Response {
         if(this.sent) {
             throw new Error('Can\'t end response: Response was already sent');
         }
+        if(this.#res.aborted) {
+            return;
+        }
         this.#res.cork(() => {
             this.#res.writeStatus(this.statusCode.toString());
             for(const [field, value] of Object.entries(this.headers)) {

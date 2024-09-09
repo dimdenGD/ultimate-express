@@ -5,12 +5,14 @@ import express from "express";
 const app = express();
 
 app.use(async (req, res, next) => {
+    let start = Date.now();
     await new Promise(resolve => setTimeout(resolve, 100));
+    res.took = Math.round((Date.now() - start) / 100) * 100;
     next();
 });
 
 app.get('/test', (req, res, next) => {
-    res.send('test');
+    res.send(`took ${res.took}ms`);
 });
 
 app.listen(13333, async () => {

@@ -12,11 +12,14 @@ class Application extends Router {
 
     #createRequestHandler() {
         this.uwsApp.any('/*', async (res, req) => {
+            res.onAborted(() => {
+                res.aborted = true;
+            });
             const request = new Request(req);
             const response = new Response(res);
             let matchedRoute = await this.route(request, response);
 
-            if(!matchedRoute) {
+            if(!matchedRoute && !res.aborted) {
                 response.status(404);
                 response.send(
                     '<!DOCTYPE html>\n' +

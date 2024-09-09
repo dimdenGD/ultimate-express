@@ -104,6 +104,10 @@ export default class Router {
     async route(req, res, i = 0) {
         return new Promise(async (resolve, reject) => {
             while (i < this.#routes.length) {
+                if(res.aborted) {
+                    resolve(false);
+                    return;
+                }
                 const route = this.#routes[i];
                 if ((route.method === req.method || route.method === 'ALL') && this.#pathMatches(route.pattern, req.path)) {
                     let calledNext = false;
