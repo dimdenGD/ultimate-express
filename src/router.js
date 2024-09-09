@@ -58,10 +58,8 @@ export default class Router {
         // /test/* - /test/a, /test/b, /test/c, /test/a/b/c, and so on
         // /test/:test - /test/a, /test/b, /test/c, /test/a/b/c, and so on
     
+        path = removeDuplicateSlashes('/' + path.replace(this.mountpath, ''));
         if(pattern instanceof RegExp) {
-            if(this.mountpath instanceof RegExp) {
-                path = path.replace(this.mountpath, '');
-            }
             return pattern.test(path);
         }
         
@@ -69,7 +67,7 @@ export default class Router {
             return true;
         }
     
-        return removeDuplicateSlashes(this.mountpath + pattern) === path;
+        return pattern === path;
     }
 
     #createRoute(method, path, ...callbacks) {
@@ -91,12 +89,13 @@ export default class Router {
 
     #extractParams(pattern, path) {
         let match = pattern.exec(path);
-        return match.groups;
+        return match?.groups ?? {};
     }
 
     #preprocessRequest(req, route) {
+        let path = removeDuplicateSlashes('/' + req.path.replace(this.mountpath, ''));
         if(route.pattern instanceof RegExp) {
-            req.params = this.#extractParams(route.pattern, req.path);
+            req.params = this.#extractParams(route.pattern, path);
         } else {
             req.params = {};
         }
@@ -138,7 +137,15 @@ export default class Router {
         }
         for(let callback of callbacks) {
             if(callback instanceof Router) {
-                callback.mountpath = removeDuplicateSlashes(this.mountpath + path);
+                let mountpath = removeDuplicateSlashes(this.mountpath + path);
+                callback.mountpath = needsConversionToRegex(mountpath) ? patternToRegex(mountpath, true) : mountpath;
+                for(let route of callback.#routes) {
+                    let nestedRouter = route.callback;
+                    if(nestedRouter instanceof Router) {
+                        let nestedMountpath = removeDuplicateSlashes(mountpath + nestedRouter.mountpath);
+                        nestedRouter.mountpath = needsConversionToRegex(nestedMountpath) ? patternToRegex(nestedMountpath, true) : nestedMountpath;
+                    }
+                }
             }
         }
         this.#createRoute('USE', path, ...callbacks);
