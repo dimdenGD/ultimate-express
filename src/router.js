@@ -38,6 +38,7 @@ export default class Router {
     #routes;
     #paramCallbacks;
     constructor() {
+        this.errorRoute = undefined;
         this.#routes = [];
         this.#paramCallbacks = {};
         this.mountpath = '/';
@@ -150,10 +151,21 @@ export default class Router {
                             resolve(this._routeRequest(req, res, i + 1));
                         }
                     } else {
-                        await route.callback(req, res, () => {
-                            calledNext = true;
-                            resolve(this._routeRequest(req, res, i + 1));
-                        });
+                        try {
+                            await route.callback(req, res, () => {
+                                calledNext = true;
+                                resolve(this._routeRequest(req, res, i + 1));
+                            });
+                        } catch(err) {
+                            if(this.errorRoute) {
+                                await this.errorRoute(err, req, res);
+                                return resolve(true);
+                            } else {
+                                console.error(err);
+                                // TODO: support env setting
+                                res.status(500).send(this._generateErrorPage('Internal Server Error'));
+                            }
+                        }
                     }
                     if(!calledNext) {
                         resolve(true);
@@ -187,7 +199,6 @@ export default class Router {
         this.#createRoute('USE', path, this, ...callbacks);
     }
     
-    
     route(path) {
         let fns = {};
         for(let method of methods) {
@@ -199,5 +210,18 @@ export default class Router {
             return this.#createRoute('GET', path, fns, ...callbacks);
         };
         return fns;
+    }
+
+    _generateErrorPage(err) {
+        return `<!DOCTYPE html>\n` +
+            `<html lang="en">\n` +
+            `<head>\n` +
+            `<meta charset="utf-8">\n` +
+            `<title>Error</title>\n` +
+            `</head>\n` +
+            `<body>\n` +
+            `<pre>${err}</pre>\n` +
+            `</body>\n` +
+            `</html>\n`;
     }
 }

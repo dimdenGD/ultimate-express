@@ -95,18 +95,7 @@ class Application extends Router {
 
             if(!matchedRoute && !res.aborted && !response.sent) {
                 response.status(404);
-                response.send(
-                    '<!DOCTYPE html>\n' +
-                    '<html lang="en">\n' +
-                    '<head>\n' +
-                    '<meta charset="utf-8">\n' +
-                    '<title>Error</title>\n' +
-                    '</head>\n' +
-                    '<body>\n' +
-                    `<pre>Cannot ${request.method} ${request.path}</pre>\n` +
-                    '</body>\n' +
-                    '</html>\n'
-                );
+                response.send(this._generateErrorPage(`Cannot ${request.method} ${request.path}`));
             }
         });
     }
