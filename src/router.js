@@ -36,8 +36,10 @@ const methods = [
 
 export default class Router {
     #routes;
+    #paramCallbacks;
     constructor() {
         this.#routes = [];
+        this.#paramCallbacks = {};
         this.mountpath = '/';
         this.fullmountpath = '/';
 
@@ -100,13 +102,31 @@ export default class Router {
         return match?.groups ?? {};
     }
 
-    #preprocessRequest(req, route) {
+    async #preprocessRequest(req, res, route) {
         let path = removeDuplicateSlashes('/' + req.path.replace(this.fullmountpath, ''));
         if(route.pattern instanceof RegExp) {
             req.params = this.#extractParams(route.pattern, path);
+
+            for(let param in req.params) {
+                if(this.#paramCallbacks[param] && !req._gotParams.includes(param)) {
+                    req._gotParams.push(param);
+                    for(let fn of this.#paramCallbacks[param]) {
+                        await new Promise(resolve => fn(req, res, resolve, req.params[param], param));
+                    }
+                }
+            }
         } else {
             req.params = {};
         }
+
+        return true;
+    }
+
+    param(name, fn) {
+        if(!this.#paramCallbacks[name]) {
+            this.#paramCallbacks[name] = [];
+        }
+        this.#paramCallbacks[name].push(fn);
     }
 
     async _routeRequest(req, res, i = 0) {
@@ -119,7 +139,7 @@ export default class Router {
                 const route = this.#routes[i];
                 if ((route.method === req.method || route.method === 'ALL') && this.#pathMatches(route.pattern, req.path)) {
                     let calledNext = false;
-                    this.#preprocessRequest(req, route);
+                    await this.#preprocessRequest(req, res, route);
                     if(route.callback instanceof Router) {
                         if(await route.callback._routeRequest(req, res, 0)) {
                             resolve(true);

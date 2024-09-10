@@ -29,7 +29,7 @@ The Ultimate Express. Fastest http server with full Express compatibility, based
 - ✅ app.enabled()
 - ✅ app.disabled()
 - ✅ app.path()
-- ❌ app.param()
+- ✅ app.param()
 - ❌ app.engine()
 - ❌ app.render()
 - ❌ app.locals
@@ -123,4 +123,4 @@ The Ultimate Express. Fastest http server with full Express compatibility, based
 - ✅ router.METHOD() (router.get, router.post, etc.)
 - ✅ router.route()
 - ✅ router.use()
-- ❌ router.param()
+- ✅ router.param()

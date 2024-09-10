@@ -93,7 +93,7 @@ class Application extends Router {
             const response = new Response(res);
             let matchedRoute = await this._routeRequest(request, response);
 
-            if(!matchedRoute && !res.aborted) {
+            if(!matchedRoute && !res.aborted && !response.sent) {
                 response.status(404);
                 response.send(
                     '<!DOCTYPE html>\n' +

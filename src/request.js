@@ -5,5 +5,6 @@ export default class Request {
         this.path = req.getUrl();
         this.method = req.getMethod().toUpperCase();
         this.params = {};
+        this._gotParams = [];
     }
 }
