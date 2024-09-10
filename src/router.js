@@ -1,5 +1,7 @@
 import { removeDuplicateSlashes } from "./utils.js";
 
+let routeKey = 0;
+
 function patternToRegex(pattern, isPrefix = false) {
     if(isPrefix && pattern === '/') {
         return new RegExp(`^(?=$|\/)`);
@@ -80,6 +82,7 @@ export default class Router {
 
     #createRoute(method, path, routeObj = this, ...callbacks) {
         callbacks = callbacks.flat();
+        let routeSkipKey = routeKey + callbacks.length - 1;
         for(let callback of callbacks) {
             const paths = Array.isArray(path) ? path : [path];
             const routes = [];
@@ -89,6 +92,8 @@ export default class Router {
                     path,
                     pattern: method === 'USE' || needsConversionToRegex(path) ? patternToRegex(path, method === 'USE') : path,
                     callback,
+                    routeSkipKey,
+                    routeKey: routeKey++
                 };
                 routes.push(route);
             }
@@ -152,8 +157,18 @@ export default class Router {
                         }
                     } else {
                         try {
-                            await route.callback(req, res, () => {
+                            await route.callback(req, res, thingamabob => {
                                 calledNext = true;
+                                if(thingamabob) {
+                                    if(thingamabob === 'route') {
+                                        let routeSkipKey = route.routeSkipKey;
+                                        while(this.#routes[i].routeKey !== routeSkipKey && i < this.#routes.length) {
+                                            i++;
+                                        }
+                                    } else {
+                                        throw thingamabob;
+                                    }
+                                }
                                 resolve(this._routeRequest(req, res, i + 1));
                             });
                         } catch(err) {
