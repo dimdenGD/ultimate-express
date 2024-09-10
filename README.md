@@ -56,7 +56,7 @@ The Ultimate Express. Fastest http server with full Express compatibility, based
 - ❌ x-powered-by
 
 ### Request
-- ❌ req.app
+- ✅ req.app
 - ❌ req.baseUrl
 - ❌ req.body
 - ❌ req.cookies

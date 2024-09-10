@@ -7,5 +7,6 @@ export default class Request {
         this.method = req.getMethod().toUpperCase();
         this.params = {};
         this._gotParams = [];
+        this._stack = [];
     }
 }

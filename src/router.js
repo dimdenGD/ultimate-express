@@ -1,8 +1,12 @@
 import { removeDuplicateSlashes } from "./utils.js";
+import { inspect } from "node:util";
 
 let routeKey = 0;
 
 function patternToRegex(pattern, isPrefix = false) {
+    if(pattern instanceof RegExp) {
+        return pattern;
+    }
     if(isPrefix && pattern === '/') {
         return new RegExp(`^(?=$|\/)`);
     }
@@ -44,7 +48,6 @@ export default class Router {
         this.#routes = [];
         this.#paramCallbacks = {};
         this.mountpath = '/';
-        this.fullmountpath = '/';
 
         methods.forEach(method => {
             this[method] = (path, ...callbacks) => {
@@ -57,7 +60,11 @@ export default class Router {
         return this.#createRoute('GET', path, this, ...callbacks);
     }
 
-    #pathMatches(pattern, path) {
+    getFullMountpath(req) {
+        return patternToRegex(removeDuplicateSlashes('/' + req._stack.join('/')), true);
+    }
+
+    #pathMatches(pattern, req) {
         // /abcd - /abcd
         // /abc?d - /abcd, /abd
         // /ab+cd - /abcd, /abbcd, /abbbbbcd, and so on
@@ -67,8 +74,15 @@ export default class Router {
         // /* - anything
         // /test/* - /test/a, /test/b, /test/c, /test/a/b/c, and so on
         // /test/:test - /test/a, /test/b, /test/c, /test/a/b/c, and so on
-    
-        path = removeDuplicateSlashes('/' + path.replace(this.fullmountpath, ''));
+        
+        let path = req.path;
+
+        // console.log(
+        //     `mount: ${this.getFullMountpath(req)} pattern: ${pattern} path: ${path} => ${removeDuplicateSlashes('/' + path.replace(this.getFullMountpath(req), ''))}`,
+        //     ((pattern instanceof RegExp && pattern.test(path.replace(this.getFullMountpath(req), ''))) || pattern === path.replace(this.getFullMountpath(req), '')) ? 'YES' : 'NO'
+        // );
+
+        path = removeDuplicateSlashes('/' + path.replace(this.getFullMountpath(req), ''));
         if(pattern instanceof RegExp) {
             return pattern.test(path);
         }
@@ -76,11 +90,11 @@ export default class Router {
         if(pattern === '*' || pattern === '/*') {
             return true;
         }
-    
+        
         return pattern === path;
     }
 
-    #createRoute(method, path, routeObj = this, ...callbacks) {
+    #createRoute(method, path, parent = this, ...callbacks) {
         callbacks = callbacks.flat();
         let routeSkipKey = routeKey + callbacks.length - 1;
         for(let callback of callbacks) {
@@ -100,7 +114,7 @@ export default class Router {
             this.#routes.push(...routes);
         }
 
-        return routeObj;
+        return parent;
     }
 
     #extractParams(pattern, path) {
@@ -109,7 +123,7 @@ export default class Router {
     }
 
     async #preprocessRequest(req, res, route) {
-        let path = removeDuplicateSlashes('/' + req.path.replace(this.fullmountpath, ''));
+        let path = removeDuplicateSlashes('/' + req.path.replace(this.getFullMountpath(req), ''));
         if(route.pattern instanceof RegExp) {
             req.params = this.#extractParams(route.pattern, path);
 
@@ -146,13 +160,15 @@ export default class Router {
                     return;
                 }
                 const route = this.#routes[i];
-                if ((route.method === req.method || route.method === 'ALL') && this.#pathMatches(route.pattern, req.path)) {
+                if ((route.method === req.method || route.method === 'ALL') && this.#pathMatches(route.pattern, req)) {
                     let calledNext = false;
                     await this.#preprocessRequest(req, res, route);
                     if(route.callback instanceof Router) {
+                        req._stack.push(route.path);
                         if(await route.callback._routeRequest(req, res, 0)) {
                             resolve(true);
                         } else {
+                            req._stack.pop();
                             resolve(this._routeRequest(req, res, i + 1));
                         }
                     } else {
@@ -203,17 +219,12 @@ export default class Router {
             callbacks.unshift(path);
             path = '/';
         }
-        for(let callback of callbacks) {
-            if(callback instanceof Router) {
-                let fullmountpath = removeDuplicateSlashes(this.fullmountpath + path);
-                callback.mountpath = removeDuplicateSlashes('/' + path);
-                callback.fullmountpath = needsConversionToRegex(fullmountpath) ? patternToRegex(fullmountpath, true) : fullmountpath;
-                for(let route of callback.#routes) {
-                    let nestedRouter = route.callback;
-                    if(nestedRouter instanceof Router) {
-                        let nestedMountpath = removeDuplicateSlashes(fullmountpath + nestedRouter.fullmountpath);
-                        nestedRouter.fullmountpath = needsConversionToRegex(nestedMountpath) ? patternToRegex(nestedMountpath, true) : nestedMountpath;
-                    }
+        let paths = Array.isArray(path) ? path : [path];
+        for(let path of paths) {
+            for(let callback of callbacks) {
+                if(callback instanceof Router) {
+                    callback.mountpath = removeDuplicateSlashes('/' + path);
+                    callback.parent = this;
                 }
             }
         }

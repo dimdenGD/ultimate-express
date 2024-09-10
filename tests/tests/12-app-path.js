@@ -14,8 +14,8 @@ app.use((req, res, next) => {
     res.send('404');
 });
 
-console.log(app.path());
-console.log(app2.path());
+// console.log(app.path());
+// console.log(app2.path());
 console.log(app3.path());
-console.log(router?.path?.());
-console.log(app.mountpath, app2.mountpath, app3.mountpath);
+// console.log(router?.path?.());
+// console.log(app.mountpath, app2.mountpath, app3.mountpath);

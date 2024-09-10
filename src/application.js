@@ -2,6 +2,7 @@ import uWS from 'uWebSockets.js';
 import Response from './response.js';
 import Request from './request.js';
 import Router from './router.js';
+import { removeDuplicateSlashes } from './utils.js';
 
 const supportedOptions = [
     "case sensitive routing",
@@ -118,7 +119,19 @@ class Application extends Router {
     }
 
     path() {
-        return this.fullmountpath === '/' ? '' : this.fullmountpath;
+        let paths = [this.mountpath];
+        let parent = this.parent;
+        while(parent) {
+            paths.unshift(parent.mountpath);
+            parent = parent.parent;
+        }
+        paths = paths.filter(path => path !== '/');
+        
+        let path = removeDuplicateSlashes('/' + paths.join('/'));
+        if(path === '/') {
+            return '';
+        }
+        return path;
     }
 }
 

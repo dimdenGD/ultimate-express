@@ -37,6 +37,10 @@ app.get('/asdf/asdf', (req, res) => {
     res.send('asdf');
 });
 
+app.use((req, res, next) => {
+    console.log('404')
+});
+
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
