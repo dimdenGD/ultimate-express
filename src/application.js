@@ -3,6 +3,24 @@ import Response from './response.js';
 import Request from './request.js';
 import Router from './router.js';
 
+const supportedOptions = [
+    "case sensitive routing",
+    "env",
+    "etag",
+    "jsonp callback name",
+    "json escape",
+    "json replacer",
+    "json spaces",
+    "query parser",
+    "strict routing",
+    "subdomain offset",
+    "trust proxy",
+    "views",
+    "view cache",
+    "view engine",
+    "x-powered-by",
+]
+
 class Application extends Router {
     constructor(options = {}) {
         super();
@@ -12,15 +30,57 @@ class Application extends Router {
     }
 
     set(key, value) {
-        this.options[key] = value;
+        if(supportedOptions.includes(key)) {
+            this.options[key] = value;
+        } else {
+            throw new Error(`Unsupported option: ${key}`);
+        }
         return this;
     }
 
     get(key, ...args) {
         if(typeof key === 'string' && args.length === 0) {
-            return this.options[key];
+            if(supportedOptions.includes(key)) {
+                return this.options[key];
+            } else {
+                throw new Error(`Unsupported option: ${key}`);
+            }
         }
         return super.get(key, ...args);
+    }
+
+    enable(key) {
+        if(supportedOptions.includes(key)) {
+            this.options[key] = true;
+        } else {
+            throw new Error(`Unsupported option: ${key}`);
+        }
+        return this;
+    }
+
+    disable(key) {
+        if(supportedOptions.includes(key)) {
+            this.options[key] = false;
+        } else {
+            throw new Error(`Unsupported option: ${key}`);
+        }
+        return this;
+    }
+
+    enabled(key) {
+        if(supportedOptions.includes(key)) {
+            return this.options[key];
+        } else {
+            throw new Error(`Unsupported option: ${key}`);
+        }
+    }
+
+    disabled(key) {
+        if(supportedOptions.includes(key)) {
+            return !this.options[key];
+        } else {
+            throw new Error(`Unsupported option: ${key}`);
+        }
     }
 
     #createRequestHandler() {

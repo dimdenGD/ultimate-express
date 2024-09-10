@@ -16,7 +16,14 @@
     "http",
     "fast",
     "server",
-    "uwebsockets"
+    "http server",
+    "https",
+    "https server",
+    "ws",
+    "websocket",
+    "websockets",
+    "uwebsockets",
+    "uws"
   ],
   "author": "dimden.dev",
   "license": "UNLICENSED",
