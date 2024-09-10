@@ -33,6 +33,8 @@ The Ultimate Express. Fastest http server with full Express compatibility, based
 - ❌ app.engine()
 - ❌ app.render()
 - ❌ app.locals
+- ✅ app.settings
+- ❌ app.engines
 - ❌ app.on("mount")
 
 ### Application settings

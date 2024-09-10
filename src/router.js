@@ -30,8 +30,8 @@ const methods = [
     'all',
     'post', 'put', 'delete', 'patch', 'options', 'head', 'trace', 'connect',
     'checkout', 'copy', 'lock', 'mkcol', 'move', 'purge', 'propfind', 'proppatch',
-    'search', 'subscribe', 'unsubscribe', 'report', 'mkactivity', 'checkout', 'merge',
-    'm-search', 'notify', 'subscribe', 'unsubscribe', 'search'
+    'search', 'subscribe', 'unsubscribe', 'report', 'mkactivity', 'mkcalendar',
+    'checkout', 'merge', 'm-search', 'notify', 'subscribe', 'unsubscribe', 'search'
 ];
 
 export default class Router {

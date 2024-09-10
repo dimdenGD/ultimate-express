@@ -22,16 +22,16 @@ const supportedOptions = [
 ]
 
 class Application extends Router {
-    constructor(options = {}) {
+    constructor(settings = {}) {
         super();
-        this.uwsApp = uWS.App(options);
+        this.uwsApp = uWS.App(settings?.uwsOptions ?? {});
         this.port = undefined;
-        this.options = options;
+        this.settings = settings;
     }
 
     set(key, value) {
         if(supportedOptions.includes(key)) {
-            this.options[key] = value;
+            this.settings[key] = value;
         } else {
             throw new Error(`Unsupported option: ${key}`);
         }
@@ -41,7 +41,7 @@ class Application extends Router {
     get(key, ...args) {
         if(typeof key === 'string' && args.length === 0) {
             if(supportedOptions.includes(key)) {
-                return this.options[key];
+                return this.settings[key];
             } else {
                 throw new Error(`Unsupported option: ${key}`);
             }
@@ -51,7 +51,7 @@ class Application extends Router {
 
     enable(key) {
         if(supportedOptions.includes(key)) {
-            this.options[key] = true;
+            this.settings[key] = true;
         } else {
             throw new Error(`Unsupported option: ${key}`);
         }
@@ -60,7 +60,7 @@ class Application extends Router {
 
     disable(key) {
         if(supportedOptions.includes(key)) {
-            this.options[key] = false;
+            this.settings[key] = false;
         } else {
             throw new Error(`Unsupported option: ${key}`);
         }
@@ -69,7 +69,7 @@ class Application extends Router {
 
     enabled(key) {
         if(supportedOptions.includes(key)) {
-            return this.options[key];
+            return this.settings[key];
         } else {
             throw new Error(`Unsupported option: ${key}`);
         }
@@ -77,7 +77,7 @@ class Application extends Router {
 
     disabled(key) {
         if(supportedOptions.includes(key)) {
-            return !this.options[key];
+            return !this.settings[key];
         } else {
             throw new Error(`Unsupported option: ${key}`);
         }
@@ -89,7 +89,7 @@ class Application extends Router {
                 res.aborted = true;
             });
 
-            const request = new Request(req);
+            const request = new Request(req, this);
             const response = new Response(res);
             let matchedRoute = await this._routeRequest(request, response);
 
