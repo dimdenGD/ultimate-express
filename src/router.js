@@ -28,7 +28,7 @@ function needsConversionToRegex(pattern) {
 
 const methods = [
     'all',
-    'get', 'post', 'put', 'delete', 'patch', 'options', 'head', 'trace', 'connect',
+    'post', 'put', 'delete', 'patch', 'options', 'head', 'trace', 'connect',
     'checkout', 'copy', 'lock', 'mkcol', 'move', 'purge', 'propfind', 'proppatch',
     'search', 'subscribe', 'unsubscribe', 'report', 'mkactivity', 'checkout', 'merge',
     'm-search', 'notify', 'subscribe', 'unsubscribe', 'search'
@@ -46,6 +46,10 @@ export default class Router {
                 this.#createRoute(method.toUpperCase(), path, this, ...callbacks);
             };
         });
+    }
+
+    get(path, ...callbacks) {
+        return this.#createRoute('GET', path, this, ...callbacks);
     }
 
     #pathMatches(pattern, path) {
@@ -168,6 +172,9 @@ export default class Router {
                 return this.#createRoute(method.toUpperCase(), path, fns, ...callbacks);
             };
         }
+        fns.get = (...callbacks) => {
+            return this.#createRoute('GET', path, fns, ...callbacks);
+        };
         return fns;
     }
 }

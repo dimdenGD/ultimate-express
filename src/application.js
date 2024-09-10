@@ -8,6 +8,19 @@ class Application extends Router {
         super();
         this.uwsApp = uWS.App(options);
         this.port = undefined;
+        this.options = options;
+    }
+
+    set(key, value) {
+        this.options[key] = value;
+        return this;
+    }
+
+    get(key, ...args) {
+        if(typeof key === 'string' && args.length === 0) {
+            return this.options[key];
+        }
+        return super.get(key, ...args);
     }
 
     #createRequestHandler() {
