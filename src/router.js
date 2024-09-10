@@ -72,6 +72,7 @@ export default class Router {
     }
 
     #createRoute(method, path, routeObj = this, ...callbacks) {
+        callbacks = callbacks.flat();
         for(let callback of callbacks) {
             const paths = Array.isArray(path) ? path : [path];
             const routes = [];
