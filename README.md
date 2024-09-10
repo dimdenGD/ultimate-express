@@ -22,8 +22,8 @@ The Ultimate Express. Fastest http server with full Express compatibility, based
 - ✅ app.all()
 - ✅ app.use()
 - ✅ app.mountpath
-- ❌ app.set()
-- ❌ app.get()
+- ✅ app.set()
+- ✅ app.get()
 - ❌ app.engine()
 - ❌ app.set()
 - ❌ app.enable()
