@@ -24,11 +24,11 @@ app.listen(13333, async () => {
     let res = await fetch('http://localhost:13333/abc/asdf');
     console.log(await res.text());
 
-    // res = await fetch('http://localhost:13333/def/asdf');
-    // console.log(await res.text());
+    res = await fetch('http://localhost:13333/def/asdf');
+    console.log(await res.text());
 
-    // res = await fetch('http://localhost:13333/ghi/asdf');
-    // console.log(await res.text());
+    res = await fetch('http://localhost:13333/ghi/asdf');
+    console.log(await res.text());
 
     process.exit(0);
 })

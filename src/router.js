@@ -1,5 +1,4 @@
 import { removeDuplicateSlashes } from "./utils.js";
-import { inspect } from "node:util";
 
 let routeKey = 0;
 
