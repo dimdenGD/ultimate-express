@@ -158,7 +158,9 @@ export default class Router {
                             });
                         } catch(err) {
                             if(this.errorRoute) {
-                                await this.errorRoute(err, req, res);
+                                await this.errorRoute(err, req, res, () => {
+                                    resolve(res.sent);
+                                });
                                 return resolve(true);
                             } else {
                                 console.error(err);
@@ -179,6 +181,10 @@ export default class Router {
     }
     use(path, ...callbacks) {
         if(typeof path !== 'string') {
+            if(callbacks.length === 0 && typeof path === 'function' && path.length === 4) {
+                this.errorRoute = path;
+                return;
+            }
             callbacks.unshift(path);
             path = '/';
         }
