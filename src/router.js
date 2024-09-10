@@ -123,10 +123,13 @@ export default class Router {
     }
 
     param(name, fn) {
-        if(!this.#paramCallbacks[name]) {
-            this.#paramCallbacks[name] = [];
+        let names = Array.isArray(name) ? name : [name];
+        for(let name of names) {
+            if(!this.#paramCallbacks[name]) {
+                this.#paramCallbacks[name] = [];
+            }
+            this.#paramCallbacks[name].push(fn);
         }
-        this.#paramCallbacks[name].push(fn);
     }
 
     async _routeRequest(req, res, i = 0) {

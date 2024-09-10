@@ -1,6 +1,6 @@
 // must support app.param and router.param
 
-import express from "../../src/index.js";
+import express from "express";
 
 const app = express();
 const router = express.Router();
