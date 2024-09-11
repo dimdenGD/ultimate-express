@@ -6,7 +6,6 @@ const app = express();
 const router = express();
 
 router.get('/asdf', (req, res) => {
-    console.log(req.hostname);
     res.send('asdf');
 });
 
