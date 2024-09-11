@@ -17,16 +17,15 @@ export default class Router {
     constructor() {
         this.errorRoute = undefined;
         this.#routes = [];
-        // this.routes = this.#routes;
         this.#paramCallbacks = new Map();
-        this.#mountpathCache = {};
+        this.#mountpathCache = new Map();
         this.mountpath = '/';
 
-        methods.forEach(method => {
+        for(let method of methods) {
             this[method] = (path, ...callbacks) => {
                 this.#createRoute(method.toUpperCase(), path, this, ...callbacks);
             };
-        });
+        };
     }
 
     get(path, ...callbacks) {
@@ -35,10 +34,10 @@ export default class Router {
 
     #getFullMountpath(req) {
         let fullStack = req._stack.join("");
-        let fullMountpath = this.#mountpathCache[fullStack];
+        let fullMountpath = this.#mountpathCache.get(fullStack);
         if(!fullMountpath) {
             fullMountpath = patternToRegex(fullStack, true);
-            this.#mountpathCache[fullStack] = fullMountpath;
+            this.#mountpathCache.set(fullStack, fullMountpath);
         }
         return fullMountpath;
     }
