@@ -18,7 +18,7 @@ export default class Router {
         this.errorRoute = undefined;
         this.#routes = [];
         // this.routes = this.#routes;
-        this.#paramCallbacks = {};
+        this.#paramCallbacks = new Map();
         this.#mountpathCache = {};
         this.mountpath = '/';
 
@@ -44,27 +44,14 @@ export default class Router {
     }
 
     #pathMatches(route, req) {
-        // /abcd - /abcd
-        // /abc?d - /abcd, /abd
-        // /ab+cd - /abcd, /abbcd, /abbbbbcd, and so on
-        // /ab*cd -  /abcd, /abxcd, /abFOOcd, /abbArcd, and so on
-        // /a(bc)?d - /ad and /abcd
-        // /:test - /a, /b, /c as query params
-        // /* - anything
-        // /test/* - /test/a, /test/b, /test/c, /test/a/b/c, and so on
-        // /test/:test - /test/a, /test/b, /test/c and so on
+        const path = req._opPath;
+        const pattern = route.pattern;
         
-        let path = req._opPath, pattern = route.pattern;
-        
-        if(pattern instanceof RegExp) {
-            return pattern.test(path);
+        if (typeof pattern === 'string') {
+            return pattern === path || pattern === '*' || pattern === '/*';
         }
         
-        if(pattern === '*' || pattern === '/*') {
-            return true;
-        }
-
-        return pattern === path;
+        return pattern.test(path);
     }
 
     #createRoute(method, path, parent = this, ...callbacks) {
@@ -109,9 +96,9 @@ export default class Router {
             req.params = this.#extractParams(route.pattern, path);
 
             for(let param in req.params) {
-                if(this.#paramCallbacks[param] && !req._gotParams.includes(param)) {
-                    req._gotParams.push(param);
-                    for(let fn of this.#paramCallbacks[param]) {
+                if(this.#paramCallbacks.has(param) && !req._gotParams.has(param)) {
+                    req._gotParams.add(param);
+                    for(let fn of this.#paramCallbacks.get(param)) {
                         await new Promise(resolve => fn(req, res, resolve, req.params[param], param));
                     }
                 }
@@ -126,10 +113,10 @@ export default class Router {
     param(name, fn) {
         let names = Array.isArray(name) ? name : [name];
         for(let name of names) {
-            if(!this.#paramCallbacks[name]) {
-                this.#paramCallbacks[name] = [];
+            if(!this.#paramCallbacks.has(name)) {
+                this.#paramCallbacks.set(name, []);
             }
-            this.#paramCallbacks[name].push(fn);
+            this.#paramCallbacks.get(name).push(fn);
         }
     }
 

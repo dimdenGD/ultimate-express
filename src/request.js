@@ -11,7 +11,7 @@ export default class Request {
         }
         this.method = req.getMethod().toUpperCase();
         this.params = {};
-        this._gotParams = [];
+        this._gotParams = new Set();
         this._stack = [];
         this._opPath = this.path;
     }
