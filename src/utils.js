@@ -3,7 +3,7 @@ export function removeDuplicateSlashes(path) {
 }
 
 export function patternToRegex(pattern, isPrefix = false) {
-    if(!needsConversionToRegex(pattern)) {
+    if(pattern instanceof RegExp) {
         return pattern;
     }
     if(isPrefix && pattern === '/') {

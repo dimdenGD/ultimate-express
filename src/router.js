@@ -71,14 +71,7 @@ export default class Router {
             return true;
         }
 
-        if(!pattern.endsWith('/')) {
-            pattern += '/';
-        }
-        if(!path.endsWith('/')) {
-            path += '/';
-        }
-        
-        return route.use ? path.startsWith(pattern) : pattern === path;
+        return pattern === path;
     }
 
     #createRoute(method, path, parent = this, ...callbacks) {

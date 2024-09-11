@@ -6,6 +6,9 @@ export default class Request {
         this.#req = req;
         this.app = app;
         this.path = req.getUrl();
+        if(this.path.endsWith('/') && this.path !== '/') {
+            this.path = this.path.slice(0, -1);
+        }
         this.method = req.getMethod().toUpperCase();
         this.params = {};
         this._gotParams = [];
