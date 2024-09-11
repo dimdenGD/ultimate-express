@@ -6,6 +6,14 @@ const app = express();
 const router = express.Router();
 
 for(let i = 0; i < 1000; i++) {
+    router.get(`/${i}`, (req, res) => {
+        res.send(i.toString());
+    });
+}
+
+app.use("/rou+ter", router);
+
+for(let i = 0; i < 1000; i++) {
     app.get(`/${i}`, (req, res) => {
         res.send(i.toString());
     });
@@ -22,14 +30,6 @@ for(let i = 1000; i < 2000; i++) {
         res.send(i.toString());
     });
 }
-
-for(let i = 0; i < 1000; i++) {
-    router.get(`/${i}`, (req, res) => {
-        res.send(i.toString());
-    });
-}
-
-app.use("/rou+ter", router);
 
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
