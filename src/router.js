@@ -1,35 +1,6 @@
-import { removeDuplicateSlashes } from "./utils.js";
+import { removeDuplicateSlashes, patternToRegex, needsConversionToRegex } from "./utils.js";
 
 let routeKey = 0;
-
-function patternToRegex(pattern, isPrefix = false) {
-    if(pattern instanceof RegExp) {
-        return pattern;
-    }
-    if(isPrefix && pattern === '/') {
-        return new RegExp(`^(?=$|\/)`);
-    }
-
-    let regexPattern = pattern
-        .replace(/\//g, '\\/') // Escape slashes
-        .replace(/\*/g, '.*') // Convert * to .*
-        .replace(/:(\w+)/g, (match, param) => {
-            return `(?<${param}>[^/]+)`;
-        }); // Convert :param to capture group
-
-    return new RegExp(`^${regexPattern}${isPrefix ? '(?=$|\/)' : '$'}`);
-}
-
-function needsConversionToRegex(pattern) {
-    if(pattern instanceof RegExp) {
-        return false;
-    }
-    if(pattern === '*' || pattern === '/*') {
-        return false;
-    }
-
-    return pattern.includes('*') || pattern.includes('?') || pattern.includes('+') || pattern.includes('(') || pattern.includes(')') || pattern.includes(':');
-}
 
 const methods = [
     'all',

@@ -57,7 +57,7 @@ The Ultimate Express. Fastest http server with full Express compatibility, based
 
 ### Request
 - ✅ req.app
-- ❌ req.baseUrl
+- ✅ req.baseUrl
 - ❌ req.body
 - ❌ req.cookies
 - ❌ req.fresh
