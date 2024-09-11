@@ -108,7 +108,7 @@ export default class Router {
         if(req._stack.length > 0) {
             path = path.replace(this.#getFullMountpath(req), '');
         }
-        if(route.pattern instanceof RegExp) {
+        if(typeof route.path === 'string' && route.path.includes(':') && route.pattern instanceof RegExp) {
             req.params = this.#extractParams(route.pattern, path);
 
             for(let param in req.params) {
