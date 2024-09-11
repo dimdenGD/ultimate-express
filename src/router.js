@@ -81,6 +81,9 @@ export default class Router {
             const paths = Array.isArray(path) ? path : [path];
             const routes = [];
             for(let path of paths) {
+                if(typeof path === 'string' && path.endsWith('/') && path !== '/') {
+                    path = path.slice(0, -1);
+                }
                 const route = {
                     method: method === 'USE' ? 'ALL' : method.toUpperCase(),
                     path,
