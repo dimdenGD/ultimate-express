@@ -152,7 +152,7 @@ export default class Router {
                             resolve(true);
                         } else {
                             req._stack.pop();
-                            req._opPath = req.path;
+                            req._opPath = req._stack.length > 0 ? req.path.replace(this.#getFullMountpath(req), '') : req.path;
                             resolve(this._routeRequest(req, res, i + 1));
                         }
                     } else {

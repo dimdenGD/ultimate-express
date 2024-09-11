@@ -17,6 +17,10 @@ router2.get('/ccc', (req, res) => {
 
 router2.use('/nested', router3);
 
+router2.get("/nested", (req, res) => {
+    res.send('nested');
+});
+
 router3.get('/ddd', (req, res) => {
     res.send('ddd');
 });
@@ -40,6 +44,7 @@ app.listen(13333, async () => {
         fetch('http://localhost:13333/abccc/ccc').then(res => res.text()),
         fetch('http://localhost:13333/abccc/ddd/ddd').then(res => res.text()),
         fetch('http://localhost:13333/abccc/nested/ddd').then(res => res.text()),
+        fetch('http://localhost:13333/abccc/nested').then(res => res.text()),
     ]);
 
     console.log(outputs.join(' '));
