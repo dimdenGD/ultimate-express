@@ -3,6 +3,7 @@
 import express from "express";
 
 const app = express();
+const router = express.Router();
 
 for(let i = 0; i < 1000; i++) {
     app.get(`/${i}`, (req, res) => {
@@ -22,6 +23,14 @@ for(let i = 1000; i < 2000; i++) {
     });
 }
 
+for(let i = 0; i < 1000; i++) {
+    router.get(`/${i}`, (req, res) => {
+        res.send(i.toString());
+    });
+}
+
+app.use("/rou+ter", router);
+
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
@@ -31,6 +40,8 @@ app.listen(13333, async () => {
     res = await fetch('http://localhost:13333/1999');
     console.log(await res.text());
 
+    res = await fetch('http://localhost:13333/rouuuter/999');
+    console.log(await res.text());
 
     process.exit(0);
 })
