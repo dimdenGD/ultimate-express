@@ -13,11 +13,13 @@ const methods = [
 export default class Router {
     #routes;
     #paramCallbacks;
+    #mountpathCache;
     constructor() {
         this.errorRoute = undefined;
         this.#routes = [];
         // this.routes = this.#routes;
         this.#paramCallbacks = {};
+        this.#mountpathCache = {};
         this.mountpath = '/';
 
         methods.forEach(method => {
@@ -32,7 +34,13 @@ export default class Router {
     }
 
     #getFullMountpath(req) {
-        return patternToRegex(req._stack.join(""), true);
+        let fullStack = req._stack.join("");
+        let fullMountpath = this.#mountpathCache[fullStack];
+        if(!fullMountpath) {
+            fullMountpath = patternToRegex(fullStack, true);
+            this.#mountpathCache[fullStack] = fullMountpath;
+        }
+        return fullMountpath;
     }
 
     #pathMatches(route, req) {

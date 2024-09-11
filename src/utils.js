@@ -11,7 +11,6 @@ export function patternToRegex(pattern, isPrefix = false) {
     }
 
     let regexPattern = pattern
-        .replace(/\//g, '\\/') // Escape slashes
         .replace(/\*/g, '.*') // Convert * to .*
         .replace(/:(\w+)/g, (match, param) => {
             return `(?<${param}>[^/]+)`;
