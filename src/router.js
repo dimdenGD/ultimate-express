@@ -142,7 +142,7 @@ export default class Router {
                 }
                 const route = this.#routes[i];
                 if ((route.all || route.method === req.method) && this.#pathMatches(route, req)) {
-                    let calledNext = false;
+                    let calledNext = false, dontStop = false;
                     await this.#preprocessRequest(req, res, route);
                     if(route.callback instanceof Router) {
                         req._stack.push(route.path);
@@ -153,7 +153,7 @@ export default class Router {
                         } else {
                             req._stack.pop();
                             req._opPath = req._stack.length > 0 ? req.path.replace(this.#getFullMountpath(req), '') : req.path;
-                            resolve(this._routeRequest(req, res, i + 1));
+                            dontStop = true;
                         }
                     } else {
                         try {
@@ -169,7 +169,7 @@ export default class Router {
                                         throw thingamabob;
                                     }
                                 }
-                                resolve(this._routeRequest(req, res, i + 1));
+                                dontStop = true;
                             });
                         } catch(err) {
                             if(this.errorRoute) {
@@ -187,7 +187,9 @@ export default class Router {
                     if(!calledNext) {
                         resolve(true);
                     }
-                    return;
+                    if(!dontStop) {
+                        return;
+                    }
                 }
                 i++;
             }
