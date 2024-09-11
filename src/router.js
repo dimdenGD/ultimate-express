@@ -210,7 +210,7 @@ export default class Router {
         });
     }
     use(path, ...callbacks) {
-        if(typeof path !== 'string') {
+        if(typeof path === 'function' || path instanceof Router || (Array.isArray(path) && path.every(p => typeof p === 'function' || p instanceof Router))) {
             if(callbacks.length === 0 && typeof path === 'function' && path.length === 4) {
                 this.errorRoute = path;
                 return;
@@ -218,13 +218,10 @@ export default class Router {
             callbacks.unshift(path);
             path = '/';
         }
-        let paths = Array.isArray(path) ? path : [path];
-        for(let path of paths) {
-            for(let callback of callbacks) {
-                if(callback instanceof Router) {
-                    callback.mountpath = removeDuplicateSlashes('/' + path);
-                    callback.parent = this;
-                }
+        for(let callback of callbacks) {
+            if(callback instanceof Router) {
+                callback.mountpath = path;
+                callback.parent = this;
             }
         }
         this.#createRoute('USE', path, this, ...callbacks);
