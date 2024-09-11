@@ -35,7 +35,7 @@ export default class Router {
         return patternToRegex(req._stack.join(""), true);
     }
 
-    #pathMatches(pattern, req, startsWith = false) {
+    #pathMatches(route, req) {
         // /abcd - /abcd
         // /abc?d - /abcd, /abd
         // /ab+cd - /abcd, /abbcd, /abbbbbcd, and so on
@@ -46,7 +46,7 @@ export default class Router {
         // /test/* - /test/a, /test/b, /test/c, /test/a/b/c, and so on
         // /test/:test - /test/a, /test/b, /test/c and so on
         
-        let path = req.path;
+        let path = req.path, pattern = route.pattern;
 
         // console.log(
         //     `mount: ${this.#getFullMountpath(req)} pattern: ${pattern} path: ${path} => ${path.replace(this.#getFullMountpath(req), '')}`
@@ -70,7 +70,7 @@ export default class Router {
             path += '/';
         }
         
-        return startsWith ? path.startsWith(pattern) : pattern === path;
+        return route.use ? path.startsWith(pattern) : pattern === path;
     }
 
     #createRoute(method, path, parent = this, ...callbacks) {
@@ -144,7 +144,7 @@ export default class Router {
                     return;
                 }
                 const route = this.#routes[i];
-                if ((route.method === req.method || route.all) && this.#pathMatches(route.pattern, req, route.use)) {
+                if ((route.method === req.method || route.all) && this.#pathMatches(route, req)) {
                     let calledNext = false;
                     await this.#preprocessRequest(req, res, route);
                     if(route.callback instanceof Router) {
