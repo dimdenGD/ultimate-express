@@ -16,6 +16,7 @@ export default class Router {
     constructor() {
         this.errorRoute = undefined;
         this.#routes = [];
+        // this.routes = this.#routes;
         this.#paramCallbacks = {};
         this.mountpath = '/';
 
@@ -30,8 +31,8 @@ export default class Router {
         return this.#createRoute('GET', path, this, ...callbacks);
     }
 
-    getFullMountpath(req) {
-        return patternToRegex(removeDuplicateSlashes('/' + req._stack.join('/')), true);
+    #getFullMountpath(req) {
+        return patternToRegex(req._stack.join(""), true);
     }
 
     #pathMatches(pattern, req) {
@@ -48,11 +49,13 @@ export default class Router {
         let path = req.path;
 
         // console.log(
-        //     `mount: ${this.getFullMountpath(req)} pattern: ${pattern} path: ${path} => ${removeDuplicateSlashes('/' + path.replace(this.getFullMountpath(req), ''))}`,
-        //     ((pattern instanceof RegExp && pattern.test(path.replace(this.getFullMountpath(req), ''))) || pattern === path.replace(this.getFullMountpath(req), '')) ? 'YES' : 'NO'
+        //     `mount: ${this.#getFullMountpath(req)} pattern: ${pattern} path: ${path} => ${removeDuplicateSlashes('/' + path.replace(this.#getFullMountpath(req), ''))}`,
+        //     ((pattern instanceof RegExp && pattern.test(path.replace(this.#getFullMountpath(req), ''))) || pattern === path.replace(this.#getFullMountpath(req), '')) ? 'YES' : 'NO'
         // );
 
-        path = removeDuplicateSlashes('/' + path.replace(this.getFullMountpath(req), ''));
+        if(req._stack.length > 0) {
+            path = path.replace(this.#getFullMountpath(req), '');
+        }
         if(pattern instanceof RegExp) {
             return pattern.test(path);
         }
@@ -93,7 +96,10 @@ export default class Router {
     }
 
     async #preprocessRequest(req, res, route) {
-        let path = removeDuplicateSlashes('/' + req.path.replace(this.getFullMountpath(req), ''));
+        let path = req.path;
+        if(req._stack.length > 0) {
+            path = path.replace(this.#getFullMountpath(req), '');
+        }
         if(route.pattern instanceof RegExp) {
             req.params = this.#extractParams(route.pattern, path);
 

@@ -1,0 +1,303 @@
+Statistical profiling result from isolate-0x5b09ed0-446986-v8.log, (10072 ticks, 4064 unaccounted, 0 excluded).
+
+ [Shared libraries]:
+   ticks  total  nonlib   name
+   3354   33.3%          /usr/bin/node
+    310    3.1%          /usr/lib/x86_64-linux-gnu/libc.so.6
+      2    0.0%          [vdso]
+      1    0.0%          /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30
+
+ [JavaScript]:
+   ticks  total  nonlib   name
+    927    9.2%   14.5%  JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+    601    6.0%    9.4%  RegExp: \/{2,}
+    274    2.7%    4.3%  JS: *#preprocessRequest file:///d:/JS/u-express/src/router.js:95:29
+    199    2.0%    3.1%  RegExp: ^(?=$|\/) {1}
+     98    1.0%    1.5%  RegExp: ^(?=$|\/)
+     90    0.9%    1.4%  JS: *<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+      1    0.0%    0.0%  JS: ^use file:///d:/JS/u-express/src/router.js:183:8
+      1    0.0%    0.0%  JS: ^needsConversionToRegex file:///d:/JS/u-express/src/utils.js:23:39
+      1    0.0%    0.0%  JS: ^#preprocessRequest file:///d:/JS/u-express/src/router.js:95:29
+      1    0.0%    0.0%  JS: *#pathMatches file:///d:/JS/u-express/src/router.js:37:17
+
+ [C++]:
+   ticks  total  nonlib   name
+     48    0.5%    0.7%  __send@@GLIBC_2.2.5
+     18    0.2%    0.3%  __write@@GLIBC_2.2.5
+     17    0.2%    0.3%  std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@@GLIBCXX_3.4.9
+     14    0.1%    0.2%  epoll_pwait@@GLIBC_2.6
+     10    0.1%    0.2%  fwrite@@GLIBC_2.2.5
+     10    0.1%    0.2%  __recv@@GLIBC_PRIVATE
+      4    0.0%    0.1%  __libc_malloc@@GLIBC_2.2.5
+      3    0.0%    0.0%  accept4@@GLIBC_2.10
+      3    0.0%    0.0%  _IO_file_xsputn@@GLIBC_2.2.5
+      2    0.0%    0.0%  std::ostream& std::ostream::_M_insert<long>(long)@@GLIBCXX_3.4.9
+      2    0.0%    0.0%  epoll_ctl@@GLIBC_2.3.2
+      2    0.0%    0.0%  __pthread_rwlock_wrlock@GLIBC_2.2.5
+      2    0.0%    0.0%  __pthread_mutex_unlock@GLIBC_2.2.5
+      2    0.0%    0.0%  __close@@GLIBC_2.2.5
+      1    0.0%    0.0%  std::ostream::sentry::sentry(std::ostream&)@@GLIBCXX_3.4
+      1    0.0%    0.0%  std::_Rb_tree_insert_and_rebalance(bool, std::_Rb_tree_node_base*, std::_Rb_tree_node_base*, std::_Rb_tree_node_base&)@@GLIBCXX_3.4
+      1    0.0%    0.0%  std::_Hash_bytes(void const*, unsigned long, unsigned long)@@CXXABI_1.3.5
+      1    0.0%    0.0%  pthread_cond_destroy@@GLIBC_2.3.2
+      1    0.0%    0.0%  isprint@@GLIBC_2.2.5
+      1    0.0%    0.0%  fputc@@GLIBC_2.2.5
+      1    0.0%    0.0%  fflush@@GLIBC_2.2.5
+      1    0.0%    0.0%  cfree@GLIBC_2.2.5
+      1    0.0%    0.0%  __pthread_mutex_trylock@GLIBC_2.2.5
+      1    0.0%    0.0%  __munmap@@GLIBC_PRIVATE
+      1    0.0%    0.0%  _IO_default_xsputn@@GLIBC_2.2.5
+
+ [Summary]:
+   ticks  total  nonlib   name
+   2193   21.8%   34.2%  JavaScript
+    148    1.5%    2.3%  C++
+    221    2.2%    3.5%  GC
+   3667   36.4%          Shared libraries
+   4064   40.3%          Unaccounted
+
+ [C++ entry points]:
+   ticks    cpp   total   name
+     15   33.3%    0.1%  std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@@GLIBCXX_3.4.9
+     10   22.2%    0.1%  fwrite@@GLIBC_2.2.5
+      7   15.6%    0.1%  __write@@GLIBC_2.2.5
+      3    6.7%    0.0%  _IO_file_xsputn@@GLIBC_2.2.5
+      2    4.4%    0.0%  std::ostream& std::ostream::_M_insert<long>(long)@@GLIBCXX_3.4.9
+      2    4.4%    0.0%  __pthread_rwlock_wrlock@GLIBC_2.2.5
+      2    4.4%    0.0%  __libc_malloc@@GLIBC_2.2.5
+      1    2.2%    0.0%  std::ostream::sentry::sentry(std::ostream&)@@GLIBCXX_3.4
+      1    2.2%    0.0%  std::_Rb_tree_insert_and_rebalance(bool, std::_Rb_tree_node_base*, std::_Rb_tree_node_base*, std::_Rb_tree_node_base&)@@GLIBCXX_3.4
+      1    2.2%    0.0%  isprint@@GLIBC_2.2.5
+      1    2.2%    0.0%  __munmap@@GLIBC_PRIVATE
+
+ [Bottom up (heavy) profile]:
+  Note: percentage shows a share of a particular caller in the total
+  amount of its parent calls.
+  Callers occupying less than 1.0% are not shown.
+
+   ticks parent  name
+   4064   40.3%  UNKNOWN
+   2723   67.0%    JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+   1709   62.8%      JS: *<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+   1709  100.0%        JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+   1709  100.0%          /usr/bin/node
+    560   20.6%      JS: *<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+    252    9.3%      /usr/bin/node
+      3    1.2%        JS: ^_routeRequest file:///d:/JS/u-express/src/router.js:125:24
+      2   66.7%          JS: ^<anonymous> file:///d:/JS/u-express/src/router.js:146:60
+      2  100.0%            JS: ^<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+      1   33.3%          JS: ~<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+    196    7.2%      JS: *_routeRequest file:///d:/JS/u-express/src/router.js:125:24
+    122   62.2%        JS: ^<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+     73   37.2%        JS: ~<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+    951   23.4%    JS: *#preprocessRequest file:///d:/JS/u-express/src/router.js:95:29
+    951  100.0%      JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+    946   99.5%        JS: *<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+    946  100.0%          JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+    946  100.0%            /usr/bin/node
+    185    4.6%    JS: *<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+    185  100.0%      JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+    185  100.0%        /usr/bin/node
+     48    1.2%    JS: *<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+
+   3354   33.3%  /usr/bin/node
+   2306   68.8%    /usr/bin/node
+   2101   91.1%      /usr/bin/node
+   1534   73.0%        JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+   1043   68.0%          JS: *<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+   1043  100.0%            JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+    372   24.3%          JS: *<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+    115    7.5%          JS: *_routeRequest file:///d:/JS/u-express/src/router.js:125:24
+     68   59.1%            JS: ^<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+     47   40.9%            JS: ~<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+    558   26.6%        JS: *#preprocessRequest file:///d:/JS/u-express/src/router.js:95:29
+    558  100.0%          JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+    554   99.3%            JS: *<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+     96    4.2%      JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+     96  100.0%        JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+     23   24.0%          JS: ~fetch node:internal/bootstrap/web/exposed-window-or-worker:67:24
+     23  100.0%            JS: ~<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:25:19
+      5    5.2%          JS: ~get node:internal/util:617:17
+      5  100.0%            /usr/bin/node
+      5    5.2%          JS: ~<anonymous> node:internal/streams/duplex:1:1
+      5  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      5    5.2%          JS: ~<anonymous> node:internal/fs/promises:1:1
+      5  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      5    5.2%          JS: ~<anonymous> node:http2:1:1
+      5  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      3    3.1%          JS: ~<anonymous> node:tty:1:1
+      3  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      3    3.1%          JS: ~<anonymous> node:internal/webstreams/readablestream:1:1
+      3  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      3    3.1%          JS: ~<anonymous> node:http:1:1
+      3  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      3    3.1%          JS: ~<anonymous> node:crypto:1:1
+      3  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      2    2.1%          JS: ~requireWithFallbackInDeps node:internal/bootstrap/realm:434:35
+      2  100.0%            JS: ~lib/dispatcher/client.js node:internal/deps/undici/undici:7232:29
+      2    2.1%          JS: ~initCJSParse node:internal/modules/esm/translators:85:28
+      2  100.0%            JS: ~commonjsStrategy node:internal/modules/esm/translators:334:60
+      2    2.1%          JS: ~getSource node:internal/modules/esm/load:40:25
+      2  100.0%            JS: ~defaultLoad node:internal/modules/esm/load:110:27
+      2    2.1%          JS: ~defaultResolve node:internal/modules/esm/loader:530:17
+      2  100.0%            JS: ~resolve node:internal/modules/esm/loader:500:10
+      2    2.1%          JS: ~<anonymous> node:tls:1:1
+      2  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      2    2.1%          JS: ~<anonymous> node:internal/streams/operators:1:1
+      2  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      2    2.1%          JS: ~<anonymous> node:internal/http2/core:1:1
+      2  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      2    2.1%          JS: ~<anonymous> node:internal/http2/compat:1:1
+      2  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      2    2.1%          JS: ~<anonymous> node:_tls_wrap:1:1
+      2  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      2    2.1%          JS: ~<anonymous> node:_http_client:1:1
+      2  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      2    2.1%          JS: ^requireWithFallbackInDeps node:internal/bootstrap/realm:434:35
+      2  100.0%            JS: ~lib/web/fetch/util.js node:internal/deps/undici/undici:3791:26
+      1    1.0%          JS: ~newResolveCache node:internal/modules/esm/loader:53:25
+      1  100.0%            JS: ~<instance_members_initializer> node:internal/modules/esm/loader:105:1
+      1    1.0%          JS: ~lookupAndConnect node:net:1280:26
+      1  100.0%            JS: ~Socket.connect node:net:1198:36
+      1    1.0%          JS: ~lazyUtilColors node:internal/console/constructor:85:24
+      1  100.0%            JS: ~value node:internal/console/constructor:326:20
+      1    1.0%          JS: ~getTranslators node:internal/modules/esm/loader:71:24
+      1  100.0%            JS: ~<instance_members_initializer> node:internal/modules/esm/loader:105:1
+      1    1.0%          JS: ~asyncRunEntryPointWithESMLoader node:internal/modules/run_main:110:47
+      1  100.0%            JS: ~runEntryPointWithESMLoader node:internal/modules/run_main:146:36
+      1    1.0%          JS: ~<anonymous> node:worker_threads:1:1
+      1  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      1    1.0%          JS: ~<anonymous> node:stream:1:1
+      1  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      1    1.0%          JS: ~<anonymous> node:net:1:1
+      1  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      1    1.0%          JS: ~<anonymous> node:internal/streams/pipeline:1:1
+      1  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      1    1.0%          JS: ~<anonymous> node:internal/perf/usertiming:1:1
+      1  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      1    1.0%          JS: ~<anonymous> node:internal/perf/timerify:1:1
+      1  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      1    1.0%          JS: ~<anonymous> node:internal/perf/observe:1:1
+      1  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      1    1.0%          JS: ~<anonymous> node:internal/modules/esm/get_format:1:1
+      1  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      1    1.0%          JS: ~<anonymous> node:internal/crypto/util:1:1
+      1  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      1    1.0%          JS: ~<anonymous> node:internal/crypto/hkdf:1:1
+      1  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      1    1.0%          JS: ~<anonymous> node:assert:1:1
+      1  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      1    1.0%          JS: ~<anonymous> node:_tls_common:1:1
+      1  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      1    1.0%          JS: ~<anonymous> node:_http_common:1:1
+      1  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      1    1.0%          JS: ~#createModuleJob node:internal/modules/esm/loader:420:19
+      1  100.0%            JS: ~getJobFromResolveResult node:internal/modules/esm/loader:248:26
+     43    1.9%      JS: *<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+     43  100.0%        JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+     43  100.0%          /usr/bin/node
+    153    4.6%    JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+     99   64.7%      JS: *<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+     99  100.0%        JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+     99  100.0%          /usr/bin/node
+     39   25.5%      JS: *<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+     10    6.5%      JS: *_routeRequest file:///d:/JS/u-express/src/router.js:125:24
+      6   60.0%        JS: ^<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+      4   40.0%        JS: ~<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+      5    3.3%      /usr/bin/node
+     72    2.1%    JS: *<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+     72  100.0%      JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+     72  100.0%        /usr/bin/node
+     48    1.4%    JS: *#preprocessRequest file:///d:/JS/u-express/src/router.js:95:29
+     48  100.0%      JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+     48  100.0%        JS: *<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+     48  100.0%          JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+     48  100.0%            /usr/bin/node
+
+    927    9.2%  JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+    563   60.7%    JS: *<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+    563  100.0%      JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+    563  100.0%        /usr/bin/node
+    161   17.4%    JS: *<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+    119   12.8%    /usr/bin/node
+     50    5.4%    JS: *_routeRequest file:///d:/JS/u-express/src/router.js:125:24
+     29   58.0%      JS: ^<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+     21   42.0%      JS: ~<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+
+    601    6.0%  RegExp: \/{2,}
+    468   77.9%    JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+    309   66.0%      JS: *<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+    309  100.0%        JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+    309  100.0%          /usr/bin/node
+    113   24.1%      JS: *<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+     44    9.4%      JS: *_routeRequest file:///d:/JS/u-express/src/router.js:125:24
+     27   61.4%        JS: ^<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+     17   38.6%        JS: ~<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+    132   22.0%    JS: *#preprocessRequest file:///d:/JS/u-express/src/router.js:95:29
+    132  100.0%      JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+    132  100.0%        JS: *<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+    132  100.0%          JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+    132  100.0%            /usr/bin/node
+
+    310    3.1%  /usr/lib/x86_64-linux-gnu/libc.so.6
+    215   69.4%    JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+    162   75.3%      JS: *<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+    162  100.0%        JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+    162  100.0%          /usr/bin/node
+     45   20.9%      JS: *<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+      8    3.7%      JS: *_routeRequest file:///d:/JS/u-express/src/router.js:125:24
+      5   62.5%        JS: ^<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+      3   37.5%        JS: ~<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+     71   22.9%    JS: *#preprocessRequest file:///d:/JS/u-express/src/router.js:95:29
+     71  100.0%      JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+     70   98.6%        JS: *<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+     70  100.0%          JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+     70  100.0%            /usr/bin/node
+      1    1.4%        JS: *<anonymous> file:///d:/JS/u-express/src/router.js:146:60
+      1  100.0%          JS: ^<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+      1  100.0%            JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+      5    1.6%    /usr/bin/node
+      2   40.0%      /usr/bin/node
+      1   50.0%        JS: ~resolvePackageTargetString node:internal/modules/esm/resolve:367:36
+      1  100.0%          JS: ~resolvePackageTarget node:internal/modules/esm/resolve:471:30
+      1  100.0%            JS: ~resolvePackageTarget node:internal/modules/esm/resolve:471:30
+      1   50.0%        JS: ~<anonymous> node:internal/crypto/keys:1:1
+      1  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      1  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      1   20.0%      JS: ~<anonymous> node:path:1114:10
+      1  100.0%        JS: ~resolve node:path:1123:10
+      1  100.0%          JS: ~patchProcessObject node:internal/process/pre_execution:224:28
+      1  100.0%            JS: ~prepareExecution node:internal/process/pre_execution:98:26
+      1   20.0%      JS: ~<anonymous> node:internal/modules/esm/translators:282:67
+      1  100.0%        /usr/bin/node
+      1  100.0%          JS: ~run node:internal/modules/esm/module_job:228:12
+      1  100.0%            /usr/bin/node
+      1   20.0%      JS: ^__require node:internal/deps/undici/undici:5:49
+      1  100.0%        JS: ~lib/web/fetch/formdata.js node:internal/deps/undici/undici:4791:30
+      1  100.0%          JS: ^__require node:internal/deps/undici/undici:5:49
+      1  100.0%            JS: ~lib/web/fetch/body.js node:internal/deps/undici/undici:5195:26
+
+    274    2.7%  JS: *#preprocessRequest file:///d:/JS/u-express/src/router.js:95:29
+    237   86.5%    JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+    236   99.6%      JS: *<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+    236  100.0%        JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+    236  100.0%          /usr/bin/node
+     37   13.5%    JS: *<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+     37  100.0%      JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+     37  100.0%        /usr/bin/node
+
+    199    2.0%  RegExp: ^(?=$|\/) {1}
+    154   77.4%    JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+    105   68.2%      JS: *<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+    105  100.0%        JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+    105  100.0%          /usr/bin/node
+     33   21.4%      JS: *<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+     16   10.4%      JS: *_routeRequest file:///d:/JS/u-express/src/router.js:125:24
+     11   68.8%        JS: ^<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+      5   31.3%        JS: ~<anonymous> file:///d:/JS/u-express/src/application.js:88:31
+     45   22.6%    JS: *#preprocessRequest file:///d:/JS/u-express/src/router.js:95:29
+     45  100.0%      JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+     45  100.0%        JS: *<anonymous> file:///d:/JS/u-express/tests/tests/26-lot-of-routes.js:14:13
+     45  100.0%          JS: *<anonymous> file:///d:/JS/u-express/src/router.js:126:28
+     45  100.0%            /usr/bin/node
+
