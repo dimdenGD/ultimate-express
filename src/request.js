@@ -13,6 +13,7 @@ export default class Request {
         this.params = {};
         this._gotParams = [];
         this._stack = [];
+        this._opPath = this.path;
     }
     get baseUrl() {
         let match = this.path.match(patternToRegex(this._stack.join(""), true));

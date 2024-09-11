@@ -54,15 +54,8 @@ export default class Router {
         // /test/* - /test/a, /test/b, /test/c, /test/a/b/c, and so on
         // /test/:test - /test/a, /test/b, /test/c and so on
         
-        let path = req.path, pattern = route.pattern;
-
-        // console.log(
-        //     `mount: ${this.#getFullMountpath(req)} pattern: ${pattern} path: ${path} => ${path.replace(this.#getFullMountpath(req), '')}`
-        // );
-
-        if(req._stack.length > 0) {
-            path = path.replace(this.#getFullMountpath(req), '');
-        }
+        let path = req._opPath, pattern = route.pattern;
+        
         if(pattern instanceof RegExp) {
             return pattern.test(path);
         }
@@ -141,7 +134,7 @@ export default class Router {
     }
 
     async _routeRequest(req, res, i = 0) {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             while (i < this.#routes.length) {
                 if(res.aborted) {
                     resolve(false);
@@ -153,10 +146,13 @@ export default class Router {
                     await this.#preprocessRequest(req, res, route);
                     if(route.callback instanceof Router) {
                         req._stack.push(route.path);
+                        req._opPath = req.path.replace(this.#getFullMountpath(req), '');
+
                         if(await route.callback._routeRequest(req, res, 0)) {
                             resolve(true);
                         } else {
                             req._stack.pop();
+                            req._opPath = req.path;
                             resolve(this._routeRequest(req, res, i + 1));
                         }
                     } else {
