@@ -125,13 +125,8 @@ class Application extends Router {
             paths.unshift(parent.mountpath);
             parent = parent.parent;
         }
-        paths = paths.filter(path => path !== '/');
-        
-        let path = removeDuplicateSlashes('/' + paths.join('/'));
-        if(path === '/') {
-            return '';
-        }
-        return path;
+        let path = removeDuplicateSlashes(paths.join(''));
+        return path === '/' ? '' : path;
     }
 }
 

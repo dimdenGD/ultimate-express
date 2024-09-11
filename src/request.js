@@ -1,4 +1,4 @@
-import { removeDuplicateSlashes, patternToRegex } from "./utils.js";
+import { patternToRegex } from "./utils.js";
 
 export default class Request {
     #req;
@@ -12,7 +12,7 @@ export default class Request {
         this._stack = [];
     }
     get baseUrl() {
-        let match = this.path.match(patternToRegex(removeDuplicateSlashes('/' + this._stack.join('/')), true));
+        let match = this.path.match(patternToRegex(this._stack.join(""), true));
         return match ? match[0] : '';
     }
 }

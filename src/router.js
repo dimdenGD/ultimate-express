@@ -1,4 +1,4 @@
-import { removeDuplicateSlashes, patternToRegex, needsConversionToRegex } from "./utils.js";
+import { patternToRegex, needsConversionToRegex } from "./utils.js";
 
 let routeKey = 0;
 
@@ -35,7 +35,7 @@ export default class Router {
         return patternToRegex(req._stack.join(""), true);
     }
 
-    #pathMatches(pattern, req) {
+    #pathMatches(pattern, req, startsWith = false) {
         // /abcd - /abcd
         // /abc?d - /abcd, /abd
         // /ab+cd - /abcd, /abbcd, /abbbbbcd, and so on
@@ -44,13 +44,12 @@ export default class Router {
         // /:test - /a, /b, /c as query params
         // /* - anything
         // /test/* - /test/a, /test/b, /test/c, /test/a/b/c, and so on
-        // /test/:test - /test/a, /test/b, /test/c, /test/a/b/c, and so on
+        // /test/:test - /test/a, /test/b, /test/c and so on
         
         let path = req.path;
 
         // console.log(
-        //     `mount: ${this.#getFullMountpath(req)} pattern: ${pattern} path: ${path} => ${removeDuplicateSlashes('/' + path.replace(this.#getFullMountpath(req), ''))}`,
-        //     ((pattern instanceof RegExp && pattern.test(path.replace(this.#getFullMountpath(req), ''))) || pattern === path.replace(this.#getFullMountpath(req), '')) ? 'YES' : 'NO'
+        //     `mount: ${this.#getFullMountpath(req)} pattern: ${pattern} path: ${path} => ${path.replace(this.#getFullMountpath(req), '')}`
         // );
 
         if(req._stack.length > 0) {
@@ -63,8 +62,15 @@ export default class Router {
         if(pattern === '*' || pattern === '/*') {
             return true;
         }
+
+        if(!pattern.endsWith('/')) {
+            pattern += '/';
+        }
+        if(!path.endsWith('/')) {
+            path += '/';
+        }
         
-        return pattern === path;
+        return startsWith ? path.startsWith(pattern) : pattern === path;
     }
 
     #createRoute(method, path, parent = this, ...callbacks) {
@@ -80,7 +86,9 @@ export default class Router {
                     pattern: method === 'USE' || needsConversionToRegex(path) ? patternToRegex(path, method === 'USE') : path,
                     callback,
                     routeSkipKey,
-                    routeKey: routeKey++
+                    routeKey: routeKey++,
+                    use: method === 'USE',
+                    all: method === 'ALL' || method === 'USE',
                 };
                 routes.push(route);
             }
@@ -136,7 +144,7 @@ export default class Router {
                     return;
                 }
                 const route = this.#routes[i];
-                if ((route.method === req.method || route.method === 'ALL') && this.#pathMatches(route.pattern, req)) {
+                if ((route.method === req.method || route.all) && this.#pathMatches(route.pattern, req, route.use)) {
                     let calledNext = false;
                     await this.#preprocessRequest(req, res, route);
                     if(route.callback instanceof Router) {
@@ -193,7 +201,10 @@ export default class Router {
                 return;
             }
             callbacks.unshift(path);
-            path = '/';
+            path = '';
+        }
+        if(path === '/') {
+            path = '';
         }
         for(let callback of callbacks) {
             if(callback instanceof Router) {

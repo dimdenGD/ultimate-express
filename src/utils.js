@@ -3,11 +3,11 @@ export function removeDuplicateSlashes(path) {
 }
 
 export function patternToRegex(pattern, isPrefix = false) {
-    if(pattern instanceof RegExp) {
+    if(!needsConversionToRegex(pattern)) {
         return pattern;
     }
     if(isPrefix && pattern === '/') {
-        return new RegExp(`^(?=$|\/)`);
+        return new RegExp(``);
     }
 
     let regexPattern = pattern
@@ -28,5 +28,12 @@ export function needsConversionToRegex(pattern) {
         return false;
     }
 
-    return pattern.includes('*') || pattern.includes('?') || pattern.includes('+') || pattern.includes('(') || pattern.includes(')') || pattern.includes(':');
+    return pattern.includes('*') ||
+        pattern.includes('?') ||
+        pattern.includes('+') ||
+        pattern.includes('(') ||
+        pattern.includes(')') ||
+        pattern.includes(':') ||
+        pattern.includes('{') ||
+        pattern.includes('}');
 }
