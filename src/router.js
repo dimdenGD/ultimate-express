@@ -112,11 +112,11 @@ export default class Router {
     }
 
     async #preprocessRequest(req, res, route) {
-        let path = req.path;
-        if(req._stack.length > 0) {
-            path = path.replace(this.#getFullMountpath(req), '');
-        }
         if(typeof route.path === 'string' && route.path.includes(':') && route.pattern instanceof RegExp) {
+            let path = req.path;
+            if(req._stack.length > 0) {
+                path = path.replace(this.#getFullMountpath(req), '');
+            }
             req.params = this.#extractParams(route.pattern, path);
 
             for(let param in req.params) {
@@ -152,7 +152,7 @@ export default class Router {
                     return;
                 }
                 const route = this.#routes[i];
-                if ((route.method === req.method || route.all) && this.#pathMatches(route, req)) {
+                if ((route.all || route.method === req.method) && this.#pathMatches(route, req)) {
                     let calledNext = false;
                     await this.#preprocessRequest(req, res, route);
                     if(route.callback instanceof Router) {
