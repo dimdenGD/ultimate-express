@@ -13,6 +13,7 @@ class IncomingMessage {
     #app;
     #cachedHeaders = null;
     #cachedDistinctHeaders = null;
+    #cachedRawHeaders = null;
     constructor(req, res, app) {
         this.#req = req;
         this.#res = res;
@@ -61,6 +62,18 @@ class IncomingMessage {
             headers[key].push(value);
         });
         this.#cachedDistinctHeaders = headers;
+        return headers;
+    }
+
+    get rawHeaders() {
+        if(this.#cachedRawHeaders) {
+            return this.#cachedRawHeaders;
+        }
+        let headers = [];
+        this.#req.forEach((key, value) => {
+            headers.push(key, value);
+        });
+        this.#cachedRawHeaders = headers;
         return headers;
     }
 }
