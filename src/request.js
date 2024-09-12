@@ -81,12 +81,11 @@ class IncomingMessage {
 export default class Request extends IncomingMessage {
     #req;
     #res;
-    #app;
     constructor(req, res, app) {
         super(req, res, app);
         this.#req = req;
         this.#res = res;
-        this.#app = app;
+        this.app = app;
         this.path = req.getUrl();
         // remove trailing slash
         if(this.path.endsWith('/') && this.path !== '/') {
