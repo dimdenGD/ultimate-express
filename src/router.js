@@ -87,6 +87,7 @@ export default class Router {
     }
 
     async #preprocessRequest(req, res, route) {
+        req.route = route;
         if(typeof route.path === 'string' && route.path.includes(':') && route.pattern instanceof RegExp) {
             let path = req.path;
             if(req._stack.length > 0) {

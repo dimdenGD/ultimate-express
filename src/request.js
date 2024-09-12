@@ -118,4 +118,10 @@ export default class Request extends IncomingMessage {
         let ip = Buffer.from(this.#res.getRemoteAddressAsText()).toString();
         return ip;
     }
+
+    get protocol() {
+        // TODO: support trust proxy
+        // TODO: implement ssl
+        return this.app.ssl ? 'https' : 'http';
+    }
 }

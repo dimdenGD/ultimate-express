@@ -74,15 +74,16 @@ This library is a fully compliant re-implementation of Express.js. It is designe
 - ✅ req.originalUrl
 - ✅ req.params
 - ✅ req.path
-- ❌ req.protocol
+- ✅ req.protocol
 - ❌ req.query
 - ✅ req.res
-- ❌ req.route
+- ✅ req.route (route impl. differs from express)
 - ❌ req.secure
 - ❌ req.signedCookies
 - ❌ req.stale
 - ❌ req.subdomains
 - ❌ req.xhr
+- ❌ req.connection, req.socket
 - ❌ req.accepts()
 - ❌ req.acceptsCharsets()
 - ❌ req.acceptsEncodings()
