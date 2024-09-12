@@ -86,16 +86,22 @@ export default class Request extends IncomingMessage {
         this.#req = req;
         this.#res = res;
         this.app = app;
-        this.path = req.getUrl();
+        this.urlQuery = req.getQuery() ?? '';
+        if(this.urlQuery) {
+            this.urlQuery = '?' + this.urlQuery;
+        }
+        this.originalUrl = req.getUrl() + this.urlQuery;
+        this.url = this.originalUrl;
+        this.path = this.url.split('?')[0];
         // remove trailing slash
         if(this.path.endsWith('/') && this.path !== '/') {
             this.path = this.path.slice(0, -1);
         }
+        this._opPath = this.path;
         this.method = req.getMethod().toUpperCase();
         this.params = {};
         this._gotParams = new Set();
         this._stack = [];
-        this._opPath = this.path;
     }
     get baseUrl() {
         let match = this.path.match(patternToRegex(this._stack.join(""), true));
