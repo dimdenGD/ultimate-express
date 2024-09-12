@@ -90,8 +90,8 @@ class Application extends Router {
                 res.aborted = true;
             });
 
+            const request = new Request(req, res, this);
             const response = new Response(res);
-            const request = new Request(req, response, this);
             let matchedRoute = await this._routeRequest(request, response);
 
             if(!matchedRoute && !res.aborted && !response.sent) {

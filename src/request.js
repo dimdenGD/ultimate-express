@@ -80,11 +80,13 @@ class IncomingMessage {
 
 export default class Request extends IncomingMessage {
     #req;
+    #res;
+    #app;
     constructor(req, res, app) {
         super(req, res, app);
         this.#req = req;
-        this.res = res;
-        this.app = app;
+        this.#res = res;
+        this.#app = app;
         this.path = req.getUrl();
         // remove trailing slash
         if(this.path.endsWith('/') && this.path !== '/') {
@@ -104,5 +106,11 @@ export default class Request extends IncomingMessage {
     get hostname() {
         // TODO: support trust proxy
         return this.#req.getHeader('host').split(':')[0];
+    }
+
+    get ip() {
+        // TODO: support trust proxy
+        let ip = Buffer.from(this.#res.getRemoteAddressAsText()).toString();
+        return ip;
     }
 }
