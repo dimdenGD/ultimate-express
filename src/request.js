@@ -1,11 +1,63 @@
 import { patternToRegex } from "./utils.js";
 
-export default class Request {
+const discardedDuplicates = [
+    "age", "authorization", "content-length", "content-type", "etag", "expires",
+    "from", "host", "if-modified-since", "if-unmodified-since", "last-modified",
+    "location", "max-forwards", "proxy-authorization", "referer", "retry-after",
+    "server", "user-agent"
+];
+
+class IncomingMessage {
     #req;
-    constructor(req, app) {
+    #res;
+    #app;
+    #cachedHeaders = null;
+    constructor(req, res, app) {
         this.#req = req;
+        this.#res = res;
+        this.#app = app;
+    }
+
+    get headers() {
+        // https://nodejs.org/api/http.html#messageheaders
+        if(this.#cachedHeaders) {
+            return this.#cachedHeaders;
+        }
+        let headers = {};
+        this.#req.forEach((key, value) => {
+            if(headers[key]) {
+                if(discardedDuplicates.includes(key)) {
+                    return;
+                }
+                if(key === 'cookie') {
+                    headers[key] += '; ' + value;
+                } else if(key === 'set-cookie') {
+                    headers[key].push(value);
+                } else {
+                    headers[key] += ', ' + value;
+                }
+                return;
+            }
+            if(key === 'set-cookie') {
+                headers[key] = [value];
+            } else {
+                headers[key] = value;
+            }
+        });
+        this.#cachedHeaders = headers;
+        return headers;
+    }
+}
+
+export default class Request extends IncomingMessage {
+    #req;
+    constructor(req, res, app) {
+        super(req, res, app);
+        this.#req = req;
+        this.res = res;
         this.app = app;
         this.path = req.getUrl();
+        // remove trailing slash
         if(this.path.endsWith('/') && this.path !== '/') {
             this.path = this.path.slice(0, -1);
         }

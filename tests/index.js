@@ -5,6 +5,7 @@ import childProcess from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert';
 
+const onlyTestNumber = process.argv[2];
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const tests = fs.readdirSync(path.join(__dirname, 'tests')).sort((a, b) => parseInt(a) - parseInt(b));
@@ -15,6 +16,10 @@ for (const testName of tests) {
     fs.writeFileSync(testPath, testCode);
     let testDescription = testCode.split('\n')[0].slice(2).trim();
     if(testDescription.endsWith('OFF')) {
+        continue;
+    }
+    let testNumber = testName.split('-')[0];
+    if(onlyTestNumber && testNumber !== onlyTestNumber) {
         continue;
     }
 

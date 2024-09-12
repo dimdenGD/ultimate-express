@@ -6,7 +6,7 @@ const app = express();
 app.set('env', 'production');
 
 app.get('/test', (req, res) => {
-    throw new Error('test');
+    throw new Error('Ignore this error, it is used in test');
 });
 
 app.listen(13333, async () => {

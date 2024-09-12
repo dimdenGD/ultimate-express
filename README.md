@@ -2,6 +2,8 @@
 
 The Ultimate Express. Fastest http server with full Express compatibility, based on µWebSockets.
 
+This library is a fully compliant re-implementation of Express.js. It is designed to be a drop-in replacement for Express.js, with the same API and functionality, while being much faster. It does not share code with Express.js.
+
 ## Compatibility
 
 ### express
@@ -62,7 +64,7 @@ The Ultimate Express. Fastest http server with full Express compatibility, based
 - ❌ req.cookies
 - ❌ req.fresh
 - ❌ req.hostname
-- ❌ req.headers
+- ✅ req.headers
 - ❌ req.ip
 - ❌ req.ips
 - ✅ req.method
@@ -71,7 +73,7 @@ The Ultimate Express. Fastest http server with full Express compatibility, based
 - ✅ req.path
 - ❌ req.protocol
 - ❌ req.query
-- ❌ req.res
+- ✅ req.res
 - ❌ req.route
 - ❌ req.secure
 - ❌ req.signedCookies

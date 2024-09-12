@@ -32,6 +32,7 @@
   },
   "homepage": "https://github.com/dimdenGD/u-express#readme",
   "dependencies": {
+    "fresh": "^0.5.2",
     "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.48.0"
   },
   "devDependencies": {
