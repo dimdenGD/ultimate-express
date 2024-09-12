@@ -8,12 +8,26 @@ import assert from 'node:assert';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const testPath = path.join(__dirname, 'tests');
 
-const testCategories = fs.readdirSync(testPath).sort((a, b) => parseInt(a) - parseInt(b));
+let testCategories = fs.readdirSync(testPath).sort((a, b) => parseInt(a) - parseInt(b));
+const filterPath = process.argv[2];
+
+if(filterPath) {
+    if(!filterPath.endsWith('.js')) {
+        testCategories = testCategories.filter(category => category.startsWith(path.basename(filterPath)));
+    } else {
+        testCategories = [path.dirname(filterPath).split(path.sep).pop()];
+    }
+}
 
 for (const testCategory of testCategories) {
     test(testCategory, async () => {
         let tests = fs.readdirSync(path.join(__dirname, 'tests', testCategory)).sort((a, b) => parseInt(a) - parseInt(b));
         for (const testName of tests) {
+            if(filterPath && filterPath.endsWith('.js')) {
+                if(path.basename(testName) !== path.basename(filterPath)) {
+                    continue;
+                }
+            }
             let testPath = path.join(__dirname, 'tests', testCategory, testName);
             let testCode = fs.readFileSync(testPath, 'utf8').replace(`import express from "../../../src/index.js";`, 'import express from "express";');
             fs.writeFileSync(testPath, testCode);
