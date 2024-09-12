@@ -14,12 +14,14 @@ export default class Router {
     #routes;
     #paramCallbacks;
     #mountpathCache;
+    #optimizedRoutes;
     constructor() {
         this.errorRoute = undefined;
         this.#routes = [];
         this.#paramCallbacks = new Map();
         this.#mountpathCache = new Map();
         this.mountpath = '/';
+        this.#optimizedRoutes = new Map();
 
         for(let method of methods) {
             this[method] = (path, ...callbacks) => {
@@ -74,11 +76,38 @@ export default class Router {
                     all: method === 'ALL' || method === 'USE',
                 };
                 routes.push(route);
+                if(typeof route.pattern === 'string') {
+                    this.#optimizeRoute(route, this.#routes);
+                }
             }
             this.#routes.push(...routes);
         }
 
         return parent;
+    }
+
+    #optimizeRoute(route, routes, optimizedPath = {}) {
+        for(let i = 0; i < routes.length; i++) {
+            const r = routes[i];
+            if(r.routeKey > route.routeKey) {
+                break;
+            }
+            if(!r.all && r.method !== route.method) {
+                continue;
+            }
+            if(
+                (r.pattern instanceof RegExp && r.pattern.test(route.path)) ||
+                (typeof r.pattern === 'string' && r.pattern === route.path)
+            ) {
+                if(r.callback instanceof Router) {
+                    this.#optimizeRoute(r, r.callback.#routes, optimizedPath);
+                } else {
+                    optimizedPath[r.routeKey] = true;
+                }
+            }
+        }
+        this.#optimizedRoutes.set(route.pattern, optimizedPath);
+        return optimizedPath;
     }
 
     #extractParams(pattern, path) {
@@ -122,13 +151,17 @@ export default class Router {
 
     async _routeRequest(req, res, i = 0) {
         return new Promise(async (resolve) => {
+            if(!this.parent && this.#optimizedRoutes.has(req.path)) {
+                req._optimizedRoute = this.#optimizedRoutes.get(req.path);
+            }
+
             while (i < this.#routes.length) {
                 if(res.aborted) {
                     resolve(false);
                     return;
                 }
                 const route = this.#routes[i];
-                if ((route.all || route.method === req.method) && this.#pathMatches(route, req)) {
+                if ((req._optimizedRoute && req._optimizedRoute[route.routeKey]) || (route.all || route.method === req.method) && this.#pathMatches(route, req)) {
                     let calledNext = false, dontStop = false;
                     await this.#preprocessRequest(req, res, route);
                     if(route.callback instanceof Router) {
