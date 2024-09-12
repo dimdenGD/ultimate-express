@@ -75,7 +75,7 @@ export default class Router {
                     all: method === 'ALL' || method === 'USE',
                 };
                 routes.push(route);
-                if(typeof route.pattern === 'string' && !this.parent) {
+                if(typeof route.pattern === 'string' && route.pattern !== '*' && route.pattern !== '/*' && !this.parent) {
                     this.#optimizeRoute(route, this.#routes);
                 }
             }
@@ -96,7 +96,7 @@ export default class Router {
             }
             if(
                 (r.pattern instanceof RegExp && r.pattern.test(route.path)) ||
-                (typeof r.pattern === 'string' && r.pattern === route.path)
+                (typeof r.pattern === 'string' && (r.pattern === route.path || r.pattern === '*' || r.pattern === '/*'))
             ) {
                 if(r.callback instanceof Router) {
                     stack.push(r.path);
@@ -134,8 +134,8 @@ export default class Router {
                     i++;
                     if(thingamabob) {
                         if(thingamabob === 'route') {
-                            let routeSkipKey = route.routeSkipKey;
-                            while(optimizedPath[i].routeKey !== routeSkipKey && i < optimizedPath.length) {
+                            let routeSkipKey = optimizedPath[i - 1].routeSkipKey;
+                            while(optimizedPath[i - 1] && optimizedPath[i - 1].routeKey !== routeSkipKey && i < optimizedPath.length) {
                                 i++;
                             }
                         } else {
