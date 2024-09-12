@@ -127,7 +127,7 @@ export default class Router {
             const request = new Request(req, res, this);
             const response = new Response(res);
 
-            this.#preprocessRequest(request, response, route);
+            await this.#preprocessRequest(request, response, route);
             let i = 0;
             try {
                 const next = (thingamabob) => {
