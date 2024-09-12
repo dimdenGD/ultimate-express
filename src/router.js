@@ -1,4 +1,7 @@
 import { patternToRegex, needsConversionToRegex } from "./utils.js";
+import uWS from 'uWebSockets.js';
+import Response from './response.js';
+import Request from './request.js';
 
 let routeKey = 0;
 
@@ -14,8 +17,8 @@ export default class Router {
     #routes = [];
     #paramCallbacks = new Map();
     #mountpathCache = new Map();
-    #optimizedRoutes = new Map();
-    constructor() {
+    constructor(settings = {}) {
+        this.uwsApp = uWS.App(settings?.uwsOptions ?? {});
         this.errorRoute = undefined;
         this.mountpath = '/';
 
@@ -72,7 +75,7 @@ export default class Router {
                     all: method === 'ALL' || method === 'USE',
                 };
                 routes.push(route);
-                if(typeof route.pattern === 'string') {
+                if(typeof route.pattern === 'string' && !this.parent) {
                     this.#optimizeRoute(route, this.#routes);
                 }
             }
@@ -82,7 +85,7 @@ export default class Router {
         return parent;
     }
 
-    #optimizeRoute(route, routes, optimizedPath = {}) {
+    #optimizeRoute(route, routes, optimizedPath = [], stack = []) {
         for(let i = 0; i < routes.length; i++) {
             const r = routes[i];
             if(r.routeKey > route.routeKey) {
@@ -96,14 +99,70 @@ export default class Router {
                 (typeof r.pattern === 'string' && r.pattern === route.path)
             ) {
                 if(r.callback instanceof Router) {
-                    this.#optimizeRoute(r, r.callback.#routes, optimizedPath);
+                    stack.push(r.path);
+                    this.#optimizeRoute(r, r.callback.#routes, optimizedPath, stack);
                 } else {
-                    optimizedPath[r.routeKey] = true;
+                    optimizedPath.push({
+                        ...r,
+                        fullpath: stack.map(s => s.path).join('') + r.path,
+                    });
                 }
             }
         }
-        this.#optimizedRoutes.set(route.pattern, optimizedPath);
+        if(!stack.length) {
+            optimizedPath.push(route);
+            this.#registerUwsRoute(route, optimizedPath);
+        } else {
+            stack.pop();
+        }
         return optimizedPath;
+    }
+
+    #registerUwsRoute(route, optimizedPath) {
+        this.uwsApp[route.method.toLowerCase()](route.path, async (res, req) => {
+            res.onAborted(() => {
+                res.aborted = true;
+            });
+
+            const request = new Request(req, res, this);
+            const response = new Response(res);
+
+            this.#preprocessRequest(request, response, route);
+            let i = 0;
+            try {
+                const next = (thingamabob) => {
+                    i++;
+                    if(thingamabob) {
+                        if(thingamabob === 'route') {
+                            let routeSkipKey = route.routeSkipKey;
+                            while(optimizedPath[i].routeKey !== routeSkipKey && i < optimizedPath.length) {
+                                i++;
+                            }
+                        } else {
+                            throw thingamabob;
+                        }
+                    }
+                    if(i >= optimizedPath.length) {
+                        return;
+                    }
+                    optimizedPath[i].callback(request, response, next);
+                }
+                optimizedPath[0].callback(request, response, next);
+            } catch(err) {
+                if(this.errorRoute) {
+                    await this.errorRoute(err, request, response, () => {
+                        if(!response.sent) {
+                            response.status(500).send(this._generateErrorPage('Internal Server Error'));
+                        }
+                    });
+                    return;
+                } else {
+                    console.error(err);
+                    // TODO: support env setting
+                    response.status(500).send(this._generateErrorPage('Internal Server Error'));
+                }
+            }
+        });
     }
 
     #extractParams(pattern, path) {
@@ -147,17 +206,13 @@ export default class Router {
 
     async _routeRequest(req, res, i = 0) {
         return new Promise(async (resolve) => {
-            if(!this.parent && this.#optimizedRoutes.has(req.path)) {
-                req._optimizedRoute = this.#optimizedRoutes.get(req.path);
-            }
-
             while (i < this.#routes.length) {
                 if(res.aborted) {
                     resolve(false);
                     return;
                 }
                 const route = this.#routes[i];
-                if ((req._optimizedRoute && req._optimizedRoute[route.routeKey]) || (route.all || route.method === req.method) && this.#pathMatches(route, req)) {
+                if ((route.all || route.method === req.method) && this.#pathMatches(route, req)) {
                     let calledNext = false, dontStop = false;
                     await this.#preprocessRequest(req, res, route);
                     if(route.callback instanceof Router) {

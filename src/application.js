@@ -24,8 +24,7 @@ const supportedOptions = [
 
 class Application extends Router {
     constructor(settings = {}) {
-        super();
-        this.uwsApp = uWS.App(settings?.uwsOptions ?? {});
+        super(settings);
         this.port = undefined;
         this.settings = settings;
     }
