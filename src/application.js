@@ -118,6 +118,10 @@ class Application extends Router {
         });
     }
 
+    address() {
+        return { port: this.port };
+    }
+
     path() {
         let paths = [this.mountpath];
         let parent = this.parent;
