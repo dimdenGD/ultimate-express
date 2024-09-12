@@ -63,7 +63,7 @@ This library is a fully compliant re-implementation of Express.js. It is designe
 - ❌ req.body
 - ❌ req.cookies
 - ❌ req.fresh
-- ❌ req.hostname
+- ✅ req.hostname
 - ✅ req.headers
 - ✅ req.headersDistinct
 - ✅ req.rawHeaders

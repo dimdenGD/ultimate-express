@@ -100,4 +100,9 @@ export default class Request extends IncomingMessage {
         let match = this.path.match(patternToRegex(this._stack.join(""), true));
         return match ? match[0] : '';
     }
+
+    get hostname() {
+        // TODO: support trust proxy
+        return this.#req.getHeader('host').split(':')[0];
+    }
 }
