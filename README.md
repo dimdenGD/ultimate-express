@@ -70,7 +70,8 @@ This library is a fully compliant re-implementation of Express.js. It is designe
 - ✅ req.ip
 - ❌ req.ips
 - ✅ req.method
-- ❌ req.originalUrl
+- ✅ req.url
+- ✅ req.originalUrl
 - ✅ req.params
 - ✅ req.path
 - ❌ req.protocol
