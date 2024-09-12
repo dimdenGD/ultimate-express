@@ -65,6 +65,7 @@ This library is a fully compliant re-implementation of Express.js. It is designe
 - ❌ req.fresh
 - ❌ req.hostname
 - ✅ req.headers
+- ✅ req.headersDistinct
 - ❌ req.ip
 - ❌ req.ips
 - ✅ req.method
