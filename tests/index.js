@@ -1,3 +1,8 @@
+// npm run test - runs all tests
+// npm run test routing - runs all tests in the routing category
+// npm run test tests/tests/routing - runs all tests in the routing category
+// npm run test tests/tests/listen/listen-random.js - runs the test at tests/tests/listen/listen-random.js
+
 import fs from 'fs';
 import path from 'path';
 import test from 'node:test';
