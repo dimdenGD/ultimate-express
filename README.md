@@ -101,7 +101,7 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 - ❌ res.locals
 - ✅ res.append()
 - ❌ res.attachment()
-- ❌ res.cookie()
+- ✅ res.cookie()
 - ❌ res.clearCookie()
 - ❌ res.download()
 - ❌ res.end()

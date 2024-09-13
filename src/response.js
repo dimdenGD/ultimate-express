@@ -1,3 +1,5 @@
+import cookie from 'cookie';
+
 export default class Response {
     #res;
     constructor(res, app) {
@@ -63,19 +65,41 @@ export default class Response {
         return this.headers[field.toLowerCase()];
     }
     append(field, value) {
-        if(this.headers[field.toLowerCase()]) {
-            if(typeof value === 'string') {
-                this.headers[field.toLowerCase()] += ', ' + value;
-            } else {
-                this.headers[field.toLowerCase()] += ', ' + value.join(', ');
+        field = field.toLowerCase();
+        if(this.headers[field]) {
+            if(typeof value === 'string' || typeof value === 'number') {
+                this.headers[field] += ', ' + value;
+            } else if(Array.isArray(value)) {
+                this.headers[field] += ', ' + value.join(', ');
             }
         } else {
-            if(typeof value === 'string') {
-                this.headers[field.toLowerCase()] = value;
-            } else {
-                this.headers[field.toLowerCase()] = value.join(', ');
+            if(typeof value === 'string' || typeof value === 'number') {
+                this.headers[field] = value.toString();
+            } else if(Array.isArray(value)) {
+                this.headers[field] = value.join(', ');
             }
         }
+        return this;
+    }
+    cookie(name, value, options) {
+        if(!options) {
+            options = {};
+        }
+        // TODO: signed cookies
+        const val = typeof value === 'object' ? "j:"+JSON.stringify(value) : String(value);
+        if(options.maxAge != null) {
+            const maxAge = options.maxAge - 0;
+            if(!isNaN(maxAge)) {
+                options.expires = new Date(Date.now() + maxAge);
+                options.maxAge = Math.floor(maxAge / 1000);
+            }
+        }
+
+        if(options.path == null) {
+            options.path = '/';
+        }
+
+        this.append('Set-Cookie', cookie.serialize(name, val, options));
         return this;
     }
 }
