@@ -160,16 +160,20 @@ export default class Router {
                     if(i >= optimizedPath.length) {
                         return;
                     }
+                    request.next = next;
                     optimizedPath[i].callback(request, response, next);
                 }
+                request.next = next;
                 optimizedPath[0].callback(request, response, next);
             } catch(err) {
                 if(this.errorRoute) {
-                    await this.errorRoute(err, request, response, () => {
+                    const next = () => {
                         if(!response.sent) {
                             response.status(500).send(this._generateErrorPage('Internal Server Error'));
                         }
-                    });
+                    };
+                    request.next = next;
+                    await this.errorRoute(err, request, response, next);
                     return;
                 } else {
                     console.error(err);
@@ -198,6 +202,7 @@ export default class Router {
                 if(this.#paramCallbacks.has(param) && !req._gotParams.has(param)) {
                     req._gotParams.add(param);
                     for(let fn of this.#paramCallbacks.get(param)) {
+                        req.next = resolve;
                         await new Promise(resolve => fn(req, res, resolve, req.params[param], param));
                     }
                 }
@@ -245,7 +250,7 @@ export default class Router {
                         }
                     } else {
                         try {
-                            await route.callback(req, res, thingamabob => {
+                            const next = thingamabob => {
                                 calledNext = true;
                                 if(thingamabob) {
                                     if(thingamabob === 'route') {
@@ -258,12 +263,15 @@ export default class Router {
                                     }
                                 }
                                 dontStop = true;
-                            });
+                            };
+                            req.next = next;
+                            await route.callback(req, res, next);
                         } catch(err) {
                             if(this.errorRoute) {
-                                await this.errorRoute(err, req, res, () => {
+                                const next = () => {
                                     resolve(res.sent);
-                                });
+                                };
+                                await this.errorRoute(err, req, res, next);
                                 return resolve(true);
                             } else {
                                 console.error(err);

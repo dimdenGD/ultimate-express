@@ -1,5 +1,6 @@
 import cookie from 'cookie';
 import mime from 'mime-types';
+import vary from 'vary';
 
 export default class Response {
     #res;
@@ -113,6 +114,12 @@ export default class Response {
         this.type(filename.split('.').pop());
         return this;
     }
+    // format(object) {
+    //     const keys = Object.keys(object).filter(v => v !== 'default');
+    //     const key = keys.length > 0 ? this.req.accepts(keys) : false;
+
+
+    // }
 
     type(type) {
         const ct = type.indexOf('/') === -1
@@ -122,5 +129,10 @@ export default class Response {
     }
     contentType(type) {
         return this.type(type);
+    }
+
+    vary(field) {
+        vary(this, field);
+        return this;
     }
 }
