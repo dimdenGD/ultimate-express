@@ -64,8 +64,11 @@ export default class Response {
     setHeader(field, value) {
         return this.set(field, value);
     }
-    getHeader(field) {
+    get(field) {
         return this.headers[field.toLowerCase()];
+    }
+    getHeader(field) {
+        return this.get(field);
     }
     append(field, value) {
         field = field.toLowerCase();
