@@ -178,6 +178,14 @@ export default class Response {
         this.set('Link', Object.entries(links).map(([rel, url]) => `<${url}>; rel="${rel}"`).join(', '));
         return this;
     }
+    location(path) {
+        if(path === 'back') {
+            path = this.req.get('Referrer');
+            if(!path) path = this.req.get('Referer');
+            if(!path) path = '/';
+        }
+        return this.set('Location', encodeURI(path));
+    }
 
     type(type) {
         const ct = type.indexOf('/') === -1

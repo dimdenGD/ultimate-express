@@ -110,7 +110,7 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 - ✅ res.get()
 - ✅ res.json()
 - ✅ res.jsonp()
-- ❌ res.links()
+- ✅ res.links()
 - ✅ res.location()
 - ❌ res.redirect()
 - ❌ res.render()
