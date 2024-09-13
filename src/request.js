@@ -164,4 +164,19 @@ export default class Request extends IncomingMessage {
         const accept = accepts({ headers: this.headers });
         return accept.types(...types);
     }
+
+    acceptsCharsets(...charsets) {
+        const accept = accepts({ headers: this.headers });
+        return accept.charsets(...charsets);
+    }
+
+    acceptsEncodings(...encodings) {
+        const accept = accepts({ headers: this.headers });
+        return accept.encodings(...encodings);
+    }
+    
+    acceptsLanguages(...languages) {
+        const accept = accepts({ headers: this.headers });
+        return accept.languages(...languages);
+    }
 }
