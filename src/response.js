@@ -7,7 +7,8 @@ export default class Response {
         this.sent = false;
         this.statusCode = 200;
         this.headers = {
-            'content-type': 'text/html'
+            'content-type': 'text/html',
+            'keep-alive': 'timeout=10'
         };
         this.body = undefined;
     }
@@ -60,5 +61,21 @@ export default class Response {
     }
     getHeader(field) {
         return this.headers[field.toLowerCase()];
+    }
+    append(field, value) {
+        if(this.headers[field.toLowerCase()]) {
+            if(typeof value === 'string') {
+                this.headers[field.toLowerCase()] += ', ' + value;
+            } else {
+                this.headers[field.toLowerCase()] += ', ' + value.join(', ');
+            }
+        } else {
+            if(typeof value === 'string') {
+                this.headers[field.toLowerCase()] = value;
+            } else {
+                this.headers[field.toLowerCase()] = value.join(', ');
+            }
+        }
+        return this;
     }
 }
