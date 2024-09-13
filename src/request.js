@@ -139,4 +139,11 @@ export default class Request extends IncomingMessage {
     get secure() {
         return this.protocol === 'https';
     }
+
+    get subdomains() {
+        let host = this.hostname;
+        let subdomains = host.split('.');
+        // TODO: support "subdomain offset" option
+        return subdomains.slice(0, -2).reverse();
+    }
 }
