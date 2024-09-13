@@ -1,7 +1,7 @@
 import cookie from 'cookie';
 import mime from 'mime-types';
 import vary from 'vary';
-import { normalizeType } from './utils.js';
+import { normalizeType, stringify } from './utils.js';
 
 export default class Response {
     constructor(res, req, app) {
@@ -139,7 +139,40 @@ export default class Response {
         if(!this.get('Content-Type')) {
             this.set('Content-Type', 'application/json');
         }
+        // TODO: support json options
         this.send(JSON.stringify(body));
+    }
+    jsonp(object) {
+        let callback = this.req.query[this.app.settings['jsonp callback name']];
+        // TODO: support json options
+        let body = stringify(object);
+
+        if(!this.get('Content-Type')) {
+            this.set('Content-Type', 'application/javascript');
+            this.set('X-Content-Type-Options', 'nosniff');
+        }
+
+        if(Array.isArray(callback)) {
+            callback = callback[0];
+        }
+
+        if(typeof callback === 'string' && callback.length !== 0) {
+            this.set('Content-Type', 'application/javascript');
+            this.set('X-Content-Type-Options', 'nosniff');
+            callback = callback.replace(/[^\[\]\w$.]/g, '');
+
+            if(body === undefined) {
+                body = '';
+            } else if(typeof body === 'string') {
+                // replace chars not allowed in JavaScript that are in JSON
+                body = body
+                    .replace(/\u2028/g, '\\u2028')
+                    .replace(/\u2029/g, '\\u2029')
+            }
+            body = '/**/ typeof ' + callback + ' === \'function\' && ' + callback + '(' + body + ');';
+        }
+
+        return this.send(body);
     }
 
     type(type) {

@@ -60,3 +60,26 @@ export function normalizeType(type) {
         acceptParams(type) :
         { value: (mime.lookup(type) || 'application/octet-stream'), params: {} };
 }
+
+export function stringify(value, replacer, spaces, escape) {
+    let json = replacer || spaces
+        ? JSON.stringify(value, replacer, spaces)
+        : JSON.stringify(value);
+  
+    if (escape && typeof json === 'string') {
+        json = json.replace(/[<>&]/g, function (c) {
+            switch (c.charCodeAt(0)) {
+                case 0x3c:
+                    return '\\u003c'
+                case 0x3e:
+                    return '\\u003e'
+                case 0x26:
+                    return '\\u0026'
+                default:
+                    return c
+            }
+        });
+    }
+  
+    return json;
+}

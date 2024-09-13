@@ -45,7 +45,7 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 - ❌ case sensitive routing
 - ❌ env
 - ❌ etag
-- ❌ jsonp callback name
+- ✅ jsonp callback name
 - ❌ json escape
 - ❌ json replacer
 - ❌ json spaces
@@ -109,7 +109,7 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 - ✅ res.format()
 - ✅ res.get()
 - ✅ res.json()
-- ❌ res.jsonp()
+- ✅ res.jsonp()
 - ❌ res.links()
 - ❌ res.location()
 - ❌ res.redirect()

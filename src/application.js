@@ -27,6 +27,10 @@ class Application extends Router {
         super(settings);
         this.port = undefined;
         this.settings = settings;
+
+        if(!settings['jsonp callback name']) {
+            this.settings['jsonp callback name'] = 'callback';
+        }
     }
 
     set(key, value) {
