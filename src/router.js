@@ -44,10 +44,13 @@ export default class Router {
     }
 
     #pathMatches(route, req) {
-        const path = req._opPath;
+        let path = req._opPath;
         const pattern = route.pattern;
-        
+
         if (typeof pattern === 'string') {
+            if(path === '') {
+                path = '/';
+            }
             return pattern === path || pattern === '*' || pattern === '/*';
         }
         
@@ -119,7 +122,13 @@ export default class Router {
     }
 
     #registerUwsRoute(route, optimizedPath) {
-        this.uwsApp[route.method.toLowerCase()](route.path, async (res, req) => {
+        let method = route.method.toLowerCase();
+        if(method === 'all') {
+            method = 'any';
+        } else if(method === 'delete') {
+            method = 'del';
+        }
+        this.uwsApp[method](route.path, async (res, req) => {
             res.onAborted(() => {
                 res.aborted = true;
             });
