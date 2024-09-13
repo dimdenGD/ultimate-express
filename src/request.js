@@ -2,6 +2,7 @@ import { patternToRegex } from "./utils.js";
 import qs from 'qs';
 import accepts from 'accepts';
 import typeis from 'type-is';
+import parseRange from 'range-parser';
 
 const discardedDuplicates = [
     "age", "authorization", "content-length", "content-type", "etag", "expires",
@@ -146,7 +147,7 @@ export default class Request extends IncomingMessage {
     }
 
     get xhr() {
-        return this.headers['x-requested-with'] === 'XMLHttpRequest';
+        return this.#req.getHeader('x-requested-with') === 'XMLHttpRequest';
     }
 
     get connection() {
@@ -195,5 +196,11 @@ export default class Request extends IncomingMessage {
 
     param(name, defaultValue) {
         return this.query[name] ?? defaultValue;
+    }
+
+    range(size, options) {
+        const range = this.#req.getHeader('range');
+        if(!range) return;
+        return parseRange(size, range, options);
     }
 }

@@ -1,4 +1,4 @@
-// must support req.acceptsLanguages
+// must support req.acceptsLanguages()
 
 import express from "express";
 

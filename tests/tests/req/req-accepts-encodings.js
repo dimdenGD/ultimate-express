@@ -1,4 +1,4 @@
-// must support req.acceptsEncodings
+// must support req.acceptsEncodings()
 
 import express from "express";
 
