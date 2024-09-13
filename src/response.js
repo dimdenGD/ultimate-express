@@ -108,6 +108,11 @@ export default class Response {
         delete opts.maxAge;
         return this.cookie(name, '', opts);
     }
+    attachment(filename) {
+        this.set('Content-Disposition', `attachment; filename="${filename}"`);
+        this.type(filename.split('.').pop());
+        return this;
+    }
 
     type(type) {
         const ct = type.indexOf('/') === -1
