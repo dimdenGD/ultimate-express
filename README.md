@@ -124,7 +124,7 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 - ❌ res.getHeader(), res.get()
 - ❌ res.removeHeader()
 - ❌ res.write()
-- ❌ res.type()
+- ✅ res.type()
 
 ### Router
 

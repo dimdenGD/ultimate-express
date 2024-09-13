@@ -1,4 +1,5 @@
 import cookie from 'cookie';
+import mime from 'mime-types';
 
 export default class Response {
     #res;
@@ -106,5 +107,15 @@ export default class Response {
         const opts = { path: '/', ...options, expires: new Date(1) };
         delete opts.maxAge;
         return this.cookie(name, '', opts);
+    }
+
+    type(type) {
+        const ct = type.indexOf('/') === -1
+            ? (mime.contentType(type) || 'application/octet-stream')
+            : type;
+        return this.set('Content-Type', ct);
+    }
+    contentType(type) {
+        return this.type(type);
     }
 }
