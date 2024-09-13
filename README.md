@@ -60,7 +60,7 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 
 ### Request
 - ✅ req.app
-- ⚠️ req.baseUrl (.use is treated as .all when not a router)
+- ⚠️ req.baseUrl (`.use` is treated as `.all` when not a router)
 - ❌ req.body
 - ❌ req.cookies
 - ❌ req.fresh
@@ -84,7 +84,7 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 - ❌ req.stale
 - ✅ req.subdomains
 - ✅ req.xhr
-- ❌ req.connection, req.socket
+- ⚠️ req.connection, req.socket (only `remoteAddress`, `localPort` and `remotePort` are supported)
 - ❌ req.accepts()
 - ❌ req.acceptsCharsets()
 - ❌ req.acceptsEncodings()

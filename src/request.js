@@ -150,4 +150,12 @@ export default class Request extends IncomingMessage {
     get xhr() {
         return this.headers['x-requested-with'] === 'XMLHttpRequest';
     }
+
+    get connection() {
+        return {
+            remoteAddress: Buffer.from(this.#res.getRemoteAddressAsText()).toString(),
+            localPort: this.app.port,
+            remotePort: this.app.port
+        };
+    }
 }
