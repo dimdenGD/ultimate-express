@@ -83,7 +83,7 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 - ❌ req.signedCookies
 - ❌ req.stale
 - ✅ req.subdomains
-- ❌ req.xhr
+- ✅ req.xhr
 - ❌ req.connection, req.socket
 - ❌ req.accepts()
 - ❌ req.acceptsCharsets()

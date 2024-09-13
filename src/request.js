@@ -146,4 +146,8 @@ export default class Request extends IncomingMessage {
         // TODO: support "subdomain offset" option
         return subdomains.slice(0, -2).reverse();
     }
+
+    get xhr() {
+        return this.headers['x-requested-with'] === 'XMLHttpRequest';
+    }
 }
