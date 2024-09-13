@@ -79,7 +79,7 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 - ✅ req.query
 - ✅ req.res
 - ⚠️ req.route (route impl. differs from express)
-- ❌ req.secure
+- ✅ req.secure
 - ❌ req.signedCookies
 - ❌ req.stale
 - ❌ req.subdomains
@@ -132,4 +132,4 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 - ✅ router.METHOD() (router.get, router.post, etc.)
 - ✅ router.route()
 - ✅ router.use()
-- ✅ router.param()
+- ⚠️ router.param() (deprecated `router.param(callback)` is not supported)

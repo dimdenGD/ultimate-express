@@ -135,4 +135,8 @@ export default class Request extends IncomingMessage {
         this.#cachedQuery = qs.parse(this.urlQuery.slice(1));
         return this.#cachedQuery;
     }
+
+    get secure() {
+        return this.protocol === 'https';
+    }
 }
