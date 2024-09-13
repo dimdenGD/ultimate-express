@@ -1,6 +1,7 @@
 import { patternToRegex } from "./utils.js";
 import qs from 'qs';
 import accepts from 'accepts';
+import typeis from 'type-is';
 
 const discardedDuplicates = [
     "age", "authorization", "content-length", "content-type", "etag", "expires",
@@ -11,15 +12,11 @@ const discardedDuplicates = [
 
 class IncomingMessage {
     #req;
-    #res;
-    #app;
     #cachedHeaders = null;
     #cachedDistinctHeaders = null;
     #cachedRawHeaders = null;
-    constructor(req, res, app) {
+    constructor(req) {
         this.#req = req;
-        this.#res = res;
-        this.#app = app;
     }
 
     get headers() {
@@ -85,7 +82,7 @@ export default class Request extends IncomingMessage {
     #res;
     #cachedQuery = null;
     constructor(req, res, app) {
-        super(req, res, app);
+        super(req);
         this.#req = req;
         this.#res = res;
         this.app = app;
@@ -190,5 +187,13 @@ export default class Request extends IncomingMessage {
     acceptsLanguages(...languages) {
         const accept = accepts({ headers: this.headers });
         return accept.languages(...languages);
+    }
+
+    is(type) {
+        return typeis(this, type);
+    }
+
+    param(name, defaultValue) {
+        return this.query[name] ?? defaultValue;
     }
 }

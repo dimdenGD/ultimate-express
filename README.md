@@ -2,7 +2,7 @@
 
 The Ultimate Express. Fastest http server with full Express compatibility, based on µWebSockets.
 
-This library is a re-implementation of Express.js. It is designed to be a drop-in replacement for Express.js, with the same API and functionality, while being much faster. It does not share code with Express.js.
+This library is a re-implementation of Express.js. It is designed to be a drop-in replacement for Express.js, with the same API and functionality, while being much faster. It is not a fork of Express.js.
 
 ## Compatibility
 
@@ -90,8 +90,8 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 - ✅ req.acceptsEncodings()
 - ✅ req.acceptsLanguages()
 - ✅ req.get()
-- ❌ req.is()
-- ❌ req.param()
+- ✅ req.is()
+- ✅ req.param()
 - ❌ req.range()
 
 ### Response
