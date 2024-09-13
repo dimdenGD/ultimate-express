@@ -1,6 +1,7 @@
 import cookie from 'cookie';
 import mime from 'mime-types';
 import vary from 'vary';
+import statuses from 'statuses';
 import { normalizeType, stringify } from './utils.js';
 
 export default class Response {
@@ -185,6 +186,16 @@ export default class Response {
             if(!path) path = '/';
         }
         return this.set('Location', encodeURI(path));
+    }
+    redirect(status, url) {
+        if(typeof status !== 'number' && !url) {
+            url = status;
+            status = 302;
+        }
+        this.location(url);
+        this.status(status);
+        this.set('Content-Type', 'text/plain');
+        return this.send(`Redirecting to ${url}`);
     }
 
     type(type) {
