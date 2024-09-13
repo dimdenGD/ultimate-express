@@ -111,7 +111,7 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 - ✅ res.json()
 - ✅ res.jsonp()
 - ❌ res.links()
-- ❌ res.location()
+- ✅ res.location()
 - ❌ res.redirect()
 - ❌ res.render()
 - ❌ res.send()

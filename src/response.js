@@ -174,6 +174,10 @@ export default class Response {
 
         return this.send(body);
     }
+    links(links) {
+        this.set('Link', Object.entries(links).map(([rel, url]) => `<${url}>; rel="${rel}"`).join(', '));
+        return this;
+    }
 
     type(type) {
         const ct = type.indexOf('/') === -1
