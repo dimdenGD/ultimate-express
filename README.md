@@ -2,7 +2,7 @@
 
 The Ultimate Express. Fastest http server with full Express compatibility, based on µWebSockets.
 
-This library is a fully compliant re-implementation of Express.js. It is designed to be a drop-in replacement for Express.js, with the same API and functionality, while being much faster. It does not share code with Express.js.
+This library is a re-implementation of Express.js. It is designed to be a drop-in replacement for Express.js, with the same API and functionality, while being much faster. It does not share code with Express.js.
 
 ## Compatibility
 
@@ -10,6 +10,7 @@ This library is a fully compliant re-implementation of Express.js. It is designe
 
 - ✅ express()
 - ✅ express.Router()
+- ❌ SSL
 - ❌ express.json()
 - ❌ express.urlencoded()
 - ❌ express.static()
@@ -31,7 +32,7 @@ This library is a fully compliant re-implementation of Express.js. It is designe
 - ✅ app.enabled()
 - ✅ app.disabled()
 - ✅ app.path()
-- ✅ app.param()
+- ⚠️ app.param() (deprecated `app.param(callback)` is not supported)
 - ❌ app.engine()
 - ❌ app.render()
 - ❌ app.locals
@@ -59,7 +60,7 @@ This library is a fully compliant re-implementation of Express.js. It is designe
 
 ### Request
 - ✅ req.app
-- ✅ req.baseUrl
+- ⚠️ req.baseUrl (.use is treated as .all when not a router)
 - ❌ req.body
 - ❌ req.cookies
 - ❌ req.fresh
@@ -75,9 +76,9 @@ This library is a fully compliant re-implementation of Express.js. It is designe
 - ✅ req.params
 - ✅ req.path
 - ✅ req.protocol
-- ❌ req.query
+- ✅ req.query
 - ✅ req.res
-- ✅ req.route (route impl. differs from express)
+- ⚠️ req.route (route impl. differs from express)
 - ❌ req.secure
 - ❌ req.signedCookies
 - ❌ req.stale

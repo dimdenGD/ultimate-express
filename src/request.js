@@ -1,4 +1,5 @@
 import { patternToRegex } from "./utils.js";
+import qs from 'qs';
 
 const discardedDuplicates = [
     "age", "authorization", "content-length", "content-type", "etag", "expires",
@@ -81,6 +82,7 @@ class IncomingMessage {
 export default class Request extends IncomingMessage {
     #req;
     #res;
+    #cachedQuery = null;
     constructor(req, res, app) {
         super(req, res, app);
         this.#req = req;
@@ -123,5 +125,14 @@ export default class Request extends IncomingMessage {
         // TODO: support trust proxy
         // TODO: implement ssl
         return this.app.ssl ? 'https' : 'http';
+    }
+
+    get query() {
+        if(this.#cachedQuery) {
+            return this.#cachedQuery;
+        }
+        // TODO: support "query parser" option
+        this.#cachedQuery = qs.parse(this.urlQuery.slice(1));
+        return this.#cachedQuery;
     }
 }
