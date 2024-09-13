@@ -97,7 +97,7 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 ### Response
 
 - ✅ res.app
-- ❌ res.headersSent
+- ✅ res.headersSent
 - ❌ res.locals
 - ❌ res.append()
 - ❌ res.attachment()

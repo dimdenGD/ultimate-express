@@ -3,6 +3,7 @@ export default class Response {
     constructor(res, app) {
         this.#res = res;
         this.app = app;
+        this.headersSent = false;
         this.sent = false;
         this.statusCode = 200;
         this.headers = {
@@ -34,6 +35,7 @@ export default class Response {
             }
             this.#res.end();
             this.sent = true;
+            this.headersSent = true;
         });
     }
     send(body) {
