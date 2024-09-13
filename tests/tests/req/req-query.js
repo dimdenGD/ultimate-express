@@ -1,4 +1,4 @@
-// must support array req.query
+// must support req.query
 
 import express from "express";
 

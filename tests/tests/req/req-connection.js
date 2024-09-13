@@ -1,4 +1,4 @@
-// must support array req.connection and req.socket
+// must support req.connection and req.socket
 
 import express from "express";
 

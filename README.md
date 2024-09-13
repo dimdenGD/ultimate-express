@@ -85,7 +85,7 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 - ✅ req.subdomains
 - ✅ req.xhr
 - ⚠️ req.connection, req.socket (only `remoteAddress`, `localPort` and `remotePort` are supported)
-- ❌ req.accepts()
+- ✅ req.accepts()
 - ❌ req.acceptsCharsets()
 - ❌ req.acceptsEncodings()
 - ❌ req.acceptsLanguages()

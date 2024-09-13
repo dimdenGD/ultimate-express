@@ -1,4 +1,4 @@
-// must support array req.xhr
+// must support req.xhr
 
 import express from "express";
 

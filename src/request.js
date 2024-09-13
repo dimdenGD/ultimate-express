@@ -1,5 +1,6 @@
 import { patternToRegex } from "./utils.js";
 import qs from 'qs';
+import accepts from 'accepts';
 
 const discardedDuplicates = [
     "age", "authorization", "content-length", "content-type", "etag", "expires",
@@ -157,5 +158,10 @@ export default class Request extends IncomingMessage {
             localPort: this.app.port,
             remotePort: this.app.port
         };
+    }
+
+    accepts(...types) {
+        const accept = accepts({ headers: this.headers });
+        return accept.types(...types);
     }
 }

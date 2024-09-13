@@ -1,4 +1,4 @@
-// must support array req.app
+// must support req.app
 
 import express from "express";
 
