@@ -49,6 +49,23 @@ export default class Response {
         if(this.sent) {
             throw new Error('Can\'t write body: Response was already sent');
         }
+        if(Buffer.isBuffer(body)) {
+            body = body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength);
+        } else if(body === null || body === undefined) {
+            body = '';
+        } else if(typeof body === 'object') {
+            body = JSON.stringify(body);
+        } else if(typeof body === 'number') {
+            if(arguments[1]) {
+                console.warn(new Error("express deprecated res.send(status, body): Use res.status(status).send(body) instead"));
+                this.body = arguments[1];
+            } else {
+                console.warn(new Error("express deprecated res.send(status): Use res.sendStatus(status) instead"));
+            }
+            return this.status(body).end();
+        } else {
+            body = String(body);
+        }
         this.body = body;
         this.end();
     }
@@ -56,7 +73,7 @@ export default class Response {
         if(this.sent) {
             throw new Error('Can\'t write headers: Response was already sent');
         }
-        this.headers[field.toLowerCase()] = value;
+        this.headers[field.toLowerCase()] = String(value);
         return this;
     }
     header(field, value) {

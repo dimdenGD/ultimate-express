@@ -114,7 +114,7 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 - ✅ res.location()
 - ✅ res.redirect()
 - ❌ res.render()
-- ❌ res.send()
+- ✅ res.send()
 - ❌ res.sendFile()
 - ❌ res.sendStatus()
 - ❌ res.set()
@@ -125,7 +125,6 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 - ❌ res.getHeader(), res.get()
 - ❌ res.removeHeader()
 - ❌ res.write()
-- ✅ res.type()
 
 ### Router
 
