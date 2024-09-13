@@ -202,8 +202,10 @@ export default class Router {
                 if(this.#paramCallbacks.has(param) && !req._gotParams.has(param)) {
                     req._gotParams.add(param);
                     for(let fn of this.#paramCallbacks.get(param)) {
-                        req.next = resolve;
-                        await new Promise(resolve => fn(req, res, resolve, req.params[param], param));
+                        await new Promise(resolve => {
+                            req.next = resolve;
+                            fn(req, res, resolve, req.params[param], param);
+                        });
                     }
                 }
             }
