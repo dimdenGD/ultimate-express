@@ -102,4 +102,9 @@ export default class Response {
         this.append('Set-Cookie', cookie.serialize(name, val, options));
         return this;
     }
+    clearCookie(name, options) {
+        const opts = { path: '/', ...options, expires: new Date(1) };
+        delete opts.maxAge;
+        return this.cookie(name, '', opts);
+    }
 }
