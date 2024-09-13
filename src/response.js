@@ -135,6 +135,12 @@ export default class Response {
 
         return this;
     }
+    json(body) {
+        if(!this.get('Content-Type')) {
+            this.set('Content-Type', 'application/json');
+        }
+        this.send(JSON.stringify(body));
+    }
 
     type(type) {
         const ct = type.indexOf('/') === -1
