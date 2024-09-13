@@ -195,6 +195,12 @@ export default class Request extends IncomingMessage {
     }
 
     param(name, defaultValue) {
+        if(this.params[name]) {
+            return this.params[name];
+        }
+        if(this.body && this.body[name]) {
+            return this.body[name];
+        }
         return this.query[name] ?? defaultValue;
     }
 
