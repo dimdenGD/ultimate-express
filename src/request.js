@@ -160,6 +160,18 @@ export default class Request extends IncomingMessage {
         };
     }
 
+    get(field) {
+        field = field.toLowerCase();
+        if(field === 'referrer' || field === 'referer') {
+            const res = this.headers['referrer'];
+            if(!res) {
+                return this.headers['referer'];
+            }
+            return res;
+        } 
+        return this.headers[field];
+    }
+
     accepts(...types) {
         const accept = accepts({ headers: this.headers });
         return accept.types(...types);
