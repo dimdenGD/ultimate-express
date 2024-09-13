@@ -12,12 +12,11 @@ const discardedDuplicates = [
 ];
 
 class IncomingMessage {
-    #req;
     #cachedHeaders = null;
     #cachedDistinctHeaders = null;
     #cachedRawHeaders = null;
     constructor(req) {
-        this.#req = req;
+        this._req = req;
     }
 
     get headers() {
@@ -26,7 +25,7 @@ class IncomingMessage {
             return this.#cachedHeaders;
         }
         let headers = {};
-        this.#req.forEach((key, value) => {
+        this._req.forEach((key, value) => {
             if(headers[key]) {
                 if(discardedDuplicates.includes(key)) {
                     return;
@@ -55,7 +54,7 @@ class IncomingMessage {
             return this.#cachedDistinctHeaders;
         }
         let headers = {};
-        this.#req.forEach((key, value) => {
+        this._req.forEach((key, value) => {
             if(!headers[key]) {
                 headers[key] = [];
             }
@@ -70,7 +69,7 @@ class IncomingMessage {
             return this.#cachedRawHeaders;
         }
         let headers = [];
-        this.#req.forEach((key, value) => {
+        this._req.forEach((key, value) => {
             headers.push(key, value);
         });
         this.#cachedRawHeaders = headers;
@@ -79,13 +78,11 @@ class IncomingMessage {
 }
 
 export default class Request extends IncomingMessage {
-    #req;
-    #res;
     #cachedQuery = null;
     constructor(req, res, app) {
         super(req);
-        this.#req = req;
-        this.#res = res;
+        this._req = req;
+        this._res = res;
         this.app = app;
         this.urlQuery = req.getQuery() ?? '';
         if(this.urlQuery) {
@@ -111,12 +108,12 @@ export default class Request extends IncomingMessage {
 
     get hostname() {
         // TODO: support trust proxy
-        return this.#req.getHeader('host').split(':')[0];
+        return this._req.getHeader('host').split(':')[0];
     }
 
     get ip() {
         // TODO: support trust proxy
-        let ip = Buffer.from(this.#res.getRemoteAddressAsText()).toString();
+        let ip = Buffer.from(this._res.getRemoteAddressAsText()).toString();
         return ip;
     }
 
@@ -147,12 +144,12 @@ export default class Request extends IncomingMessage {
     }
 
     get xhr() {
-        return this.#req.getHeader('x-requested-with') === 'XMLHttpRequest';
+        return this._req.getHeader('x-requested-with') === 'XMLHttpRequest';
     }
 
     get connection() {
         return {
-            remoteAddress: Buffer.from(this.#res.getRemoteAddressAsText()).toString(),
+            remoteAddress: Buffer.from(this.res._res.getRemoteAddressAsText()).toString(),
             localPort: this.app.port,
             remotePort: this.app.port
         };
@@ -205,7 +202,7 @@ export default class Request extends IncomingMessage {
     }
 
     range(size, options) {
-        const range = this.#req.getHeader('range');
+        const range = this._req.getHeader('range');
         if(!range) return;
         return parseRange(size, range, options);
     }

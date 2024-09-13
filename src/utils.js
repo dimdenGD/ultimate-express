@@ -1,3 +1,5 @@
+import mime from 'mime-types';
+
 export function removeDuplicateSlashes(path) {
     return path.replace(/\/{2,}/g, '/');
 }
@@ -35,4 +37,26 @@ export function needsConversionToRegex(pattern) {
         pattern.includes(':') ||
         pattern.includes('{') ||
         pattern.includes('}');
+}
+
+function acceptParams(str) {
+    const parts = str.split(/ *; */);
+    const ret = { value: parts[0], quality: 1, params: {} }
+  
+    for (let i = 1; i < parts.length; ++i) {
+      const pms = parts[i].split(/ *= */);
+      if ('q' === pms[0]) {
+        ret.quality = parseFloat(pms[1]);
+      } else {
+        ret.params[pms[0]] = pms[1];
+      }
+    }
+  
+    return ret;
+}
+
+export function normalizeType(type) {
+    return ~type.indexOf('/') ?
+        acceptParams(type) :
+        { value: (mime.lookup(type) || 'application/octet-stream'), params: {} };
 }

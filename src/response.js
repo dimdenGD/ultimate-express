@@ -1,11 +1,12 @@
 import cookie from 'cookie';
 import mime from 'mime-types';
 import vary from 'vary';
+import { normalizeType } from './utils.js';
 
 export default class Response {
-    #res;
-    constructor(res, app) {
-        this.#res = res;
+    constructor(res, req, app) {
+        this._res = res;
+        this._req = req;
         this.app = app;
         this.headersSent = false;
         this.sent = false;
@@ -27,18 +28,18 @@ export default class Response {
         if(this.sent) {
             throw new Error('Can\'t end response: Response was already sent');
         }
-        if(this.#res.aborted) {
+        if(this._res.aborted) {
             return;
         }
-        this.#res.cork(() => {
-            this.#res.writeStatus(this.statusCode.toString());
+        this._res.cork(() => {
+            this._res.writeStatus(this.statusCode.toString());
             for(const [field, value] of Object.entries(this.headers)) {
-                this.#res.writeHeader(field, value);
+                this._res.writeHeader(field, value);
             }
             if(this.body !== undefined) {
-                this.#res.write(this.body);
+                this._res.write(this.body);
             }
-            this.#res.end();
+            this._res.end();
             this.sent = true;
             this.headersSent = true;
         });
@@ -114,12 +115,23 @@ export default class Response {
         this.type(filename.split('.').pop());
         return this;
     }
-    // format(object) {
-    //     const keys = Object.keys(object).filter(v => v !== 'default');
-    //     const key = keys.length > 0 ? this.req.accepts(keys) : false;
+    format(object) {
+        const keys = Object.keys(object).filter(v => v !== 'default');
+        const key = keys.length > 0 ? this.req.accepts(keys) : false;
 
+        this.vary('Accept');
 
-    // }
+        if(key) {
+            this.set('Content-Type', normalizeType(key).value);
+            object[key](this.req, this, this.req.next);
+        } else if(object.default) {
+            object.default(this.req, this, this.req.next);
+        } else {
+            this.status(406).send(this.app._generateErrorPage('Not Acceptable'));
+        }
+
+        return this;
+    }
 
     type(type) {
         const ct = type.indexOf('/') === -1

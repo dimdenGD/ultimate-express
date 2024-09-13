@@ -140,7 +140,9 @@ export default class Router {
             });
 
             const request = new Request(req, res, this);
-            const response = new Response(res, this);
+            const response = new Response(res, request, this);
+            request.res = response;
+            response.req = request;
 
             await this.#preprocessRequest(request, response, route);
             let i = 0;

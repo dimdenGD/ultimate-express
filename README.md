@@ -98,6 +98,7 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 
 - ✅ res.app
 - ✅ res.headersSent
+- ✅ res.req
 - ❌ res.locals
 - ✅ res.append()
 - ✅ res.attachment()
@@ -105,7 +106,7 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 - ✅ res.clearCookie()
 - ❌ res.download()
 - ✅ res.end()
-- ❌ res.format()
+- ✅ res.format()
 - ❌ res.get()
 - ❌ res.json()
 - ❌ res.jsonp()
