@@ -51,7 +51,7 @@ export default class Router {
             if(path === '') {
                 path = '/';
             }
-            return pattern === path || pattern === '*' || pattern === '/*';
+            return pattern === path || pattern === '/*';
         }
         
         return pattern.test(path);
@@ -67,6 +67,9 @@ export default class Router {
                 if(typeof path === 'string' && path.endsWith('/') && path !== '/') {
                     path = path.slice(0, -1);
                 }
+                if(path === '*') {
+                    path = '/*';
+                }
                 const route = {
                     method: method === 'USE' ? 'ALL' : method.toUpperCase(),
                     path,
@@ -78,8 +81,11 @@ export default class Router {
                     all: method === 'ALL' || method === 'USE',
                 };
                 routes.push(route);
-                if(typeof route.pattern === 'string' && route.pattern !== '*' && route.pattern !== '/*' && !this.parent) {
-                    this.#optimizeRoute(route, this.#routes);
+                if(typeof route.pattern === 'string' && route.pattern !== '/*' && !this.parent) {
+                    // the only methods that uWS supports natively
+                    if(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE'].includes(method)) {
+                        this.#optimizeRoute(route, this.#routes);
+                    }
                 }
             }
             this.#routes.push(...routes);

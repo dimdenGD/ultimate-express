@@ -11,6 +11,10 @@ greet.get('/jp', function (req, res) {
 
 app.use(['/gre+t', '/hel{2}o'], greet);
 
+// app.use('/greet', (req, res, next) => {
+//     res.send(req.baseUrl);
+// });
+
 app.use((req, res, next) => {
     res.send('404');
 });
@@ -26,6 +30,9 @@ app.listen(13333, async () => {
 
     res = await fetch('http://localhost:13333/greet/fsg');
     console.log(await res.text());
+
+    // res = await fetch('http://localhost:13333/greet/test');
+    // console.log(await res.text());
 
     process.exit(0);
 })

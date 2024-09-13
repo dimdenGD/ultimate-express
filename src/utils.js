@@ -23,7 +23,7 @@ export function needsConversionToRegex(pattern) {
     if(pattern instanceof RegExp) {
         return false;
     }
-    if(pattern === '*' || pattern === '/*') {
+    if(pattern === '/*') {
         return false;
     }
 
