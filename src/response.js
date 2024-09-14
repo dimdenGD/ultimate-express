@@ -6,6 +6,32 @@ import { PassThrough } from 'stream';
 import { isAbsolute } from 'path';
 import fs from 'fs';
 import { join as pathJoin, resolve as pathResolve } from 'path';
+import { Worker } from 'worker_threads';
+
+let fsKey = 0;
+const fsCache = {};
+const fsWorker = new Worker('./src/workers/fs.js');
+
+fsWorker.on('message', (message) => {
+    if(message.err) {
+        fsCache[message.key].reject(new Error(message.err));
+    } else {
+        fsCache[message.key].resolve(message.data);
+    }
+    delete fsCache[message.key];
+});
+
+function readFile(path) {
+    return new Promise((resolve, reject) => {
+        const key = fsKey++;
+        fsWorker.postMessage({ key, type: 'readFile', path });
+        fsCache[key] = { resolve, reject };
+    });
+}
+
+setInterval(() => {
+    if(fsKey > 100000) fsKey = 0;
+}, 60000);
 
 export default class Response extends PassThrough {
     constructor(res, req, app) {
@@ -130,10 +156,7 @@ export default class Response extends PassThrough {
 
         //there's no point in creating a stream when the file is small enough to fit in a single chunk
         if(stat.size < 64 * 1024) { // 64kb - default highWaterMark
-            fs.readFile(fullpath, (err, data) => {
-                if(err) {
-                    return this.status(500).send(this.app._generateErrorPage(`Cannot ${this.req.method} ${this.req.path}`));
-                }
+            readFile(fullpath).then((data) => {
                 if(this._res.aborted) {
                     return;
                 }
@@ -145,6 +168,8 @@ export default class Response extends PassThrough {
                     this.headersSent = true;
                     this._res.end(data);
                 });
+            }).catch((err) => {
+                this.status(500).send(this.app._generateErrorPage(err.message));
             });
         } else {
             const file = fs.createReadStream(fullpath);
