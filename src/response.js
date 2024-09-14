@@ -140,7 +140,9 @@ export default class Response extends PassThrough {
                     if(err) {
                         return this.status(500).send(this.app._generateErrorPage(`Cannot ${this.req.method} ${this.req.path}`));
                     }
-                    this._res.end(data);
+                    this._res.cork(() => {
+                        this._res.end(data);
+                    });
                 });
             } else {
                 const file = fs.createReadStream(fullpath);
