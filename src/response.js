@@ -128,6 +128,12 @@ export default class Response extends PassThrough {
             return this.status(404).send(this.app._generateErrorPage(`Cannot ${this.req.method} ${this.req.path}`));
         }
 
+        this._res.writeStatus(this.statusCode.toString());
+        for(const [field, value] of Object.entries(this.headers)) {
+            this._res.writeHeader(field, value);
+        }
+        this.headersSent = true;
+
         const file = fs.createReadStream(fullpath);
         pipeStreamOverResponse(this._res, file, stat.size, callback);
     }
@@ -295,6 +301,11 @@ export default class Response extends PassThrough {
 
 function pipeStreamOverResponse(res, readStream, totalSize, callback) {
     readStream.on('data', (chunk) => {
+        if(res.aborted) {
+            const err = new Error("Request aborted");
+            err.code = "ECONNABORTED";
+            return readStream.destroy(err);
+        }
         res.cork(() => {
             const ab = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
         
