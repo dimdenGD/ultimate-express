@@ -107,7 +107,7 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 - ❌ res.download()
 - ✅ res.end()
 - ✅ res.format()
-- ✅ res.get()
+- ✅ res.getHeader(), res.get()
 - ✅ res.json()
 - ✅ res.jsonp()
 - ✅ res.links()
@@ -118,13 +118,11 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 - ✅ piping to res
 - ⚠️ res.sendFile() (`options` not supported yet)
 - ✅ res.sendStatus()
-- ✅ res.set()
+- ✅ res.header(), res.setHeader(), res.set()
 - ✅ res.status()
-- ❌ res.type()
+- ✅ res.type()
 - ✅ res.vary()
-- ❌ res.header(), res.setHeader(), res.set()
-- ❌ res.getHeader(), res.get()
-- ❌ res.removeHeader()
+- ✅ res.removeHeader()
 - ❌ res.write()
 
 ### Router

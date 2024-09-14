@@ -206,6 +206,10 @@ export default class Response extends PassThrough {
     getHeader(field) {
         return this.get(field);
     }
+    removeHeader(field) {
+        delete this.headers[field.toLowerCase()];
+        return this;
+    }
     append(field, value) {
         field = field.toLowerCase();
         if(this.headers[field]) {
