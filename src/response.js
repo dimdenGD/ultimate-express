@@ -147,15 +147,8 @@ export default class Response extends PassThrough {
                 });
             });
         } else {
-            this._res.cork(() => {
-                this._res.writeStatus(this.statusCode.toString());
-                for(const h of Object.entries(this.headers)) {
-                    this._res.writeHeader(h[0], h[1]);
-                }
-                this.headersSent = true;
-                const file = fs.createReadStream(fullpath);
-                pipeStreamOverResponse(this._res, file, stat.size, callback);
-            });
+            const file = fs.createReadStream(fullpath);
+            pipeStreamOverResponse(this, file, stat.size, callback);
         }
     }
     set(field, value) {
@@ -322,32 +315,39 @@ export default class Response extends PassThrough {
 
 function pipeStreamOverResponse(res, readStream, totalSize, callback) {
     readStream.on('data', (chunk) => {
-        if(res.aborted) {
+        if(res._res.aborted) {
             const err = new Error("Request aborted");
             err.code = "ECONNABORTED";
             return readStream.destroy(err);
         }
-        res.cork(() => {
+        res._res.cork(() => {
+            if(!res.headersSent) {
+                res._res.writeStatus(res.statusCode.toString());
+                for(const h of Object.entries(res.headers)) {
+                    res._res.writeHeader(h[0], h[1]);
+                }
+                res.headersSent = true;
+            }
             const ab = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
         
-            const lastOffset = res.getWriteOffset();
-            const [ok, done] = res.tryEnd(ab, totalSize);
+            const lastOffset = res._res.getWriteOffset();
+            const [ok, done] = res._res.tryEnd(ab, totalSize);
       
             if (done) {
                 readStream.destroy();
-                res.done = true;
+                res._res.done = true;
                 if(callback) callback();
             } else if (!ok) {
                 readStream.pause();
         
-                res.ab = ab;
-                res.abOffset = lastOffset;
+                res._res.ab = ab;
+                res._res.abOffset = lastOffset;
         
-                res.onWritable((offset) => {  
-                    const [ok, done] = res.tryEnd(res.ab.slice(offset - res.abOffset), totalSize);
+                res._res.onWritable((offset) => {  
+                    const [ok, done] = res._res.tryEnd(res._res.ab.slice(offset - res._res.abOffset), totalSize);
                     if (done) {
                         readStream.destroy();
-                        res.done = true;
+                        res._res.done = true;
                         if(callback) callback();
                     } else if (ok) {
                         readStream.resume();
@@ -359,8 +359,8 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
         });
     }).on('error', e => {
         if(callback) callback(e);
-        if(!res.done && !res.aborted) {
-            res.close();
+        if(!res._res.done && !res._res.aborted) {
+            res._res.close();
         }
     });
   }
