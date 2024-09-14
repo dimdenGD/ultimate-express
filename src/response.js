@@ -32,7 +32,7 @@ export default class Response extends PassThrough {
             this.pause();
             this._res.cork(() => {
                 if(!this.headersSent) {
-                    if(this.statusCode !== 200) this._res.writeStatus(this.statusCode.toString());
+                    this._res.writeStatus(this.statusCode.toString());
                     for(const h of Object.entries(this.headers)) {
                         this._res.writeHeader(h[0], h[1]);
                     }
@@ -138,7 +138,7 @@ export default class Response extends PassThrough {
                     return;
                 }
                 this._res.cork(() => {
-                    if(this.statusCode !== 200) this._res.writeStatus(this.statusCode.toString());
+                    this._res.writeStatus(this.statusCode.toString());
                     for(const h of Object.entries(this.headers)) {
                         this._res.writeHeader(h[0], h[1]);
                     }
@@ -322,7 +322,7 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
         }
         res._res.cork(() => {
             if(!res.headersSent) {
-                if(this.statusCode !== 200) res._res.writeStatus(res.statusCode.toString());
+                res._res.writeStatus(res.statusCode.toString());
                 for(const h of Object.entries(res.headers)) {
                     res._res.writeHeader(h[0], h[1]);
                 }
