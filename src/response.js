@@ -33,8 +33,8 @@ export default class Response extends PassThrough {
             this._res.cork(() => {
                 if(!this.headersSent) {
                     this._res.writeStatus(this.statusCode.toString());
-                    for(const [field, value] of Object.entries(this.headers)) {
-                        this._res.writeHeader(field, value);
+                    for(const h of Object.entries(this.headers)) {
+                        this._res.writeHeader(h[0], h[1]);
                     }
                     this.headersSent = true;
                 }
@@ -68,8 +68,8 @@ export default class Response extends PassThrough {
         }
         this._res.cork(() => {
             this._res.writeStatus(this.statusCode.toString());
-            for(const [field, value] of Object.entries(this.headers)) {
-                this._res.writeHeader(field, value);
+            for(const h of Object.entries(this.headers)) {
+                this._res.writeHeader(h[0], h[1]);
             }
             this.headersSent = true;
             if(this.body !== undefined) {
@@ -128,14 +128,16 @@ export default class Response extends PassThrough {
             return this.status(404).send(this.app._generateErrorPage(`Cannot ${this.req.method} ${this.req.path}`));
         }
 
-        this._res.writeStatus(this.statusCode.toString());
-        for(const [field, value] of Object.entries(this.headers)) {
-            this._res.writeHeader(field, value);
-        }
-        this.headersSent = true;
-
-        const file = fs.createReadStream(fullpath);
-        pipeStreamOverResponse(this._res, file, stat.size, callback);
+        this._res.cork(() => {
+            this._res.writeStatus(this.statusCode.toString());
+            for(const h of Object.entries(this.headers)) {
+                this._res.writeHeader(h[0], h[1]);
+            }
+            this.headersSent = true;
+    
+            const file = fs.createReadStream(fullpath);
+            pipeStreamOverResponse(this._res, file, stat.size, callback);
+        });
     }
     set(field, value) {
         if(this.headersSent) {
@@ -324,7 +326,8 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
                 res.onWritable((offset) => {  
                     const [ok, done] = res.tryEnd(res.ab.slice(offset - res.abOffset), totalSize);
                     if (done) {
-                        onAbortedOrFinishedResponse(res, readStream);
+                        readStream.destroy();
+                        if(callback) callback();
                     } else if (ok) {
                         readStream.resume();
                     }
@@ -334,7 +337,7 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
             }
         });
     }).on('error', e => {
-        callback(e);
+        if(callback) callback(e);
         res.close();
     });
   }
