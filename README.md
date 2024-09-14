@@ -123,7 +123,7 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 - ✅ res.type()
 - ✅ res.vary()
 - ✅ res.removeHeader()
-- ❌ res.write()
+- ✅ res.write()
 
 ### Router
 
