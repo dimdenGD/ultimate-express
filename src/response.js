@@ -134,9 +134,18 @@ export default class Response extends PassThrough {
                 this._res.writeHeader(h[0], h[1]);
             }
             this.headersSent = true;
-    
-            const file = fs.createReadStream(fullpath);
-            pipeStreamOverResponse(this._res, file, stat.size, callback);
+
+            if(stat.size < 100 * 1024) { // 100kb
+                fs.readFile(fullpath, (err, data) => {
+                    if(err) {
+                        return this.status(500).send(this.app._generateErrorPage(`Cannot ${this.req.method} ${this.req.path}`));
+                    }
+                    this._res.end(data);
+                });
+            } else {
+                const file = fs.createReadStream(fullpath);
+                pipeStreamOverResponse(this._res, file, stat.size, callback);
+            }
         });
     }
     set(field, value) {
