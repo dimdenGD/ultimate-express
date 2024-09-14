@@ -118,7 +118,7 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 - ✅ piping to res
 - ⚠️ res.sendFile() (`options` not supported yet)
 - ✅ res.sendStatus()
-- ❌ res.set()
+- ✅ res.set()
 - ✅ res.status()
 - ❌ res.type()
 - ✅ res.vary()

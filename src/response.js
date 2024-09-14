@@ -185,7 +185,13 @@ export default class Response extends PassThrough {
         if(this.headersSent) {
             throw new Error('Can\'t write headers: Response was already sent');
         }
-        this.headers[field.toLowerCase()] = String(value);
+        if(typeof field === 'object') {
+            for(const v of Object.entries(field)) {
+                this.set(v[0].toLowerCase(), v[1]);
+            }
+        } else {
+            this.headers[field.toLowerCase()] = String(value);
+        }
         return this;
     }
     header(field, value) {
