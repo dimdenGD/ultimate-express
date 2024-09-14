@@ -128,27 +128,32 @@ export default class Response extends PassThrough {
             return this.status(404).send(this.app._generateErrorPage(`Cannot ${this.req.method} ${this.req.path}`));
         }
 
-        this._res.cork(() => {
-            this._res.writeStatus(this.statusCode.toString());
-            for(const h of Object.entries(this.headers)) {
-                this._res.writeHeader(h[0], h[1]);
-            }
-            this.headersSent = true;
-
-            if(stat.size < 100 * 1024) { // 100kb
-                fs.readFile(fullpath, (err, data) => {
-                    if(err) {
-                        return this.status(500).send(this.app._generateErrorPage(`Cannot ${this.req.method} ${this.req.path}`));
+        //there's no point in creating a stream when the file is small enough to fit in a single chunk
+        if(stat.size < 64 * 1024) { // 64kb - default highWaterMark
+            fs.readFile(fullpath, (err, data) => {
+                if(err) {
+                    return this.status(500).send(this.app._generateErrorPage(`Cannot ${this.req.method} ${this.req.path}`));
+                }
+                this._res.cork(() => {
+                    this._res.writeStatus(this.statusCode.toString());
+                    for(const h of Object.entries(this.headers)) {
+                        this._res.writeHeader(h[0], h[1]);
                     }
-                    this._res.cork(() => {
-                        this._res.end(data);
-                    });
+                    this.headersSent = true;
+                    this._res.end(data);
                 });
-            } else {
+            });
+        } else {
+            this._res.cork(() => {
+                this._res.writeStatus(this.statusCode.toString());
+                for(const h of Object.entries(this.headers)) {
+                    this._res.writeHeader(h[0], h[1]);
+                }
+                this.headersSent = true;
                 const file = fs.createReadStream(fullpath);
                 pipeStreamOverResponse(this._res, file, stat.size, callback);
-            }
-        });
+            });
+        }
     }
     set(field, value) {
         if(this.headersSent) {
