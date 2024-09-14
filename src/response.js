@@ -82,6 +82,9 @@ export default class Response extends PassThrough {
         this.statusCode = parseInt(code);
         return this;
     }
+    sendStatus(code) {
+        return this.status(code).send(code.toString());
+    }
     end() {
         if(this.streaming && !this._res.aborted) {
             this._res.cork(() => {
@@ -131,6 +134,7 @@ export default class Response extends PassThrough {
     }
     sendFile(path, options = {}, callback) {
         // TODO: support options
+        // TODO: support Range
         if(!path) {
             throw new TypeError('path argument is required to res.sendFile');
         }
@@ -156,6 +160,7 @@ export default class Response extends PassThrough {
 
         //there's no point in creating a stream when the file is small enough to fit in a single chunk
         if(stat.size < 64 * 1024) { // 64kb - default highWaterMark
+            // get file using worker
             readFile(fullpath).then((data) => {
                 if(this._res.aborted) {
                     return;
