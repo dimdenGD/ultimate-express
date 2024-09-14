@@ -32,7 +32,7 @@ export default class Response extends PassThrough {
             this.pause();
             this._res.cork(() => {
                 if(!this.headersSent) {
-                    this._res.writeStatus(this.statusCode.toString());
+                    if(this.statusCode !== 200) this._res.writeStatus(this.statusCode.toString());
                     for(const h of Object.entries(this.headers)) {
                         this._res.writeHeader(h[0], h[1]);
                     }
@@ -53,7 +53,7 @@ export default class Response extends PassThrough {
         if(this.headersSent) {
             throw new Error('Can\'t set status: Response was already sent');
         }
-        this.statusCode = code;
+        this.statusCode = parseInt(code);
         return this;
     }
     end() {
@@ -138,7 +138,7 @@ export default class Response extends PassThrough {
                     return;
                 }
                 this._res.cork(() => {
-                    this._res.writeStatus(this.statusCode.toString());
+                    if(this.statusCode !== 200) this._res.writeStatus(this.statusCode.toString());
                     for(const h of Object.entries(this.headers)) {
                         this._res.writeHeader(h[0], h[1]);
                     }
@@ -322,7 +322,7 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
         }
         res._res.cork(() => {
             if(!res.headersSent) {
-                res._res.writeStatus(res.statusCode.toString());
+                if(this.statusCode !== 200) res._res.writeStatus(res.statusCode.toString());
                 for(const h of Object.entries(res.headers)) {
                     res._res.writeHeader(h[0], h[1]);
                 }
