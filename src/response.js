@@ -3,6 +3,9 @@ import mime from 'mime-types';
 import vary from 'vary';
 import { normalizeType, stringify } from './utils.js';
 import { PassThrough } from 'stream';
+import { isAbsolute } from 'path';
+import fs from 'fs';
+import { join as pathJoin, resolve as pathResolve } from 'path';
 
 export default class Response extends PassThrough {
     constructor(res, req, app) {
@@ -22,7 +25,9 @@ export default class Response extends PassThrough {
         this.on('data', (chunk) => {
             this.streaming = true;
             if(this._res.aborted) {
-                return this.destroy(new Error('Request was aborted'));
+                const err = new Error('Request aborted');
+                err.code = 'ECONNABORTED';
+                return this.destroy(err);
             }
             this.pause();
             this._res.cork(() => {
@@ -97,6 +102,34 @@ export default class Response extends PassThrough {
         }
         this.body = body;
         this.end();
+    }
+    sendFile(path, options = {}, callback) {
+        // TODO: support options
+        if(!path) {
+            throw new TypeError('path argument is required to res.sendFile');
+        }
+        if(typeof path !== 'string') {
+            throw new TypeError('path argument is required to res.sendFile');
+        }
+        if(typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+        if(!options) options = {};
+        if(!options.root && !isAbsolute(path)) {
+            throw new TypeError('path must be absolute or specify root to res.sendFile');
+        }
+        const fullpath = options.root ? pathResolve(pathJoin(options.root, path)) : path;
+        if(options.root && !fullpath.startsWith(pathResolve(options.root))) {
+            throw new Error('Forbidden');
+        }
+        const stat = fs.statSync(fullpath);
+        if(stat.isDirectory()) {
+            return this.status(404).send(this.app._generateErrorPage(`Cannot ${this.req.method} ${this.req.path}`));
+        }
+
+        const file = fs.createReadStream(fullpath);
+        pipeStreamOverResponse(this._res, file, stat.size, callback);
     }
     set(field, value) {
         if(this.headersSent) {
@@ -259,3 +292,39 @@ export default class Response extends PassThrough {
         return this;
     }
 }
+
+function pipeStreamOverResponse(res, readStream, totalSize, callback) {
+    readStream.on('data', (chunk) => {
+        res.cork(() => {
+            const ab = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
+        
+            const lastOffset = res.getWriteOffset();
+            const [ok, done] = res.tryEnd(ab, totalSize);
+      
+            if (done) {
+                readStream.destroy();
+                if(callback) callback();
+            } else if (!ok) {
+                readStream.pause();
+        
+                res.ab = ab;
+                res.abOffset = lastOffset;
+        
+                res.onWritable((offset) => {  
+                    const [ok, done] = res.tryEnd(res.ab.slice(offset - res.abOffset), totalSize);
+                    if (done) {
+                        onAbortedOrFinishedResponse(res, readStream);
+                    } else if (ok) {
+                        readStream.resume();
+                    }
+            
+                    return ok;
+                });
+            }
+        });
+    }).on('error', e => {
+        callback(e);
+        res.close();
+    });
+  }
+  

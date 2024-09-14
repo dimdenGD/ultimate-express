@@ -14,9 +14,12 @@ const discardedDuplicates = [
 class IncomingMessage {
     #cachedHeaders = null;
     #cachedDistinctHeaders = null;
-    #cachedRawHeaders = null;
+    #rawHeadersEntries = [];
     constructor(req) {
         this._req = req;
+        this._req.forEach((key, value) => {
+            this.#rawHeadersEntries.push([key, value]);
+        });
     }
 
     get headers() {
@@ -25,7 +28,7 @@ class IncomingMessage {
             return this.#cachedHeaders;
         }
         let headers = {};
-        this._req.forEach((key, value) => {
+        this.#rawHeadersEntries.forEach((key, value) => {
             if(headers[key]) {
                 if(discardedDuplicates.includes(key)) {
                     return;
@@ -54,7 +57,7 @@ class IncomingMessage {
             return this.#cachedDistinctHeaders;
         }
         let headers = {};
-        this._req.forEach((key, value) => {
+        this.#rawHeadersEntries.forEach((key, value) => {
             if(!headers[key]) {
                 headers[key] = [];
             }
@@ -65,15 +68,11 @@ class IncomingMessage {
     }
 
     get rawHeaders() {
-        if(this.#cachedRawHeaders) {
-            return this.#cachedRawHeaders;
-        }
-        let headers = [];
-        this._req.forEach((key, value) => {
-            headers.push(key, value);
+        const res = [];
+        this.#rawHeadersEntries.forEach(([key, value]) => {
+            res.push(key, value);
         });
-        this.#cachedRawHeaders = headers;
-        return headers;
+        return res;
     }
 }
 
