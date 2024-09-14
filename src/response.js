@@ -316,6 +316,7 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
       
             if (done) {
                 readStream.destroy();
+                res.done = true;
                 if(callback) callback();
             } else if (!ok) {
                 readStream.pause();
@@ -327,6 +328,7 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
                     const [ok, done] = res.tryEnd(res.ab.slice(offset - res.abOffset), totalSize);
                     if (done) {
                         readStream.destroy();
+                        res.done = true;
                         if(callback) callback();
                     } else if (ok) {
                         readStream.resume();
@@ -338,7 +340,9 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
         });
     }).on('error', e => {
         if(callback) callback(e);
-        res.close();
+        if(!res.done && !res.aborted) {
+            res.close();
+        }
     });
   }
   
