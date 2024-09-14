@@ -28,7 +28,7 @@ class IncomingMessage {
             return this.#cachedHeaders;
         }
         let headers = {};
-        this.#rawHeadersEntries.forEach((key, value) => {
+        this.#rawHeadersEntries.forEach(([key, value]) => {
             if(headers[key]) {
                 if(discardedDuplicates.includes(key)) {
                     return;
@@ -57,7 +57,7 @@ class IncomingMessage {
             return this.#cachedDistinctHeaders;
         }
         let headers = {};
-        this.#rawHeadersEntries.forEach((key, value) => {
+        this.#rawHeadersEntries.forEach(([key, value]) => {
             if(!headers[key]) {
                 headers[key] = [];
             }
