@@ -28,7 +28,9 @@ class IncomingMessage {
             return this.#cachedHeaders;
         }
         let headers = {};
-        this.#rawHeadersEntries.forEach(([key, value]) => {
+        this.#rawHeadersEntries.forEach((val) => {
+            const key = val[0];
+            const value = val[1];
             if(headers[key]) {
                 if(discardedDuplicates.includes(key)) {
                     return;
@@ -57,11 +59,11 @@ class IncomingMessage {
             return this.#cachedDistinctHeaders;
         }
         let headers = {};
-        this.#rawHeadersEntries.forEach(([key, value]) => {
-            if(!headers[key]) {
-                headers[key] = [];
+        this.#rawHeadersEntries.forEach((val) => {
+            if(!headers[val[0]]) {
+                headers[val[0]] = [];
             }
-            headers[key].push(value);
+            headers[val[0]].push(val[1]);
         });
         this.#cachedDistinctHeaders = headers;
         return headers;
@@ -69,8 +71,8 @@ class IncomingMessage {
 
     get rawHeaders() {
         const res = [];
-        this.#rawHeadersEntries.forEach(([key, value]) => {
-            res.push(key, value);
+        this.#rawHeadersEntries.forEach((val) => {
+            res.push(val[0], val[1]);
         });
         return res;
     }
