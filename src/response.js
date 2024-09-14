@@ -135,6 +135,9 @@ export default class Response extends PassThrough {
                     return this.status(500).send(this.app._generateErrorPage(`Cannot ${this.req.method} ${this.req.path}`));
                 }
                 this._res.cork(() => {
+                    if(this._res.aborted) {
+                        return;
+                    }
                     this._res.writeStatus(this.statusCode.toString());
                     for(const h of Object.entries(this.headers)) {
                         this._res.writeHeader(h[0], h[1]);
