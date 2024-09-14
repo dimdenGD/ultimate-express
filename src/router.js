@@ -170,7 +170,7 @@ export default class Router {
             } catch(err) {
                 if(this.errorRoute) {
                     const next = () => {
-                        if(!response.sent) {
+                        if(!response.headersSent) {
                             response.status(500).send(this._generateErrorPage('Internal Server Error'));
                         }
                     };
@@ -273,7 +273,7 @@ export default class Router {
                         } catch(err) {
                             if(this.errorRoute) {
                                 const next = () => {
-                                    resolve(res.sent);
+                                    resolve(res.headersSent);
                                 };
                                 await this.errorRoute(err, req, res, next);
                                 return resolve(true);

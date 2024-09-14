@@ -100,7 +100,7 @@ class Application extends Router {
 
             let matchedRoute = await this._routeRequest(request, response);
 
-            if(!matchedRoute && !res.aborted && !response.sent) {
+            if(!matchedRoute && !res.aborted && !response.headersSent) {
                 response.status(404);
                 response.send(this._generateErrorPage(`Cannot ${request.method} ${request.path}`));
             }

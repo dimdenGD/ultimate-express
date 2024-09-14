@@ -1,35 +1,64 @@
 import cookie from 'cookie';
 import mime from 'mime-types';
 import vary from 'vary';
-import statuses from 'statuses';
 import { normalizeType, stringify } from './utils.js';
+import { PassThrough } from 'stream';
 
-export default class Response {
+export default class Response extends PassThrough {
     constructor(res, req, app) {
+        super();
         this._res = res;
         this._req = req;
         this.app = app;
         this.headersSent = false;
-        this.sent = false;
         this.statusCode = 200;
         this.headers = {
             'content-type': 'text/html',
             'keep-alive': 'timeout=10'
         };
         this.body = undefined;
+        this.streaming = false;
+
+        this.on('data', (chunk) => {
+            this.streaming = true;
+            if(this._res.aborted) {
+                return this.destroy(new Error('Request was aborted'));
+            }
+            this.pause();
+            this._res.cork(() => {
+                if(!this.headersSent) {
+                    this._res.writeStatus(this.statusCode.toString());
+                    for(const [field, value] of Object.entries(this.headers)) {
+                        this._res.writeHeader(field, value);
+                    }
+                    this.headersSent = true;
+                }
+                const ab = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
+                this._res.write(ab);
+                this.resume();
+            });
+        });
+        this.on('error', (err) => {
+            this._res.cork(() => {
+                this._res.end();
+            });
+        });
     }
     status(code) {
-        if(this.sent) {
+        if(this.headersSent) {
             throw new Error('Can\'t set status: Response was already sent');
         }
         this.statusCode = code;
         return this;
     }
     end() {
-        if(this.sent) {
-            throw new Error('Can\'t end response: Response was already sent');
+        if(this.streaming && !this._res.aborted) {
+            this._res.cork(() => {
+                this._res.end();
+            });
+            return;
         }
-        if(this._res.aborted) {
+        if(this._res.aborted || this.headersSent) {
             return;
         }
         this._res.cork(() => {
@@ -37,16 +66,16 @@ export default class Response {
             for(const [field, value] of Object.entries(this.headers)) {
                 this._res.writeHeader(field, value);
             }
-            if(this.body !== undefined) {
-                this._res.write(this.body);
-            }
-            this._res.end();
-            this.sent = true;
             this.headersSent = true;
+            if(this.body !== undefined) {
+                this._res.end(this.body);
+            } else {
+                this._res.end();
+            }
         });
     }
     send(body) {
-        if(this.sent) {
+        if(this.headersSent) {
             throw new Error('Can\'t write body: Response was already sent');
         }
         if(Buffer.isBuffer(body)) {
@@ -70,7 +99,7 @@ export default class Response {
         this.end();
     }
     set(field, value) {
-        if(this.sent) {
+        if(this.headersSent) {
             throw new Error('Can\'t write headers: Response was already sent');
         }
         this.headers[field.toLowerCase()] = String(value);
