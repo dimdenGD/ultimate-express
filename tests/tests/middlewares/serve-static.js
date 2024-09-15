@@ -1,4 +1,4 @@
-// must support serve static OFF
+// must support serve static
 
 import express from "express";
 import serveStatic from "serve-static";

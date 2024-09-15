@@ -194,4 +194,5 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 
 - ✅ cookie-parser
 - ✅ body-parser
+- ✅ serve-static
 
