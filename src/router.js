@@ -1,4 +1,4 @@
-import { patternToRegex, needsConversionToRegex } from "./utils.js";
+import { patternToRegex, needsConversionToRegex, deprecated } from "./utils.js";
 import uWS from 'uWebSockets.js';
 import Response from './response.js';
 import Request from './request.js';
@@ -40,6 +40,11 @@ export default class Router {
             }
         }
         return this.#createRoute('GET', path, this, ...callbacks);
+    }
+
+    del(path, ...callbacks) {
+        deprecated('app.del', 'app.delete');
+        return this.#createRoute('DELETE', path, this, ...callbacks);
     }
 
     #getFullMountpath(req) {

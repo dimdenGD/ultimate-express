@@ -1,7 +1,7 @@
 import cookie from 'cookie';
 import mime from 'mime-types';
 import vary from 'vary';
-import { normalizeType, stringify } from './utils.js';
+import { normalizeType, stringify, deprecated } from './utils.js';
 import { PassThrough } from 'stream';
 import { isAbsolute } from 'path';
 import fs from 'fs';
@@ -121,10 +121,10 @@ export default class Response extends PassThrough {
             body = stringify(body);
         } else if(typeof body === 'number') {
             if(arguments[1]) {
-                console.warn(new Error("express deprecated res.send(status, body): Use res.status(status).send(body) instead"));
+                deprecated('res.send(status, body)', 'res.status(status).send(body)');
                 this.body = arguments[1];
             } else {
-                console.warn(new Error("express deprecated res.send(status): Use res.sendStatus(status) instead"));
+                deprecated('res.send(status)', 'res.sendStatus(status)');
             }
             return this.status(body).end();
         } else {

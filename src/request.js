@@ -1,4 +1,4 @@
-import { patternToRegex } from "./utils.js";
+import { patternToRegex, deprecated } from "./utils.js";
 import qs from 'qs';
 import accepts from 'accepts';
 import typeis from 'type-is';
@@ -109,9 +109,34 @@ export default class Request extends IncomingMessage {
         return match ? match[0] : '';
     }
 
+    get #host() {
+        const trust = this.app.get('trust proxy fn');
+        if(!trust) {
+            return this._req.getHeader('host');
+        }
+        let val = this._req.getHeader('x-forwarded-host');
+        if (!val || !trust(this.connection.remoteAddress, 0)) {
+            val = this._req.getHeader('Host');
+        } else if (val.indexOf(',') !== -1) {
+            // Note: X-Forwarded-Host is normally only ever a
+            //       single value, but this is to be safe.
+            val = val.substring(0, val.indexOf(',')).trimRight()
+        }
+        
+        return val ? val.split(':')[0] : undefined;
+    }
+
+    get host() {
+        deprecated('req.host', 'req.hostname');
+        return this.hostname;
+    }
+
     get hostname() {
-        // TODO: support trust proxy
-        return this._req.getHeader('host').split(':')[0];
+        const host = this.#host;
+        if(!host) return this.get('host').split(':')[0];
+        const offset = host[0] === '[' ? host.indexOf(']') + 1 : 0;
+        const index = host.indexOf(':', offset);
+        return index !== -1 ? host.slice(0, index) : host;
     }
 
     get ip() {
@@ -219,6 +244,7 @@ export default class Request extends IncomingMessage {
     }
 
     param(name, defaultValue) {
+        deprecated('req.param(name)', 'req.params, req.body, or req.quer');
         if(this.params[name]) {
             return this.params[name];
         }

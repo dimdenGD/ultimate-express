@@ -119,3 +119,22 @@ export function compileTrust(val) {
   
     return proxyaddr.compile(val || []);
 }
+
+const shownWarnings = new Set();
+export function deprecated(oldMethod, newMethod) {
+    const err = new Error();
+    const pos = err.stack.split('\n')[3].trim().split('(').slice(1).join('(').split(')').slice(0, -1).join(')');
+    if(shownWarnings.has(pos)) return;
+    shownWarnings.add(pos);
+    console.warn(`${new Date().toLocaleString('en-UK', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        timeZone: 'GMT',
+        timeZoneName: 'short'
+    })} express deprecated ${oldMethod}: Use ${newMethod} instead at ${pos}`);
+}

@@ -11,8 +11,6 @@ app2.set('trust proxy', false);
 app3.set('trust proxy', 'loopback');
 app4.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
 
-console.log(app2.get('trust proxy fn'));
-
 app.get('/abc', (req, res) => {
     res.send(req.ips);
 });
