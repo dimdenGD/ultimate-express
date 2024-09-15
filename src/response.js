@@ -8,6 +8,7 @@ import fs from 'fs';
 import { join as pathJoin, resolve as pathResolve, basename as pathBasename } from 'path';
 import { Worker } from 'worker_threads';
 import statuses from 'statuses';
+import { sign } from 'cookie-signature';
 
 let fsKey = 0;
 const fsCache = {};
@@ -268,13 +269,16 @@ export default class Response extends PassThrough {
             options = {};
         }
         // TODO: signed cookies
-        const val = typeof value === 'object' ? "j:"+JSON.stringify(value) : String(value);
+        let val = typeof value === 'object' ? "j:"+JSON.stringify(value) : String(value);
         if(options.maxAge != null) {
             const maxAge = options.maxAge - 0;
             if(!isNaN(maxAge)) {
                 options.expires = new Date(Date.now() + maxAge);
                 options.maxAge = Math.floor(maxAge / 1000);
             }
+        }
+        if(options.signed) {
+            val = 's:' + sign(val, this.req.secret);
         }
 
         if(options.path == null) {

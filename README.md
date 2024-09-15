@@ -29,7 +29,7 @@ import express from 'u-express';
 
 const app = express({
     uwsOptions: {
-        // all options: https://unetworking.github.io/uWebSockets.js/generated/interfaces/AppOptions.html
+        // https://unetworking.github.io/uWebSockets.js/generated/interfaces/AppOptions.html
         key_file_name: 'path/to/key.pem',
         cert_file_name: 'path/to/cert.pem',
         ca_file_name: 'path/to/ca.pem', // optional
@@ -109,7 +109,7 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 - ✅ req.app
 - ⚠️ req.baseUrl (`.use` is treated as `.all` when not a router)
 - ❌ req.body
-- ❌ req.cookies
+- ✅ req.cookies
 - ❌ req.fresh
 - ✅ req.hostname
 - ✅ req.headers
@@ -127,7 +127,7 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 - ✅ req.res
 - ⚠️ req.route (route impl. differs from express)
 - ✅ req.secure
-- ❌ req.signedCookies
+- ✅ req.signedCookies
 - ❌ req.stale
 - ✅ req.subdomains
 - ✅ req.xhr
@@ -179,3 +179,7 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 - ✅ router.route()
 - ✅ router.use()
 - ⚠️ router.param() (deprecated `router.param(callback)` is not supported)
+
+## Tested middlewares
+
+- ✅ cookie-parser
