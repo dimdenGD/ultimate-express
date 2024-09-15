@@ -184,7 +184,7 @@ export default class Router {
                 if(this.errorRoute) {
                     const next = () => {
                         if(!response.headersSent) {
-                            response.status(500).send(this._generateErrorPage('Internal Server Error'));
+                            response.status(500).send(this._generateErrorPage(err, true));
                         }
                     };
                     request.next = next;
@@ -193,7 +193,7 @@ export default class Router {
                 } else {
                     console.error(err);
                     // TODO: support env setting
-                    response.status(500).send(this._generateErrorPage('Internal Server Error'));
+                    response.status(500).send(this._generateErrorPage(err, true));
                 }
             }
         });
@@ -293,7 +293,7 @@ export default class Router {
                             } else {
                                 console.error(err);
                                 // TODO: support env setting
-                                res.status(500).send(this._generateErrorPage('Internal Server Error'));
+                                res.status(500).send(this._generateErrorPage(err, true));
                             }
                         }
                     }
@@ -343,7 +343,10 @@ export default class Router {
         return fns;
     }
 
-    _generateErrorPage(err) {
+    _generateErrorPage(err, checkEnv = false) {
+        if(checkEnv && this.get('env') === 'production') {
+            return err = 'Internal Server Error';
+        }
         return `<!DOCTYPE html>\n` +
             `<html lang="en">\n` +
             `<head>\n` +
@@ -351,7 +354,7 @@ export default class Router {
             `<title>Error</title>\n` +
             `</head>\n` +
             `<body>\n` +
-            `<pre>${err}</pre>\n` +
+            `<pre>${err?.stack ?? err}</pre>\n` +
             `</body>\n` +
             `</html>\n`;
     }

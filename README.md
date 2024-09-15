@@ -56,7 +56,7 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 ### Application settings
 
 - ✅ case sensitive routing
-- ❌ env
+- ✅ env
 - ❌ etag
 - ✅ jsonp callback name
 - ❌ json escape
