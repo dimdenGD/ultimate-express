@@ -98,7 +98,6 @@ export default class Response extends PassThrough {
                 this._res.close();
                 this.finished = true;
                 this.socket.writable = false;
-                this.socket.emit('error', err);
                 this.socket.emit('close');
             });
         });
@@ -466,6 +465,8 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
                     if (done) {
                         readStream.destroy();
                         res.finished = true;
+                        res.socket.writable = false;
+                        res.socket.emit('close');
                         if(callback) callback();
                     } else if (ok) {
                         readStream.resume();
