@@ -77,7 +77,7 @@ export default class Router {
             const paths = Array.isArray(path) ? path : [path];
             const routes = [];
             for(let path of paths) {
-                if(typeof path === 'string' && path.endsWith('/') && path !== '/') {
+                if(!this.get('strict routing') && typeof path === 'string' && path.endsWith('/') && path !== '/') {
                     path = path.slice(0, -1);
                 }
                 if(path === '*') {
