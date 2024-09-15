@@ -1,6 +1,7 @@
 import mime from 'mime-types';
 import path from 'path';
 import proxyaddr from 'proxy-addr';
+import qs from 'qs';
 
 export function removeDuplicateSlashes(path) {
     return path.replace(/\/{2,}/g, '/');
@@ -91,6 +92,7 @@ export const defaultSettings = {
     'env': () => process.env.NODE_ENV ?? 'development',
     'etag': 'weak',
     'query parser': 'extended',
+    'query parser fn': () => qs.parse,
     'subdomain offset': 2,
     'trust proxy': false,
     'views': () => path.join(process.cwd(), 'views'),

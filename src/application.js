@@ -3,6 +3,8 @@ import Response from './response.js';
 import Request from './request.js';
 import Router from './router.js';
 import { removeDuplicateSlashes, defaultSettings, compileTrust } from './utils.js';
+import querystring from 'querystring';
+import qs from 'qs';
 
 class Application extends Router {
     constructor(settings = {}) {
@@ -35,6 +37,16 @@ class Application extends Router {
                 delete this.settings['trust proxy fn'];
             } else {
                 this.settings['trust proxy fn'] = compileTrust(value);
+            }
+        } else if(key === 'query parser') {
+            if(value === 'extended') {
+                this.settings['query parser fn'] = qs.parse;
+            } else if(value === 'simple') {
+                this.settings['query parser fn'] = querystring.parse;
+            } else if(typeof value === 'function') {
+                this.settings['query parser fn'] = value;
+            } else {
+                this.settings['query parser fn'] = undefined;
             }
         } else {
             this.settings[key] = value;
