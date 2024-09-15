@@ -28,7 +28,7 @@ app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
     const response = await fetch('http://localhost:13333/test', { redirect: 'manual' });
-    console.log(response.status, response.headers.get('Location'));
+    console.log(response.status, response.headers.get('Location'), await response.text());
 
     const response2 = await fetch('http://localhost:13333/test2', { redirect: 'manual' });
     console.log(response2.status, response2.headers.get('Location'));

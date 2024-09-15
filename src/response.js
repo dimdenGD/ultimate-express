@@ -7,6 +7,7 @@ import { isAbsolute } from 'path';
 import fs from 'fs';
 import { join as pathJoin, resolve as pathResolve } from 'path';
 import { Worker } from 'worker_threads';
+import statuses from 'statuses';
 
 let fsKey = 0;
 const fsCache = {};
@@ -83,7 +84,7 @@ export default class Response extends PassThrough {
         return this;
     }
     sendStatus(code) {
-        return this.status(code).send(code.toString());
+        return this.status(code).send(statuses.message[+code] ?? code.toString());
     }
     end() {
         if(this.streaming && !this._res.aborted) {
@@ -334,7 +335,7 @@ export default class Response extends PassThrough {
         this.location(url);
         this.status(status);
         this.set('Content-Type', 'text/plain');
-        return this.send(`Redirecting to ${url}`);
+        return this.send(`${statuses.message[status] ?? status}. Redirecting to ${url}`);
     }
 
     type(type) {

@@ -37,6 +37,7 @@
     "mime-types": "^2.1.35",
     "qs": "^6.13.0",
     "range-parser": "^1.2.1",
+    "statuses": "^2.0.1",
     "type-is": "^1.6.18",
     "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.48.0",
     "vary": "^1.1.2"
