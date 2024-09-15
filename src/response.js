@@ -102,12 +102,12 @@ export default class Response extends PassThrough {
         if(this._res.aborted || this.headersSent) {
             return;
         }
+        this.headersSent = true;
         this._res.cork(() => {
             this._res.writeStatus(this.statusCode.toString());
             for(const h of Object.entries(this.headers)) {
                 this._res.writeHeader(h[0], h[1]);
             }
-            this.headersSent = true;
             if(this.body !== undefined) {
                 this._res.end(this.body);
             } else {

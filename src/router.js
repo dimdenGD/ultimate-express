@@ -247,77 +247,58 @@ export default class Router {
         }
     }
 
-    async _routeRequest(req, res, i = 0) {
+    async _routeRequest(req, res, startIndex = 0) {
         return new Promise(async (resolve) => {
-            while (i < this.#routes.length) {
-                if(res.aborted) {
-                    resolve(false);
-                    return;
-                }
-                const route = this.#routes[i];
-                if ((route.all || route.method === req.method) && this.#pathMatches(route, req)) {
-                    let calledNext = false, dontStop = false;
-                    await this.#preprocessRequest(req, res, route);
-                    if(route.callback instanceof Router) {
-                        req._stack.push(route.path);
-                        req._opPath = req.path.replace(this.#getFullMountpath(req), '');
-                        req.url = req._opPath + req.urlQuery;
-                        if(route.callback.constructor.name === 'Application') {
-                            req.app = route.callback;
-                        }
+            let [routeIndex, route] = this.#routes.findStartingFrom(r => (r.all || r.method === req.method) && this.#pathMatches(r, req), startIndex);
+            if(!route) return resolve(false);
 
-                        if(await route.callback._routeRequest(req, res, 0)) {
-                            resolve(true);
-                        } else {
-                            req._stack.pop();
-                            req._opPath = req._stack.length > 0 ? req.path.replace(this.#getFullMountpath(req), '') : req.path;
-                            req.url = req._opPath + req.urlQuery;
-                            if(route.callback.constructor.name === 'Application' && req.app.parent) {
-                                req.app = req.app.parent;
-                            }
-                            dontStop = true;
-                        }
-                    } else {
-                        try {
-                            const next = thingamabob => {
-                                calledNext = true;
-                                if(thingamabob) {
-                                    if(thingamabob === 'route') {
-                                        let routeSkipKey = route.routeSkipKey;
-                                        while(this.#routes[i].routeKey !== routeSkipKey && i < this.#routes.length) {
-                                            i++;
-                                        }
-                                    } else {
-                                        throw thingamabob;
-                                    }
+            if(route.callback instanceof Router) {
+                req._stack.push(route.path);
+                req._opPath = req.path.replace(this.#getFullMountpath(req), '');
+                req.url = req._opPath + req.urlQuery;
+                if(route.callback.constructor.name === 'Application') {
+                    req.app = route.callback;
+                }
+                
+                const routed = await route.callback._routeRequest(req, res, 0);
+                if(routed) return resolve(true);
+
+                req._stack.pop();
+                req._opPath = req._stack.length > 0 ? req.path.replace(this.#getFullMountpath(req), '') : req.path;
+                req.url = req._opPath + req.urlQuery;
+                if(route.callback.constructor.name === 'Application' && req.app.parent) {
+                    req.app = req.app.parent;
+                }
+                return resolve(this._routeRequest(req, res, routeIndex + 1));
+            } else {
+                try {
+                    const next = (thingamabob) => {
+                        routeIndex++;
+                        if(thingamabob) {
+                            if(thingamabob === 'route') {
+                                let routeSkipKey = route.routeSkipKey;
+                                while(this.#routes[routeIndex].routeKey !== routeSkipKey && routeIndex < this.#routes.length) {
+                                    routeIndex++;
                                 }
-                                dontStop = true;
-                            };
-                            req.next = next;
-                            await route.callback(req, res, next);
-                        } catch(err) {
-                            if(this.errorRoute) {
-                                const next = () => {
-                                    resolve(res.headersSent);
-                                };
-                                await this.errorRoute(err, req, res, next);
-                                return resolve(true);
                             } else {
-                                console.error(err);
-                                res.status(500).send(this._generateErrorPage(err, true));
+                                throw thingamabob;
                             }
                         }
+                        return resolve(this._routeRequest(req, res, routeIndex));
                     }
-                    if(!calledNext) {
-                        resolve(true);
-                    }
-                    if(!dontStop) {
-                        return;
+                    req.next = next;
+                    await this.#preprocessRequest(req, res, route);
+                    await route.callback(req, res, next);
+                } catch(err) {
+                    if(this.errorRoute) {
+                        const next = () => {
+                            resolve(res.headersSent);
+                        };
+                        await this.errorRoute(err, req, res, next);
+                        return resolve(true);
                     }
                 }
-                i++;
             }
-            resolve(false);
         });
     }
     use(path, ...callbacks) {

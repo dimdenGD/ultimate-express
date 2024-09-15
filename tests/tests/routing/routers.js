@@ -23,6 +23,10 @@ app.use('/', router);
 app.use('/asdf', router2);
 app.use(router3);
 
+app.get('/gaa', (req, res) => {
+    res.send('gaa');
+});
+
 app.use((req, res, next) => {
     res.send('404');
 });
@@ -34,7 +38,8 @@ app.listen(13333, async () => {
     let output2 = await fetch('http://localhost:13333/asdf/asdf').then(res => res.text());
     let output3 = await fetch('http://localhost:13333/asdf/test').then(res => res.text());
     let output4 = await fetch('http://localhost:13333/meow').then(res => res.text());
+    let output5 = await fetch('http://localhost:13333/gaa').then(res => res.text());
 
-    console.log(output1, output2, output3, output4);
+    console.log(output1, output2, output3, output4, output5);
     process.exit(0);
 });
