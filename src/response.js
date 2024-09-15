@@ -48,6 +48,9 @@ export default class Response extends PassThrough {
         };
         this.body = undefined;
         this.streaming = false;
+        if(this.app.get('x-powered-by')) {
+            this.set('x-powered-by', 'uExpress');
+        }
 
         this.on('data', (chunk) => {
             this.streaming = true;

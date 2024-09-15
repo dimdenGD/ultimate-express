@@ -237,6 +237,9 @@ export default class Router {
     }
 
     param(name, fn) {
+        if(typeof name === 'function') {
+            throw new Error('app.param(callback) is not supported, use app.param(name, callback) instead');
+        }
         let names = Array.isArray(name) ? name : [name];
         for(let name of names) {
             if(!this.#paramCallbacks.has(name)) {
