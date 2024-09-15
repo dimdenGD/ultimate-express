@@ -3,6 +3,7 @@ import qs from 'qs';
 import accepts from 'accepts';
 import typeis from 'type-is';
 import parseRange from 'range-parser';
+import querystring from 'querystring';
 
 const discardedDuplicates = [
     "age", "authorization", "content-length", "content-type", "etag", "expires",
@@ -128,8 +129,16 @@ export default class Request extends IncomingMessage {
         if(this.#cachedQuery) {
             return this.#cachedQuery;
         }
-        // TODO: support "query parser" option
-        this.#cachedQuery = qs.parse(this.urlQuery.slice(1));
+        const qp = this.app.get('query parser');
+        if(qp === 'extended') {
+            this.#cachedQuery = qs.parse(this.urlQuery.slice(1));
+        } else if(qp === 'simple') {
+            this.#cachedQuery = querystring.parse(this.urlQuery.slice(1));
+        } else if(typeof qp === 'function') {
+            this.#cachedQuery = qp(this.urlQuery.slice(1));
+        } else {
+            this.#cachedQuery = {};
+        }
         return this.#cachedQuery;
     }
 

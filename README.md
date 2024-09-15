@@ -62,7 +62,7 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 - ✅ json escape
 - ✅ json replacer
 - ✅ json spaces
-- ❌ query parser
+- ✅ query parser
 - ❌ strict routing
 - ❌ subdomain offset
 - ❌ trust proxy
