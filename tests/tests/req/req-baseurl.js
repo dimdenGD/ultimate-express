@@ -11,9 +11,9 @@ greet.get('/jp', function (req, res) {
 
 app.use(['/gre+t', '/hel{2}o'], greet);
 
-// app.use('/greet', (req, res, next) => {
-//     res.send(req.baseUrl);
-// });
+app.use('/greet', (req, res, next) => {
+    res.send(req.baseUrl);
+});
 
 app.use((req, res, next) => {
     res.send('404');

@@ -117,7 +117,7 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 ### Request
 - ✅ implements Readable stream
 - ✅ req.app
-- ⚠️ req.baseUrl (`.use` is treated as `.all` when not a router)
+- ✅ req.baseUrl
 - ✅ req.body
 - ✅ req.cookies
 - ❌ req.fresh

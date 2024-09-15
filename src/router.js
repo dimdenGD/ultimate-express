@@ -231,6 +231,23 @@ export default class Router {
             req.params = {};
         }
 
+        if(route.use) {
+            req._stack.push(route.path);
+            req.url = req.path.replace(this.#getFullMountpath(req), '');
+            if(!req.url) {
+                req.url = '/';
+            }
+            req.popAt = route.routeSkipKey + 1;
+        }
+        if(req.popAt === route.routeKey) {
+            req._stack.pop();
+            req.url = req.path.replace(this.#getFullMountpath(req), '');
+            if(!req.url) {
+                req.url = '/';
+            }
+            delete req.popAt;
+        }
+
         return true;
     }
 
@@ -259,7 +276,7 @@ export default class Router {
                 if(route.callback.constructor.name === 'Application') {
                     req.app = route.callback;
                 }
-                
+
                 const routed = await route.callback._routeRequest(req, res, 0);
                 if(routed) return resolve(true);
 
