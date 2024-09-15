@@ -2,7 +2,7 @@ import uWS from 'uWebSockets.js';
 import Response from './response.js';
 import Request from './request.js';
 import Router from './router.js';
-import { removeDuplicateSlashes, defaultSettings, compileTrust } from './utils.js';
+import { removeDuplicateSlashes, defaultSettings, compileTrust, readBody } from './utils.js';
 import querystring from 'querystring';
 import qs from 'qs';
 
@@ -48,9 +48,9 @@ class Application extends Router {
             } else {
                 this.settings['query parser fn'] = undefined;
             }
-        } else {
-            this.settings[key] = value;
         }
+
+        this.settings[key] = value;
         return this;
     }
 
@@ -82,6 +82,7 @@ class Application extends Router {
             const response = new Response(res, req, this);
             request.res = response;
             response.req = request;
+            readBody(request, response);
 
             let matchedRoute = await this._routeRequest(request, response);
 

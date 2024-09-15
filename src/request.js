@@ -3,6 +3,7 @@ import accepts from 'accepts';
 import typeis from 'type-is';
 import parseRange from 'range-parser';
 import proxyaddr from 'proxy-addr';
+import { Readable } from 'stream';
 
 const discardedDuplicates = [
     "age", "authorization", "content-length", "content-type", "etag", "expires",
@@ -11,11 +12,12 @@ const discardedDuplicates = [
     "server", "user-agent"
 ];
 
-class IncomingMessage {
+class IncomingMessage extends Readable {
     #cachedHeaders = null;
     #cachedDistinctHeaders = null;
     #rawHeadersEntries = [];
     constructor(req) {
+        super();
         this._req = req;
         this._req.forEach((key, value) => {
             this.#rawHeadersEntries.push([key, value]);

@@ -140,3 +140,23 @@ export function deprecated(oldMethod, newMethod) {
         timeZoneName: 'short'
     })} express deprecated ${oldMethod}: Use ${newMethod} instead at ${pos}`);
 }
+
+export function readBody(req, res) {
+    const bufferedData = Buffer.alloc(0);
+    res._res.onData((ab, isLast) => {
+        const chunk = Buffer.from(ab);
+        if(bufferedData.length || !req.push(chunk)) {
+            bufferedData = Buffer.concat([bufferedData, chunk]);
+        }
+        if(isLast && bufferedData.length === 0) {
+            req.push(null);
+        }
+    });
+    req._read = (size) => {
+        if(bufferedData.length > 0) {
+            const chunk = bufferedData.slice(0, size);
+            bufferedData = bufferedData.slice(size);
+            req.push(chunk);
+        }
+    };
+}

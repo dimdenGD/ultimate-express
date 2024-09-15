@@ -58,11 +58,11 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 
 - ✅ express()
 - ✅ express.Router()
-- ❌ express.json()
-- ❌ express.urlencoded()
+- ✅ express.json()
+- ✅ express.urlencoded()
 - ❌ express.static()
-- ❌ express.text()
-- ❌ express.raw()
+- ✅ express.text()
+- ✅ express.raw()
 
 ### Application
 
@@ -108,7 +108,7 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 ### Request
 - ✅ req.app
 - ⚠️ req.baseUrl (`.use` is treated as `.all` when not a router)
-- ❌ req.body
+- ✅ req.body
 - ✅ req.cookies
 - ❌ req.fresh
 - ✅ req.hostname
@@ -183,3 +183,5 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 ## Tested middlewares
 
 - ✅ cookie-parser
+- ✅ body-parser
+

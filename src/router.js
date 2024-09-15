@@ -1,5 +1,4 @@
-import { patternToRegex, needsConversionToRegex, deprecated } from "./utils.js";
-import uWS from 'uWebSockets.js';
+import { patternToRegex, needsConversionToRegex, deprecated, readBody } from "./utils.js";
 import Response from './response.js';
 import Request from './request.js';
 
@@ -160,6 +159,7 @@ export default class Router {
             const response = new Response(res, request, this);
             request.res = response;
             response.req = request;
+            readBody(request, response);
 
             await this.#preprocessRequest(request, response, route);
             let i = 0;
