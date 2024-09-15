@@ -59,8 +59,9 @@ Currently, there's 2 similar projects based on uWebSockets.js:
 - `hyper-express` - while having a similar API to Express, it's very far from being a drop-in replacement, and implements most of the functionality differently. This creates a lot of random quirks and issues, making the switch quite difficult. Built in middlewares are also very different.
 - `uwebsockets-express` - this library is closer to being a drop-in replacement, but:
 - - misses a lot of APIs
+- - depends on Express, calls it's methods under the hood
 - - doesn't try to optimize routing by using native uWS router.
-- - 
+- - because of the above, it's slower than µExpress by about 2 times.
 
 ## Compatibility
 
