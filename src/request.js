@@ -149,8 +149,11 @@ export default class Request extends IncomingMessage {
     get subdomains() {
         let host = this.hostname;
         let subdomains = host.split('.');
-        // TODO: support "subdomain offset" option
-        return subdomains.slice(0, -2).reverse();
+        const so = this.app.get('subdomain offset');
+        if(so === 0) {
+            return subdomains.reverse();
+        }
+        return subdomains.slice(0, -so).reverse();
     }
 
     get xhr() {

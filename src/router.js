@@ -256,6 +256,9 @@ export default class Router {
                         req._stack.push(route.path);
                         req._opPath = req.path.replace(this.#getFullMountpath(req), '');
                         req.url = req._opPath + req.urlQuery;
+                        if(route.callback.constructor.name === 'Application') {
+                            req.app = route.callback;
+                        }
 
                         if(await route.callback._routeRequest(req, res, 0)) {
                             resolve(true);
@@ -263,6 +266,9 @@ export default class Router {
                             req._stack.pop();
                             req._opPath = req._stack.length > 0 ? req.path.replace(this.#getFullMountpath(req), '') : req.path;
                             req.url = req._opPath + req.urlQuery;
+                            if(route.callback.constructor.name === 'Application' && req.app.parent) {
+                                req.app = req.app.parent;
+                            }
                             dontStop = true;
                         }
                     } else {
