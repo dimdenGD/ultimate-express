@@ -345,7 +345,7 @@ export default class Router {
 
     _generateErrorPage(err, checkEnv = false) {
         if(checkEnv && this.get('env') === 'production') {
-            return err = 'Internal Server Error';
+            err = 'Internal Server Error';
         }
         return `<!DOCTYPE html>\n` +
             `<html lang="en">\n` +

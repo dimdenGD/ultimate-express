@@ -118,7 +118,7 @@ export default class Response extends PassThrough {
         } else if(body === null || body === undefined) {
             body = '';
         } else if(typeof body === 'object') {
-            body = JSON.stringify(body);
+            body = stringify(body);
         } else if(typeof body === 'number') {
             if(arguments[1]) {
                 console.warn(new Error("express deprecated res.send(status, body): Use res.status(status).send(body) instead"));
@@ -280,13 +280,14 @@ export default class Response extends PassThrough {
         if(!this.get('Content-Type')) {
             this.set('Content-Type', 'application/json');
         }
-        // TODO: support json options
-        this.send(JSON.stringify(body));
+        const escape = this.app.get('json escape');
+        const replacer = this.app.get('json replacer');
+        const spaces = this.app.get('json spaces');
+        this.send(stringify(body, replacer, spaces, escape));
     }
     jsonp(object) {
         let callback = this.req.query[this.app.get('jsonp callback name')];
-        // TODO: support json options
-        let body = stringify(object);
+        let body = stringify(object, this.app.get('json replacer'), this.app.get('json spaces'), this.app.get('json escape'));
 
         if(!this.get('Content-Type')) {
             this.set('Content-Type', 'application/javascript');
