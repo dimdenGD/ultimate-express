@@ -71,7 +71,7 @@ export default class Response extends PassThrough {
         });
         this.on('error', (err) => {
             this._res.cork(() => {
-                this._res.end();
+                this._res.close();
             });
         });
     }

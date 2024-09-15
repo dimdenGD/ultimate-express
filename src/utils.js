@@ -1,4 +1,5 @@
 import mime from 'mime-types';
+import path from 'path';
 
 export function removeDuplicateSlashes(path) {
     return path.replace(/\/{2,}/g, '/');
@@ -83,3 +84,32 @@ export function stringify(value, replacer, spaces, escape) {
   
     return json;
 }
+
+export const defaultSettings = {
+    'jsonp callback name': 'callback',
+    'env': () => process.env.NODE_ENV ?? 'development',
+    'etag': 'weak',
+    'query parser': 'extended',
+    'subdomain offset': 2,
+    'trust proxy': false,
+    'views': () => path.join(process.cwd(), 'views'),
+    'x-powered-by': true
+};
+
+export const supportedOptions = [
+    "case sensitive routing",
+    "env",
+    "etag",
+    "jsonp callback name",
+    "json escape",
+    "json replacer",
+    "json spaces",
+    "query parser",
+    "strict routing",
+    "subdomain offset",
+    "trust proxy",
+    "views",
+    "view cache",
+    "view engine",
+    "x-powered-by",
+];

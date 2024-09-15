@@ -2,34 +2,21 @@ import uWS from 'uWebSockets.js';
 import Response from './response.js';
 import Request from './request.js';
 import Router from './router.js';
-import { removeDuplicateSlashes } from './utils.js';
-
-const supportedOptions = [
-    "case sensitive routing",
-    "env",
-    "etag",
-    "jsonp callback name",
-    "json escape",
-    "json replacer",
-    "json spaces",
-    "query parser",
-    "strict routing",
-    "subdomain offset",
-    "trust proxy",
-    "views",
-    "view cache",
-    "view engine",
-    "x-powered-by",
-]
+import { removeDuplicateSlashes, defaultSettings, supportedOptions } from './utils.js';
 
 class Application extends Router {
     constructor(settings = {}) {
         super(settings);
         this.port = undefined;
-        this.settings = settings;
 
-        if(!settings['jsonp callback name']) {
-            this.settings['jsonp callback name'] = 'callback';
+        for(const key in defaultSettings) {
+            if(!this.settings[key]) {
+                if(typeof defaultSettings[key] === 'function') {
+                    this.settings[key] = defaultSettings[key]();
+                } else {
+                    this.settings[key] = defaultSettings[key];
+                }
+            }
         }
     }
 
@@ -40,17 +27,6 @@ class Application extends Router {
             throw new Error(`Unsupported option: ${key}`);
         }
         return this;
-    }
-
-    get(key, ...args) {
-        if(typeof key === 'string' && args.length === 0) {
-            if(supportedOptions.includes(key)) {
-                return this.settings[key];
-            } else {
-                throw new Error(`Unsupported option: ${key}`);
-            }
-        }
-        return super.get(key, ...args);
     }
 
     enable(key) {

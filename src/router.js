@@ -1,4 +1,4 @@
-import { patternToRegex, needsConversionToRegex } from "./utils.js";
+import { patternToRegex, needsConversionToRegex, supportedOptions } from "./utils.js";
 import uWS from 'uWebSockets.js';
 import Response from './response.js';
 import Request from './request.js';
@@ -21,7 +21,7 @@ export default class Router {
         this.uwsApp = uWS.App(settings?.uwsOptions ?? {});
         this.errorRoute = undefined;
         this.mountpath = '/';
-
+        this.settings = settings;
         for(let method of methods) {
             this[method] = (path, ...callbacks) => {
                 this.#createRoute(method.toUpperCase(), path, this, ...callbacks);
@@ -30,6 +30,18 @@ export default class Router {
     }
 
     get(path, ...callbacks) {
+        if(typeof path === 'string' && callbacks.length === 0) {
+            const key = path;
+            if(supportedOptions.includes(key)) {
+                if(typeof this.settings[key] === 'undefined' && this.parent) {
+                    return this.parent.get(key);
+                } else {
+                    return this.settings[key];
+                }
+            } else {
+                throw new Error(`Unsupported option: ${key}`);
+            }
+        }
         return this.#createRoute('GET', path, this, ...callbacks);
     }
 
