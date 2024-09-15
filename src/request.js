@@ -158,9 +158,18 @@ export default class Request extends IncomingMessage {
     }
 
     get protocol() {
-        // TODO: support trust proxy
-        // TODO: implement ssl
-        return this.app.ssl ? 'https' : 'http';
+        const proto = this.app.ssl ? 'https' : 'http';
+        const trust = this.app.get('trust proxy fn');
+        if(!trust) {
+            return proto;
+        }
+        if(!trust(this.connection.remoteAddress, 0)) {
+            return proto;
+        }
+        const header = this._req.getHeader('x-forwarded-proto') || proto;
+        const index = header.indexOf(',');
+
+        return index !== -1 ? header.slice(0, index).trim() : header.trim();
     }
 
     get query() {
