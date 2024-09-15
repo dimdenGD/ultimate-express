@@ -5,14 +5,16 @@ import { normalizeType, stringify, deprecated } from './utils.js';
 import { PassThrough } from 'stream';
 import { isAbsolute } from 'path';
 import fs from 'fs';
-import { join as pathJoin, resolve as pathResolve, basename as pathBasename } from 'path';
+import { join as pathJoin, resolve as pathResolve, basename as pathBasename, dirname as pathDirname } from 'path';
 import { Worker } from 'worker_threads';
 import statuses from 'statuses';
 import { sign } from 'cookie-signature';
+import { fileURLToPath } from 'node:url';
 
+const __dirname = pathDirname(fileURLToPath(import.meta.url));
 let fsKey = 0;
 const fsCache = {};
-const fsWorker = new Worker('./src/workers/fs.js');
+const fsWorker = new Worker(pathJoin(__dirname, 'workers/fs.js'));
 
 fsWorker.on('message', (message) => {
     if(message.err) {

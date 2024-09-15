@@ -52,6 +52,16 @@ app.listen(3000, () => {
 
 Optimized routes can be up to 10 times faster than normal routes, as they're using native uWS router.
 
+## Difference from similar projects
+
+Currently, there's 2 similar projects based on uWebSockets.js:
+
+- `hyper-express` - while having a similar API to Express, it's very far from being a drop-in replacement, and implements most of the functionality differently. This creates a lot of random quirks and issues, making the switch quite difficult. Built in middlewares are also very different.
+- `uwebsockets-express` - this library is closer to being a drop-in replacement, but:
+- - misses a lot of APIs
+- - doesn't try to optimize routing by using native uWS router.
+- - 
+
 ## Compatibility
 
 ### express
