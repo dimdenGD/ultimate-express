@@ -12,6 +12,11 @@ let fsKey = 0;
 const fsCache = {};
 const fsWorker = new Worker('./src/workers/fs.js');
 
+const fsInt = setInterval(() => {
+    if(fsKey > 1000000) fsKey = 0;
+}, 60000);
+fsInt.unref();
+
 fsWorker.on('message', (message) => {
     if(message.err) {
         fsCache[message.key].reject(new Error(message.err));
@@ -20,6 +25,7 @@ fsWorker.on('message', (message) => {
     }
     delete fsCache[message.key];
 });
+fsWorker.unref();
 
 function readFile(path) {
     return new Promise((resolve, reject) => {
@@ -28,10 +34,6 @@ function readFile(path) {
         fsCache[key] = { resolve, reject };
     });
 }
-
-setInterval(() => {
-    if(fsKey > 100000) fsKey = 0;
-}, 60000);
 
 export default class Response extends PassThrough {
     constructor(res, req, app) {
@@ -283,7 +285,7 @@ export default class Response extends PassThrough {
         this.send(JSON.stringify(body));
     }
     jsonp(object) {
-        let callback = this.req.query[this.app.settings['jsonp callback name']];
+        let callback = this.req.query[this.app.get('jsonp callback name')];
         // TODO: support json options
         let body = stringify(object);
 
