@@ -4,6 +4,7 @@ import accepts from 'accepts';
 import typeis from 'type-is';
 import parseRange from 'range-parser';
 import querystring from 'querystring';
+import proxyaddr from 'proxy-addr';
 
 const discardedDuplicates = [
     "age", "authorization", "content-length", "content-type", "etag", "expires",
@@ -114,9 +115,11 @@ export default class Request extends IncomingMessage {
     }
 
     get ip() {
-        // TODO: support trust proxy
-        let ip = Buffer.from(this._res.getRemoteAddressAsText()).toString();
-        return ip;
+        const trust = this.app.get('trust proxy fn');
+        if(!trust) {
+            return Buffer.from(this._res.getRemoteAddressAsText()).toString();
+        }
+        return proxyaddr(this, trust);
     }
 
     get protocol() {

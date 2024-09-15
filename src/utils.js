@@ -1,5 +1,6 @@
 import mime from 'mime-types';
 import path from 'path';
+import proxyaddr from 'proxy-addr';
 
 export function removeDuplicateSlashes(path) {
     return path.replace(/\/{2,}/g, '/');
@@ -97,20 +98,24 @@ export const defaultSettings = {
     'case sensitive routing': true
 };
 
-export const supportedOptions = [
-    "case sensitive routing",
-    "env",
-    "etag",
-    "jsonp callback name",
-    "json escape",
-    "json replacer",
-    "json spaces",
-    "query parser",
-    "strict routing",
-    "subdomain offset",
-    "trust proxy",
-    "views",
-    "view cache",
-    "view engine",
-    "x-powered-by",
-];
+export function compileTrust(val) {
+    if (typeof val === 'function') return val;
+  
+    if (val === true) {
+        // Support plain true/false
+        return function(){ return true };
+    }
+  
+    if (typeof val === 'number') {
+        // Support trusting hop count
+        return function(a, i){ return i < val };
+    }
+  
+    if (typeof val === 'string') {
+        // Support comma-separated values
+        val = val.split(',')
+            .map(function (v) { return v.trim() })
+    }
+  
+    return proxyaddr.compile(val || []);
+}

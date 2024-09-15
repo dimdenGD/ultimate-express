@@ -2,7 +2,7 @@ import uWS from 'uWebSockets.js';
 import Response from './response.js';
 import Request from './request.js';
 import Router from './router.js';
-import { removeDuplicateSlashes, supportedOptions, defaultSettings } from './utils.js';
+import { removeDuplicateSlashes, defaultSettings, compileTrust } from './utils.js';
 
 class Application extends Router {
     constructor(settings = {}) {
@@ -20,46 +20,29 @@ class Application extends Router {
     }
 
     set(key, value) {
-        if(supportedOptions.includes(key)) {
-            this.settings[key] = value;
-        } else {
-            throw new Error(`Unsupported option: ${key}`);
+        if(key === 'trust proxy') {
+            this.settings['trust proxy fn'] = compileTrust(value);
         }
+        this.settings[key] = value;
         return this;
     }
 
     enable(key) {
-        if(supportedOptions.includes(key)) {
-            this.settings[key] = true;
-        } else {
-            throw new Error(`Unsupported option: ${key}`);
-        }
+        this.settings[key] = true;
         return this;
     }
 
     disable(key) {
-        if(supportedOptions.includes(key)) {
-            this.settings[key] = false;
-        } else {
-            throw new Error(`Unsupported option: ${key}`);
-        }
+        this.settings[key] = false;
         return this;
     }
 
     enabled(key) {
-        if(supportedOptions.includes(key)) {
-            return this.settings[key];
-        } else {
-            throw new Error(`Unsupported option: ${key}`);
-        }
+        return !!this.settings[key];
     }
 
     disabled(key) {
-        if(supportedOptions.includes(key)) {
-            return !this.settings[key];
-        } else {
-            throw new Error(`Unsupported option: ${key}`);
-        }
+        return !this.settings[key];
     }
 
     #createRequestHandler() {
