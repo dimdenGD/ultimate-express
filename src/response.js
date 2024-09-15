@@ -12,11 +12,6 @@ let fsKey = 0;
 const fsCache = {};
 const fsWorker = new Worker('./src/workers/fs.js');
 
-const fsInt = setInterval(() => {
-    if(fsKey > 1000000) fsKey = 0;
-}, 60000);
-fsInt.unref();
-
 fsWorker.on('message', (message) => {
     if(message.err) {
         fsCache[message.key].reject(new Error(message.err));
@@ -32,6 +27,9 @@ function readFile(path) {
         const key = fsKey++;
         fsWorker.postMessage({ key, type: 'readFile', path });
         fsCache[key] = { resolve, reject };
+        if(key > 1000000) {
+            fsKey = 0;
+        }
     });
 }
 

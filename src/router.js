@@ -1,4 +1,4 @@
-import { patternToRegex, needsConversionToRegex, supportedOptions } from "./utils.js";
+import { patternToRegex, needsConversionToRegex } from "./utils.js";
 import uWS from 'uWebSockets.js';
 import Response from './response.js';
 import Request from './request.js';
@@ -22,6 +22,7 @@ export default class Router {
         this.errorRoute = undefined;
         this.mountpath = '/';
         this.settings = settings;
+
         for(let method of methods) {
             this[method] = (path, ...callbacks) => {
                 this.#createRoute(method.toUpperCase(), path, this, ...callbacks);
@@ -32,14 +33,10 @@ export default class Router {
     get(path, ...callbacks) {
         if(typeof path === 'string' && callbacks.length === 0) {
             const key = path;
-            if(supportedOptions.includes(key)) {
-                if(typeof this.settings[key] === 'undefined' && this.parent) {
-                    return this.parent.get(key);
-                } else {
-                    return this.settings[key];
-                }
+            if(typeof this.settings[key] === 'undefined' && this.parent) {
+                return this.parent.get(key);
             } else {
-                throw new Error(`Unsupported option: ${key}`);
+                return this.settings[key];
             }
         }
         return this.#createRoute('GET', path, this, ...callbacks);
@@ -57,11 +54,15 @@ export default class Router {
 
     #pathMatches(route, req) {
         let path = req._opPath;
-        const pattern = route.pattern;
+        let pattern = route.pattern;
 
         if (typeof pattern === 'string') {
             if(path === '') {
                 path = '/';
+            }
+            if(!this.get('case sensitive routing')) {
+                path = path.toLowerCase();
+                pattern = pattern.toLowerCase();
             }
             return pattern === path || pattern === '/*';
         }
@@ -93,7 +94,7 @@ export default class Router {
                     all: method === 'ALL' || method === 'USE',
                 };
                 routes.push(route);
-                if(typeof route.pattern === 'string' && route.pattern !== '/*' && !this.parent) {
+                if(typeof route.pattern === 'string' && route.pattern !== '/*' && !this.parent && this.get('case sensitive routing')) {
                     // the only methods that uWS supports natively
                     if(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE'].includes(method)) {
                         this.#optimizeRoute(route, this.#routes);

@@ -93,7 +93,8 @@ export const defaultSettings = {
     'subdomain offset': 2,
     'trust proxy': false,
     'views': () => path.join(process.cwd(), 'views'),
-    'x-powered-by': true
+    'x-powered-by': true,
+    'case sensitive routing': true
 };
 
 export const supportedOptions = [

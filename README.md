@@ -2,7 +2,20 @@
 
 The Ultimate Express. Fastest http server with full Express compatibility, based on µWebSockets.
 
-This library is a re-implementation of Express.js. It is designed to be a drop-in replacement for Express.js, with the same API and functionality, while being much faster. It is not a fork of Express.js.
+This library is a re-implementation of Express.js.
+It is designed to be a drop-in replacement for Express.js, with the same API and functionality, while being much faster. It is not a fork of Express.js.
+
+## Differences
+
+- `case sensitive routing` is enabled by default.
+
+## Performance tips
+
+µExpress tries to optimize routing as much as possible, but it's only possible if:
+- `case sensitive routing` is enabled (it is by default, unlike in normal Express).
+- only string paths without regex characters like *, +, (), {}, :param, etc. can be optimized.
+
+Optimized routes can be up to 10 times faster than normal routes, as they're using native uWS router.
 
 ## Compatibility
 
@@ -42,7 +55,7 @@ This library is a re-implementation of Express.js. It is designed to be a drop-i
 
 ### Application settings
 
-- ❌ case sensitive routing
+- ✅ case sensitive routing
 - ❌ env
 - ❌ etag
 - ✅ jsonp callback name

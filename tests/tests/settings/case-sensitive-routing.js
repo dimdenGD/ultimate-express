@@ -1,4 +1,4 @@
-// must support "case sensitive routing" OFF
+// must support "case sensitive routing"
 
 import express from "express";
 
@@ -42,7 +42,7 @@ app.listen(13333, async () => {
         ]);
 
         console.log(outputs2.join(' '));
+        process.exit(0);
     });
 
-    process.exit(0);
 });

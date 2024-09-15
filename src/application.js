@@ -2,13 +2,12 @@ import uWS from 'uWebSockets.js';
 import Response from './response.js';
 import Request from './request.js';
 import Router from './router.js';
-import { removeDuplicateSlashes, defaultSettings, supportedOptions } from './utils.js';
+import { removeDuplicateSlashes, supportedOptions, defaultSettings } from './utils.js';
 
 class Application extends Router {
     constructor(settings = {}) {
         super(settings);
         this.port = undefined;
-
         for(const key in defaultSettings) {
             if(!this.settings[key]) {
                 if(typeof defaultSettings[key] === 'function') {
