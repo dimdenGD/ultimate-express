@@ -11,14 +11,10 @@ It is designed to be a drop-in replacement for Express.js, with the same API and
 Similar projects based on uWebSockets.js:
 
 - `hyper-express` - while having a similar API to Express, it's very far from being a drop-in replacement, and implements most of the functionality differently. This creates a lot of random quirks and issues, making the switch quite difficult. Built in middlewares are also very different.
-- `uwebsockets-express` - this library is closer to being a drop-in replacement, but:
-- - misses a lot of APIs
-- - depends on Express, calls it's methods under the hood
-- - doesn't try to optimize routing by using native uWS router.
-- - because of the above, it's slower than µExpress by about 2 times.
-- `express` on Bun - since Bun uses uWS for its HTTP module, Express is about 2 times than on Node.js with 25k/sec instead of 10k/sec normally, but still slower than µExpress at 60k/sec because it doesn't optimize routing using native uWS router.
+- `uwebsockets-express` - this library is closer to being a drop-in replacement, but misses a lot of APIs, depends on Express by calling it's methods under the hood, doesn't try to optimize routing by using native uWS router, and is about 2-3 times slower than µExpress.
+- `express` on Bun - since Bun uses uWS for its HTTP module, Express is about 2.5 times than on Node.js with 25k/sec instead of 10k/sec normally, but still slower than µExpress at 60k/sec because it doesn't optimize routing using native uWS router.
 
-## Differences
+## Differences from Express
 
 - `case sensitive routing` is enabled by default.
 - Running HTTPS server is done differently, instead of:
@@ -119,6 +115,7 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 - ✅ x-powered-by
 
 ### Request
+- ✅ implements Readable stream
 - ✅ req.app
 - ⚠️ req.baseUrl (`.use` is treated as `.all` when not a router)
 - ✅ req.body
