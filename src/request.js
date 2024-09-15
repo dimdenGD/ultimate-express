@@ -122,6 +122,14 @@ export default class Request extends IncomingMessage {
         return proxyaddr(this, trust);
     }
 
+    get ips() {
+        const trust = this.app.get('trust proxy fn');
+        if(!trust) {
+            return [];
+        }
+        return proxyaddr.all(this, trust);
+    }
+
     get protocol() {
         // TODO: support trust proxy
         // TODO: implement ssl
@@ -167,7 +175,8 @@ export default class Request extends IncomingMessage {
         return {
             remoteAddress: Buffer.from(this.res._res.getRemoteAddressAsText()).toString(),
             localPort: this.app.port,
-            remotePort: this.app.port
+            remotePort: this.app.port,
+            encrypted: this.app.ssl,
         };
     }
 

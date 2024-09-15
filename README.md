@@ -82,7 +82,7 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 - ✅ req.headersDistinct
 - ✅ req.rawHeaders
 - ✅ req.ip
-- ❌ req.ips
+- ✅ req.ips
 - ✅ req.method
 - ✅ req.url
 - ✅ req.originalUrl
@@ -97,7 +97,7 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 - ❌ req.stale
 - ✅ req.subdomains
 - ✅ req.xhr
-- ⚠️ req.connection, req.socket (only `remoteAddress`, `localPort` and `remotePort` are supported)
+- ⚠️ req.connection, req.socket (only `encrypted`, `remoteAddress`, `localPort` and `remotePort` are supported)
 - ✅ req.accepts()
 - ✅ req.acceptsCharsets()
 - ✅ req.acceptsEncodings()

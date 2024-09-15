@@ -21,9 +21,14 @@ class Application extends Router {
 
     set(key, value) {
         if(key === 'trust proxy') {
-            this.settings['trust proxy fn'] = compileTrust(value);
+            if(!value) {
+                delete this.settings['trust proxy fn'];
+            } else {
+                this.settings['trust proxy fn'] = compileTrust(value);
+            }
+        } else {
+            this.settings[key] = value;
         }
-        this.settings[key] = value;
         return this;
     }
 
