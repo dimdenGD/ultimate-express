@@ -5,7 +5,7 @@ import { normalizeType, stringify } from './utils.js';
 import { PassThrough } from 'stream';
 import { isAbsolute } from 'path';
 import fs from 'fs';
-import { join as pathJoin, resolve as pathResolve } from 'path';
+import { join as pathJoin, resolve as pathResolve, basename as pathBasename } from 'path';
 import { Worker } from 'worker_threads';
 import statuses from 'statuses';
 
@@ -173,14 +173,46 @@ export default class Response extends PassThrough {
                     }
                     this.headersSent = true;
                     this._res.end(data);
+                    if(callback) callback();
                 });
             }).catch((err) => {
-                this.status(500).send(this.app._generateErrorPage(err.message));
+                if(callback) callback(err);
             });
         } else {
             const file = fs.createReadStream(fullpath);
             pipeStreamOverResponse(this, file, stat.size, callback);
         }
+    }
+    download(path, filename, options, callback) {
+        let done = callback;
+        let name = filename;
+        let opts = options || {};
+
+        // support function as second or third arg
+        if (typeof filename === 'function') {
+            done = filename;
+            name = null;
+            opts = {};
+        } else if (typeof options === 'function') {
+            done = options;
+            opts = {};
+        }
+
+        // support optional filename, where options may be in it's place
+        if (typeof filename === 'object' &&
+            (typeof options === 'function' || options === undefined)) {
+            name = null;
+            opts = filename;
+        }
+        if(!name) {
+            name = pathBasename(path);
+        }
+        if(!opts.root) {
+            opts.root = process.cwd();
+        }
+
+        this.attachment(name);
+        this.sendFile(path, opts, done);
     }
     set(field, value) {
         if(this.headersSent) {

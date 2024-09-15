@@ -117,7 +117,7 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 - ✅ res.attachment()
 - ✅ res.cookie()
 - ✅ res.clearCookie()
-- ❌ res.download()
+- ✅ res.download()
 - ✅ res.end()
 - ✅ res.format()
 - ✅ res.getHeader(), res.get()
