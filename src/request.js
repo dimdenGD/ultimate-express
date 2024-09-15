@@ -127,7 +127,9 @@ export default class Request extends IncomingMessage {
         if(!trust) {
             return [];
         }
-        return proxyaddr.all(this, trust);
+        const addrs = proxyaddr.all(this, trust);
+        addrs.reverse().pop();
+        return addrs;
     }
 
     get protocol() {
