@@ -15,7 +15,10 @@ import express from 'express';
 
 const app = express();
 
-https.createServer(app).listen(3000, () => {
+https.createServer({
+    key: fs.readFileSync('path/to/key.pem'),
+    cert: fs.readFileSync('path/to/cert.pem')
+}, app).listen(3000, () => {
     console.log('Server is running on port 3000');
 });
 ```
