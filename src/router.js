@@ -18,7 +18,6 @@ export default class Router {
     #paramCallbacks = new Map();
     #mountpathCache = new Map();
     constructor(settings = {}) {
-        this.uwsApp = uWS.App(settings?.uwsOptions ?? {});
         this.errorRoute = undefined;
         this.mountpath = '/';
         this.settings = settings;
@@ -197,7 +196,6 @@ export default class Router {
                     return;
                 } else {
                     console.error(err);
-                    // TODO: support env setting
                     response.status(500).send(this._generateErrorPage(err, true));
                 }
             }
@@ -306,7 +304,6 @@ export default class Router {
                                 return resolve(true);
                             } else {
                                 console.error(err);
-                                // TODO: support env setting
                                 res.status(500).send(this._generateErrorPage(err, true));
                             }
                         }

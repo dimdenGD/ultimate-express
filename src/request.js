@@ -253,7 +253,7 @@ export default class Request extends IncomingMessage {
     }
 
     param(name, defaultValue) {
-        deprecated('req.param(name)', 'req.params, req.body, or req.quer');
+        deprecated('req.param(name)', 'req.params, req.body, or req.query');
         if(this.params[name]) {
             return this.params[name];
         }

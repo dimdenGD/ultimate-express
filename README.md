@@ -1,6 +1,6 @@
 # µExpress
 
-The Ultimate Express. Fastest http server with full Express compatibility, based on µWebSockets.
+The *Ultimate* Express. Fastest http server with full Express compatibility, based on µWebSockets.
 
 This library is a re-implementation of Express.js.
 It is designed to be a drop-in replacement for Express.js, with the same API and functionality, while being much faster. It is not a fork of Express.js.
@@ -8,6 +8,38 @@ It is designed to be a drop-in replacement for Express.js, with the same API and
 ## Differences
 
 - `case sensitive routing` is enabled by default.
+- Running HTTPS server is done differently, instead of:
+```js
+import https from 'https';
+import express from 'express';
+
+const app = express();
+
+https.createServer(app).listen(3000, () => {
+    console.log('Server is running on port 3000');
+});
+```
+
+You have to pass `uwsOptions` to the `express()` constructor:
+```js
+import express from 'u-express';
+
+const app = express({
+    uwsOptions: {
+        // all options: https://unetworking.github.io/uWebSockets.js/generated/interfaces/AppOptions.html
+        key_file_name: 'path/to/key.pem',
+        cert_file_name: 'path/to/cert.pem',
+        ca_file_name: 'path/to/ca.pem', // optional
+        passphrase: 'passphrase', // optional
+    }
+});
+
+app.listen(3000, () => {
+    console.log('Server is running on port 3000');
+});
+```
+
+- This also applies to non-SSL HTTP too. Do not create http server manually, use `app.listen()` instead.
 
 ## Performance tips
 
@@ -23,7 +55,6 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 
 - ✅ express()
 - ✅ express.Router()
-- ❌ SSL
 - ❌ express.json()
 - ❌ express.urlencoded()
 - ❌ express.static()
