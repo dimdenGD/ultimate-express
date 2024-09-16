@@ -53,13 +53,26 @@ class Socket extends EventEmitter {
     }
 }
 
-class ServerResponse extends PassThrough {
-    constructor(res) {
+export default class Response extends PassThrough {
+    constructor(res, req, app) {
         super();
+        this._req = req;
         this._res = res;
         this.headersSent = false;
         this.aborted = false;
         this.socket = new Socket(this);
+        this.app = app;
+        this.aborted = false;
+        this.statusCode = 200;
+        this.headers = {
+            'content-type': 'text/html',
+            'keep-alive': 'timeout=10'
+        };
+        this.body = undefined;
+        this.streaming = false;
+        if(this.app.get('x-powered-by')) {
+            this.set('x-powered-by', 'uExpress');
+        }
 
         this.on('data', (chunk) => {
             this.streaming = true;
@@ -92,25 +105,6 @@ class ServerResponse extends PassThrough {
             });
         });
         this.emit('socket', this.socket);
-    }
-}
-
-export default class Response extends ServerResponse {
-    constructor(res, req, app) {
-        super(res, req, app);
-        this._req = req;
-        this.app = app;
-        this.aborted = false;
-        this.statusCode = 200;
-        this.headers = {
-            'content-type': 'text/html',
-            'keep-alive': 'timeout=10'
-        };
-        this.body = undefined;
-        this.streaming = false;
-        if(this.app.get('x-powered-by')) {
-            this.set('x-powered-by', 'uExpress');
-        }
     }
     status(code) {
         if(this.headersSent) {
