@@ -142,6 +142,9 @@ export function deprecated(oldMethod, newMethod) {
 }
 
 export function readBody(req, res) {
+    if(req.method !== 'POST' && req.method !== 'PUT' && req.method !== 'PATCH') {
+        return;
+    }
     const bufferedData = Buffer.alloc(0);
     res._res.onData((ab, isLast) => {
         const chunk = Buffer.from(ab);
