@@ -141,29 +141,6 @@ export function deprecated(oldMethod, newMethod) {
     })} express deprecated ${oldMethod}: Use ${newMethod} instead at ${pos}`);
 }
 
-export function readBody(req, res) {
-    if(req.method !== 'POST' && req.method !== 'PUT' && req.method !== 'PATCH') {
-        return;
-    }
-    const bufferedData = Buffer.alloc(0);
-    res._res.onData((ab, isLast) => {
-        const chunk = Buffer.from(ab);
-        if(bufferedData.length || !req.push(chunk)) {
-            bufferedData = Buffer.concat([bufferedData, chunk]);
-        }
-        if(isLast && bufferedData.length === 0) {
-            req.push(null);
-        }
-    });
-    req._read = (size) => {
-        if(bufferedData.length > 0) {
-            const chunk = bufferedData.slice(0, size);
-            bufferedData = bufferedData.slice(size);
-            req.push(chunk);
-        }
-    };
-}
-
 Array.prototype.findStartingFrom = function(fn, index = 0) {
     for(let i = index; i < this.length; i++) {
         if(fn(this[i], i, this)) {

@@ -1,4 +1,4 @@
-import { patternToRegex, needsConversionToRegex, deprecated, readBody } from "./utils.js";
+import { patternToRegex, needsConversionToRegex, deprecated } from "./utils.js";
 import Response from './response.js';
 import Request from './request.js';
 
@@ -110,6 +110,8 @@ export default class Router {
         return parent;
     }
 
+    // if route is a simple string, its possible to pre-calculate its path
+    // and then create a native uWS route for it, which is much faster
     #optimizeRoute(route, routes, optimizedPath = [], stack = []) {
         for(let i = 0; i < routes.length; i++) {
             const r = routes[i];
@@ -156,7 +158,6 @@ export default class Router {
             const response = new Response(res, request, this);
             request.res = response;
             response.req = request;
-            readBody(request, response);
             res.onAborted(() => {
                 const err = new Error('Connection closed');
                 err.code = 'ECONNRESET';

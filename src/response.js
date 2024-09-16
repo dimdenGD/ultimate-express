@@ -10,7 +10,7 @@ import { Worker } from 'worker_threads';
 import statuses from 'statuses';
 import { sign } from 'cookie-signature';
 import { fileURLToPath } from 'node:url';
-import { EventEmitter } from 'events';
+import { EventEmitter } from "tseep";
 
 const __dirname = pathDirname(fileURLToPath(import.meta.url));
 let fsKey = 0;

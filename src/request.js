@@ -4,7 +4,7 @@ import typeis from 'type-is';
 import parseRange from 'range-parser';
 import proxyaddr from 'proxy-addr';
 import fresh from 'fresh';
-import { Readable } from 'stream';
+import { EventEmitter } from "tseep";
 
 const discardedDuplicates = [
     "age", "authorization", "content-length", "content-type", "etag", "expires",
@@ -13,7 +13,7 @@ const discardedDuplicates = [
     "server", "user-agent"
 ];
 
-export default class Request extends Readable {
+export default class Request extends EventEmitter {
     #cachedQuery = null;
     #cachedHeaders = null;
     #cachedDistinctHeaders = null;
@@ -22,6 +22,7 @@ export default class Request extends Readable {
         super();
         this._res = res;
         this._req = req;
+        this.readable = true;
         this._req.forEach((key, value) => {
             this.#rawHeadersEntries.push([key, value]);
         });
@@ -42,7 +43,28 @@ export default class Request extends Readable {
         this.params = {};
         this._gotParams = new Set();
         this._stack = [];
+
+        const additionalMethods = this.app.get('body methods');
+        // skip reading body for non-POST requests
+        // this makes it +10k req/sec faster
+        if(
+            this.method === 'POST' ||
+            this.method === 'PUT' ||
+            this.method === 'PATCH' || 
+            (additionalMethods && additionalMethods.includes(this.method))
+        ) {
+            this._res.onData((ab, isLast) => {
+                const chunk = Buffer.from(ab);
+                this.emit('data', chunk);
+                if(isLast) {
+                    this.emit('end');
+                }
+            });
+        } else {
+            this.emit('end');
+        }
     }
+
     get baseUrl() {
         let match = this.path.match(patternToRegex(this._stack.join(""), true));
         return match ? match[0] : '';

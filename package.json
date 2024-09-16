@@ -43,6 +43,7 @@
     "range-parser": "^1.2.1",
     "serve-static": "^1.16.2",
     "statuses": "^2.0.1",
+    "tseep": "^1.2.2",
     "type-is": "^1.6.18",
     "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.48.0",
     "vary": "^1.1.2"
