@@ -73,6 +73,9 @@ export default class Response extends Writable {
             this.set('x-powered-by', 'uExpress');
         }
         this.on('error', (err) => {
+            if(this.aborted) {
+                return;
+            }
             this._res.cork(() => {
                 this._res.close();
                 this.socket.emit('close');
