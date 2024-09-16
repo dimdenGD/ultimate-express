@@ -1,18 +1,18 @@
 # µExpress
 
-The *Ultimate* Express. Fastest http server with full Express compatibility, based on µWebSockets.
+The *Ultimate* Express. Fastest http server with **full** Express compatibility, based on µWebSockets.
 
-This library is a re-implementation of Express.js.
+This library is an extremely fast re-implementation of Express.js.
 It is designed to be a drop-in replacement for Express.js, with the same API and functionality, while being much faster. It is not a fork of Express.js.
 
 
 ## Difference from similar projects
 
-Similar projects based on uWebSockets.js:
+Similar projects based on uWebSockets:
 
+- `express` on Bun - since Bun uses uWS for its HTTP module, Express is about 2.5 times faster than on Node.js with 25k req/sec instead of 10k req/sec normally, but still slower than µExpress at 70k req/sec because it doesn't do uWS-specific optimizations.
 - `hyper-express` - while having a similar API to Express, it's very far from being a drop-in replacement, and implements most of the functionality differently. This creates a lot of random quirks and issues, making the switch quite difficult. Built in middlewares are also very different.
 - `uwebsockets-express` - this library is closer to being a drop-in replacement, but misses a lot of APIs, depends on Express by calling it's methods under the hood, doesn't try to optimize routing by using native uWS router, and is about 2-3 times slower than µExpress.
-- `express` on Bun - since Bun uses uWS for its HTTP module, Express is about 2.5 times faster than on Node.js with 25k req/sec instead of 10k req/sec normally, but still slower than µExpress at 60k req/sec because it doesn't do uWS-specific optimizations.
 
 ## Differences from Express
 
