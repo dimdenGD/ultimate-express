@@ -27,7 +27,6 @@ app.get('/undefined', (req, res) => {
 });
 
 app.get('/number', (req, res) => {
-    res.body = "Accepted";
     res.send(202);
 });
 

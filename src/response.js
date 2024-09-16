@@ -113,7 +113,7 @@ export default class Response extends PassThrough {
     sendStatus(code) {
         return this.status(code).send(statuses.message[+code] ?? code.toString());
     }
-    end() {
+    end(data) {
         if(this.streaming && !this._res.aborted) {
             this._res.cork(() => {
                 this.finished = true;
@@ -137,15 +137,13 @@ export default class Response extends PassThrough {
                 }
                 this._res.writeHeader(h[0], h[1]);
             }
-            if(this.body !== undefined) {
-                this._res.end(this.body);
-            } else {
-                this._res.endWithoutBody();
-            }
+            this._res.end(data);
             this.finished = true;
             this.socket.writable = false;
             this.socket.emit('close');
         });
+
+        return this;
     }
     send(body) {
         if(this.headersSent) {
@@ -160,16 +158,15 @@ export default class Response extends PassThrough {
         } else if(typeof body === 'number') {
             if(arguments[1]) {
                 deprecated('res.send(status, body)', 'res.status(status).send(body)');
-                this.body = arguments[1];
+                return this.status(body).send(arguments[1]);
             } else {
                 deprecated('res.send(status)', 'res.sendStatus(status)');
+                return this.sendStatus(body);
             }
-            return this.status(body).end();
         } else {
             body = String(body);
         }
-        this.body = body;
-        this.end();
+        return this.end(body);
     }
     sendFile(path, options = {}, callback) {
         // TODO: support options
