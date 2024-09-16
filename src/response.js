@@ -2,7 +2,7 @@ import cookie from 'cookie';
 import mime from 'mime-types';
 import vary from 'vary';
 import { normalizeType, stringify, deprecated } from './utils.js';
-import { PassThrough } from 'stream';
+import { Writable } from 'stream';
 import { isAbsolute } from 'path';
 import fs from 'fs';
 import { join as pathJoin, resolve as pathResolve, basename as pathBasename, dirname as pathDirname } from 'path';
@@ -53,7 +53,7 @@ class Socket extends EventEmitter {
     }
 }
 
-export default class Response extends PassThrough {
+export default class Response extends Writable {
     constructor(res, req, app) {
         super();
         this._req = req;
@@ -69,35 +69,9 @@ export default class Response extends PassThrough {
             'keep-alive': 'timeout=10'
         };
         this.body = undefined;
-        this.streaming = false;
         if(this.app.get('x-powered-by')) {
             this.set('x-powered-by', 'uExpress');
         }
-
-        this.on('data', (chunk) => {
-            this.streaming = true;
-            if(this.aborted) {
-                const err = new Error('Request aborted');
-                err.code = 'ECONNABORTED';
-                return this.destroy(err);
-            }
-            this.pause();
-            this._res.cork(() => {
-                if(!this.headersSent) {
-                    this._res.writeStatus(this.statusCode.toString());
-                    for(const h of Object.entries(this.headers)) {
-                        if(h[0] === 'content-length') {
-                            continue;
-                        }
-                        this._res.writeHeader(h[0], h[1]);
-                    }
-                    this.headersSent = true;
-                }
-                const ab = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
-                this._res.write(ab);
-                this.resume();
-            });
-        });
         this.on('error', (err) => {
             this._res.cork(() => {
                 this._res.close();
@@ -105,6 +79,31 @@ export default class Response extends PassThrough {
             });
         });
         this.emit('socket', this.socket);
+    }
+    _write(chunk, encoding, callback) {
+        if(this.aborted) {
+            const err = new Error('Request aborted');
+            err.code = 'ECONNABORTED';
+            return this.destroy(err);
+        }
+        if(!Buffer.isBuffer(chunk)) {
+            chunk = Buffer.from(chunk);
+        }
+        this._res.cork(() => {
+            if(!this.headersSent) {
+                this._res.writeStatus(this.statusCode.toString());
+                for(const header in this.headers) {
+                    if(header === 'content-length') {
+                        continue;
+                    }
+                    this._res.writeHeader(header, this.headers[header]);
+                }
+                this.headersSent = true;
+            }
+            const ab = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
+            this._res.write(ab);
+            callback();
+        });
     }
     status(code) {
         if(this.headersSent) {
@@ -129,11 +128,11 @@ export default class Response extends PassThrough {
                     return this._res.end();
                 }
                 this._res.writeStatus(this.statusCode.toString());
-                for(const h of Object.entries(this.headers)) {
-                    if(h[0] === 'content-length') {
+                for(const header in this.headers) {
+                    if(header === 'content-length') {
                         continue;
                     }
-                    this._res.writeHeader(h[0], h[1]);
+                    this._res.writeHeader(header, this.headers[header]);
                 }
             }
             this._res.end(data);
@@ -246,8 +245,8 @@ export default class Response extends PassThrough {
             throw new Error('Can\'t write headers: Response was already sent');
         }
         if(typeof field === 'object') {
-            for(const v of Object.entries(field)) {
-                this.set(v[0].toLowerCase(), v[1]);
+            for(const header in field) {
+                this.set(header, field[header]);
             }
         } else {
             this.headers[field.toLowerCase()] = String(value);
@@ -435,8 +434,8 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
         res._res.cork(() => {
             if(!res.headersSent) {
                 res._res.writeStatus(res.statusCode.toString());
-                for(const h of Object.entries(res.headers)) {
-                    res._res.writeHeader(h[0], h[1]);
+                for(const header in res.headers) {
+                    res._res.writeHeader(header, res.headers[header]);
                 }
                 res.headersSent = true;
             }
