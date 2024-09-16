@@ -33,9 +33,10 @@ export default class Request extends EventEmitter {
         }
         this.originalUrl = req.getUrl() + this.urlQuery;
         this.url = this.originalUrl;
-        this.path = this.url.split('?')[0];
+        const iq = this.url.indexOf('?');
+        this.path = iq !== -1 ? this.url.substring(0, iq) : this.url;
         // remove trailing slash
-        if(this.path.endsWith('/') && this.path !== '/') {
+        if(this.path[this.path.length - 1] === '/' && this.path !== '/') {
             this.path = this.path.slice(0, -1);
         }
         this._opPath = this.path;
