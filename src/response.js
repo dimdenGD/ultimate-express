@@ -39,9 +39,17 @@ function readFile(path) {
 }
 
 class Socket extends EventEmitter {
-    constructor() {
+    constructor(response) {
         super();
+        this.response = response;
         this.writable = true;
+
+        this.on('error', (err) => {
+            this.emit('close');
+        });
+        this.on('close', () => {
+            this.writable = false;
+        });
     }
 }
 
@@ -52,6 +60,7 @@ export default class Response extends PassThrough {
         this._req = req;
         this.app = app;
         this.headersSent = false;
+        this.aborted = false;
         this.statusCode = 200;
         this.headers = {
             'content-type': 'text/html',
@@ -59,21 +68,16 @@ export default class Response extends PassThrough {
         };
         this.body = undefined;
         this.streaming = false;
-        this.finished = false;
-        this.socket = new Socket();
+        this.socket = new Socket(this);
         if(this.app.get('x-powered-by')) {
             this.set('x-powered-by', 'uExpress');
         }
 
         this.on('data', (chunk) => {
             this.streaming = true;
-            if(this._res.aborted) {
+            if(this.aborted) {
                 const err = new Error('Request aborted');
                 err.code = 'ECONNABORTED';
-                this.socket.emit('error', err);
-                this.socket.emit('close');
-                this.socket.writable = false;
-                this.finished = true;
                 return this.destroy(err);
             }
             this.pause();
@@ -96,8 +100,6 @@ export default class Response extends PassThrough {
         this.on('error', (err) => {
             this._res.cork(() => {
                 this._res.close();
-                this.finished = true;
-                this.socket.writable = false;
                 this.socket.emit('close');
             });
         });
@@ -114,32 +116,26 @@ export default class Response extends PassThrough {
         return this.status(code).send(statuses.message[+code] ?? code.toString());
     }
     end(data) {
-        if(this.streaming && !this._res.aborted) {
-            this._res.cork(() => {
-                this.finished = true;
-                this.socket.writable = false;
-                this._res.end();
-                this.socket.emit('close');
-            });
+        if(this.finished) {
             return;
         }
-        if(this._res.aborted || this.headersSent) {
-            this.finished = true;
-            this.socket.writable = false;
-            return;
-        }
-        this.headersSent = true;
         this._res.cork(() => {
-            this._res.writeStatus(this.statusCode.toString());
-            for(const h of Object.entries(this.headers)) {
-                if(h[0] === 'content-length') {
-                    continue;
+            if(!this.headersSent) {
+                this.headersSent = true;
+                if(this.req.fresh) {
+                    this._res.writeStatus('304');
+                    this.socket.emit('close');
+                    return this._res.end();
                 }
-                this._res.writeHeader(h[0], h[1]);
+                this._res.writeStatus(this.statusCode.toString());
+                for(const h of Object.entries(this.headers)) {
+                    if(h[0] === 'content-length') {
+                        continue;
+                    }
+                    this._res.writeHeader(h[0], h[1]);
+                }
             }
             this._res.end(data);
-            this.finished = true;
-            this.socket.writable = false;
             this.socket.emit('close');
         });
 
@@ -154,7 +150,9 @@ export default class Response extends PassThrough {
         } else if(body === null || body === undefined) {
             body = '';
         } else if(typeof body === 'object') {
-            body = stringify(body);
+            if(!(body instanceof ArrayBuffer)) {
+                body = stringify(body);
+            }
         } else if(typeof body === 'number') {
             if(arguments[1]) {
                 deprecated('res.send(status, body)', 'res.status(status).send(body)');
@@ -201,15 +199,8 @@ export default class Response extends PassThrough {
                 if(this._res.aborted) {
                     return;
                 }
-                this._res.cork(() => {
-                    this._res.writeStatus(this.statusCode.toString());
-                    for(const h of Object.entries(this.headers)) {
-                        this._res.writeHeader(h[0], h[1]);
-                    }
-                    this.headersSent = true;
-                    this._res.end(data);
-                    if(callback) callback();
-                });
+                this.send(data);
+                if(callback) callback();
             }).catch((err) => {
                 if(callback) callback(err);
             });
@@ -423,11 +414,15 @@ export default class Response extends PassThrough {
         vary(this, field);
         return this;
     }
+
+    get finished() {
+        return !this.socket.writable;
+    }
 }
 
 function pipeStreamOverResponse(res, readStream, totalSize, callback) {
     readStream.on('data', (chunk) => {
-        if(res._res.aborted) {
+        if(res.aborted) {
             const err = new Error("Request aborted");
             err.code = "ECONNABORTED";
             return readStream.destroy(err);
@@ -447,8 +442,6 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
       
             if (done) {
                 readStream.destroy();
-                res.finished = true;
-                res.socket.writable = false;
                 res.socket.emit('close');
                 if(callback) callback();
             } else if (!ok) {
@@ -461,8 +454,6 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
                     const [ok, done] = res._res.tryEnd(res._res.ab.slice(offset - res._res.abOffset), totalSize);
                     if (done) {
                         readStream.destroy();
-                        res.finished = true;
-                        res.socket.writable = false;
                         res.socket.emit('close');
                         if(callback) callback();
                     } else if (ok) {
@@ -475,11 +466,9 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
         });
     }).on('error', e => {
         if(callback) callback(e);
-        if(!res.finished && !res._res.aborted) {
+        if(!res.finished) {
             res._res.close();
-            res.socket.writable = false;
-            res.finished = true;
-            res.socket.emit('close');
+            res.socket.emit('error', e);
         }
     });
   }

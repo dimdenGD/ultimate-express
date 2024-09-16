@@ -124,7 +124,7 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - ✅ req.baseUrl
 - ✅ req.body
 - ✅ req.cookies
-- ❌ req.fresh
+- ✅ req.fresh
 - ✅ req.hostname
 - ✅ req.headers
 - ✅ req.headersDistinct
@@ -142,7 +142,7 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - ⚠️ req.route (route impl. differs from express)
 - ✅ req.secure
 - ✅ req.signedCookies
-- ❌ req.stale
+- ✅ req.stale
 - ✅ req.subdomains
 - ✅ req.xhr
 - ⚠️ req.connection, req.socket (only `encrypted`, `remoteAddress`, `localPort` and `remotePort` are supported)
@@ -157,6 +157,7 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 
 ### Response
 
+- ✅ implements Writable stream
 - ✅ res.app
 - ✅ res.headersSent
 - ✅ res.req
@@ -176,7 +177,6 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - ✅ res.redirect()
 - ❌ res.render()
 - ✅ res.send()
-- ✅ piping to res
 - ⚠️ res.sendFile() (`options` not supported yet)
 - ✅ res.sendStatus()
 - ✅ res.header(), res.setHeader(), res.set()

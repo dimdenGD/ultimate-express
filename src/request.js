@@ -3,6 +3,7 @@ import accepts from 'accepts';
 import typeis from 'type-is';
 import parseRange from 'range-parser';
 import proxyaddr from 'proxy-addr';
+import fresh from 'fresh';
 import { Readable } from 'stream';
 
 const discardedDuplicates = [
@@ -210,6 +211,23 @@ export default class Request extends IncomingMessage {
             remotePort: this.app.port,
             encrypted: this.app.ssl,
         };
+    }
+
+    get fresh() {
+        if(this.method !== 'HEAD' && this.method !== 'GET') {
+            return false;
+        }
+        if((this.res.statusCode >= 200 && this.res.statusCode < 300) || this.res.statusCode === 304) {
+            return fresh(this.headers, {
+                'etag': this.res.get('etag'),
+                'last-modified': this.res.get('last-modified'),
+            });
+        }
+        return false;
+    }
+
+    get stale() {
+        return !this.fresh;
     }
 
     get(field) {

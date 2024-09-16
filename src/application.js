@@ -74,15 +74,18 @@ class Application extends Router {
 
     #createRequestHandler() {
         this.uwsApp.any('/*', async (res, req) => {
-            res.onAborted(() => {
-                res.aborted = true;
-            });
 
             const request = new Request(req, res, this);
             const response = new Response(res, req, this);
             request.res = response;
             response.req = request;
             readBody(request, response);
+            res.onAborted(() => {
+                const err = new Error('Request aborted');
+                err.code = 'ECONNABORTED';
+                response.aborted = true;
+                response.socket.emit('error', err);
+            });
 
             let matchedRoute = await this._routeRequest(request, response);
 

@@ -151,15 +151,18 @@ export default class Router {
             method = 'del';
         }
         this.uwsApp[method](route.path, async (res, req) => {
-            res.onAborted(() => {
-                res.aborted = true;
-            });
 
             const request = new Request(req, res, this);
             const response = new Response(res, request, this);
             request.res = response;
             response.req = request;
             readBody(request, response);
+            res.onAborted(() => {
+                const err = new Error('Connection closed');
+                err.code = 'ECONNRESET';
+                response.aborted = true;
+                response.socket.emit('error', err);
+            });
 
             await this.#preprocessRequest(request, response, route);
             let i = 0;
