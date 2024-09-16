@@ -123,7 +123,7 @@ export default class Router {
             }
             if(
                 (r.pattern instanceof RegExp && r.pattern.test(route.path)) ||
-                (typeof r.pattern === 'string' && (r.pattern === route.path || r.pattern === '*' || r.pattern === '/*'))
+                (typeof r.pattern === 'string' && (r.pattern === route.path || r.pattern === '/*'))
             ) {
                 if(r.callback instanceof Router) {
                     stack.push(r.path);
