@@ -65,6 +65,8 @@ Do not use external `serve-static` module. Instead use built-in `express.static(
 
 ## Compatibility
 
+WORK IN PROGRESS. Features with ❌ will be implemented in the future.
+
 ### express
 
 - ✅ express()
