@@ -18,6 +18,7 @@ Similar projects based on uWebSockets:
 
 - `case sensitive routing` is enabled by default.
 - request body is only read for POST, PUT and PATCH requests by default. You can add additional methods by setting `body methods` to array with uppercased methods.
+- For HTTPS, instead of doing this:
 
 ```js
 import https from 'https';
@@ -41,9 +42,7 @@ const app = express({
     uwsOptions: {
         // https://unetworking.github.io/uWebSockets.js/generated/interfaces/AppOptions.html
         key_file_name: 'path/to/key.pem',
-        cert_file_name: 'path/to/cert.pem',
-        ca_file_name: 'path/to/ca.pem', // optional
-        passphrase: 'passphrase', // optional
+        cert_file_name: 'path/to/cert.pem'
     }
 });
 
