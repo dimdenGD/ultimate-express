@@ -94,11 +94,11 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - ✅ app.disabled()
 - ✅ app.path()
 - ⚠️ app.param() (deprecated `app.param(callback)` is not supported)
-- ❌ app.engine()
+- ✅ app.engine()
 - ❌ app.render()
 - ❌ app.locals
 - ✅ app.settings
-- ❌ app.engines
+- ✅ app.engines
 - ✅ app.on("mount")
 
 ### Application settings

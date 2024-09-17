@@ -19,6 +19,7 @@ class Application extends Router {
             this.uwsApp = uWS.App(settings.uwsOptions);
             this.ssl = false;
         }
+        this.engines = {};
         this.port = undefined;
         for(const key in defaultSettings) {
             if(!this.settings[key]) {
@@ -125,6 +126,17 @@ class Application extends Router {
         }
         let path = removeDuplicateSlashes(paths.join(''));
         return path === '/' ? '' : path;
+    }
+
+    engine(ext, fn) {
+        if (typeof fn !== 'function') {
+            throw new Error('callback function required');
+        }
+        const extension = ext[0] !== '.'
+            ? '.' + ext
+            : ext;
+        this.engines[extension] = fn;
+        return this;
     }
 }
 
