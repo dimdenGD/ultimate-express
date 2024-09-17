@@ -99,7 +99,7 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - ❌ app.locals
 - ✅ app.settings
 - ❌ app.engines
-- ❌ app.on("mount")
+- ✅ app.on("mount")
 
 ### Application settings
 
