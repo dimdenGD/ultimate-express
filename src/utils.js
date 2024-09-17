@@ -19,8 +19,8 @@ export function patternToRegex(pattern, isPrefix = false) {
         .replace(/\./g, '\\.')
         .replace(/\-/g, '\\-')
         .replace(/\*/g, '.*') // Convert * to .*
-        .replace(/:(\w+)/g, (match, param) => {
-            return `(?<${param}>[^/]+)`;
+        .replace(/:(\w+)(\(.+?\))?/g, (match, param, regex) => {
+            return `(?<${param}>${regex ? regex + '($|\\/)' : '[^/]+'})`;
         }); // Convert :param to capture group
 
     return new RegExp(`^${regexPattern}${isPrefix ? '(?=$|\/)' : '$'}`);
