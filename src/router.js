@@ -341,8 +341,8 @@ export default class Router extends EventEmitter {
             if(callback instanceof Router) {
                 callback.mountpath = path;
                 callback.parent = this;
+                callback.emit('mount', this);
             }
-            callback.emit('mount', this);
         }
         this.#createRoute('USE', path, this, ...callbacks);
     }
