@@ -204,3 +204,4 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 ## Tested view engines
 
 - ✅ pug
+- ✅ express-art-template

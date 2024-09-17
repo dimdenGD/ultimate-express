@@ -180,7 +180,7 @@ export default class Router extends EventEmitter {
                                 i++;
                             }
                         } else {
-                            throw thingamabob;
+                            this.#handleError(thingamabob, request, response);
                         }
                     }
                     if(i >= optimizedPath.length) {
@@ -192,21 +192,20 @@ export default class Router extends EventEmitter {
                 request.next = next;
                 optimizedPath[0].callback(request, response, next);
             } catch(err) {
-                if(this.errorRoute) {
-                    const next = () => {
-                        if(!response.headersSent) {
-                            response.status(500).send(this._generateErrorPage(err, true));
-                        }
-                    };
-                    request.next = next;
-                    await this.errorRoute(err, request, response, next);
-                    return;
-                } else {
-                    console.error(err);
-                    response.status(500).send(this._generateErrorPage(err, true));
-                }
+                this.#handleError(err, request, response);
             }
         });
+    }
+
+    #handleError(err, request, response) {
+        if(this.errorRoute) {
+            return this.errorRoute(err, request, response, () => {
+                if(!response.headersSent) {
+                    response.status(500).send(this._generateErrorPage(err, true));
+                }
+            });
+        }
+        response.status(500).send(this._generateErrorPage(err, true));
     }
 
     #extractParams(pattern, path) {

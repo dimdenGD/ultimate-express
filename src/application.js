@@ -61,6 +61,9 @@ class Application extends Router {
             } else {
                 this.settings['view cache'] = undefined;
             }
+        } else if(key === 'views') {
+            this.settings[key] = path.resolve(value);
+            return this;
         }
 
         this.settings[key] = value;
