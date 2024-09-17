@@ -41,7 +41,6 @@
     "proxy-addr": "^2.0.7",
     "qs": "^6.13.0",
     "range-parser": "^1.2.1",
-    "serve-static": "^1.16.2",
     "statuses": "^2.0.1",
     "tseep": "^1.2.2",
     "type-is": "^1.6.18",
@@ -52,6 +51,7 @@
     "cookie-parser": "^1.4.6",
     "exit-hook": "^4.0.0",
     "express": "^4.19.2",
-    "pako": "^2.1.0"
+    "pako": "^2.1.0",
+    "serve-static": "^1.16.2"
   }
 }
