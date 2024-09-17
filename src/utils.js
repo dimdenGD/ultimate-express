@@ -15,6 +15,8 @@ export function patternToRegex(pattern, isPrefix = false) {
         return new RegExp(``);
     }
 
+    // TODO: fix dot https://expressjs.com/en/guide/routing.html#route-parameters
+
     let regexPattern = pattern
         .replace(/\*/g, '.*') // Convert * to .*
         .replace(/:(\w+)/g, (match, param) => {

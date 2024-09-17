@@ -157,7 +157,6 @@ export default class Router extends EventEmitter {
             method = 'del';
         }
         this.uwsApp[method](route.path, async (res, req) => {
-
             const request = new Request(req, res, this);
             const response = new Response(res, request, this);
             request.res = response;
@@ -229,18 +228,20 @@ export default class Router extends EventEmitter {
                 for(let param in req.params) {
                     if(this.#paramCallbacks.has(param) && !req._gotParams.has(param)) {
                         req._gotParams.add(param);
-                        for(let fn of this.#paramCallbacks.get(param)) {
+                        const pcs = this.#paramCallbacks.get(param);
+                        for(let i = 0; i < pcs.length; i++) {
+                            const fn = pcs[i];
                             await new Promise(resolveRoute => {
                                 const next = (thingamabob) => {
                                     if(thingamabob) {
                                         if(thingamabob === 'route') {
-                                            resolveRoute('route');
+                                            return resolve('route');
                                         } else {
                                             this.#handleError(thingamabob, req, res);
-                                            resolve(false);
+                                            return resolve(false);
                                         }
                                     }
-                                    resolveRoute();
+                                    return resolveRoute();
                                 };
                                 req.next = next;
                                 fn(req, res, next, req.params[param], param);
@@ -325,7 +326,7 @@ export default class Router extends EventEmitter {
                         if(thingamabob) {
                             if(thingamabob === 'route') {
                                 let routeSkipKey = route.routeSkipKey;
-                                while(this.#routes[routeIndex].routeKey !== routeSkipKey && routeIndex < this.#routes.length) {
+                                while(this.#routes[routeIndex - 1].routeKey !== routeSkipKey && routeIndex < this.#routes.length) {
                                     routeIndex++;
                                 }
                             } else {
@@ -336,7 +337,9 @@ export default class Router extends EventEmitter {
                     }
                     req.next = next;
                     const continueRoute = await this.#preprocessRequest(req, res, route);
-                    if(continueRoute) {
+                    if(continueRoute === 'route') {
+                        next('route');
+                    } else if(continueRoute) {
                         await route.callback(req, res, next);
                     } else {
                         resolve(true);
