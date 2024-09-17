@@ -5,6 +5,8 @@ import Router from './router.js';
 import { removeDuplicateSlashes, defaultSettings, compileTrust } from './utils.js';
 import querystring from 'querystring';
 import qs from 'qs';
+import ViewClass from './view.js';
+import path from 'path';
 
 class Application extends Router {
     constructor(settings = {}) {
@@ -19,7 +21,9 @@ class Application extends Router {
             this.uwsApp = uWS.App(settings.uwsOptions);
             this.ssl = false;
         }
+        this.cache = {};
         this.engines = {};
+        this.locals = {};
         this.port = undefined;
         for(const key in defaultSettings) {
             if(!this.settings[key]) {
@@ -30,6 +34,8 @@ class Application extends Router {
                 }
             }
         }
+        this.set('view', ViewClass);
+        this.set('views', path.resolve('views'));
     }
 
     set(key, value) {
@@ -48,6 +54,12 @@ class Application extends Router {
                 this.settings['query parser fn'] = value;
             } else {
                 this.settings['query parser fn'] = undefined;
+            }
+        } else if(key === 'env') {
+            if(value === 'production') {
+                this.settings['view cache'] = true;
+            } else {
+                this.settings['view cache'] = undefined;
             }
         }
 
@@ -137,6 +149,64 @@ class Application extends Router {
             : ext;
         this.engines[extension] = fn;
         return this;
+    }
+
+    render(name, options, callback) {
+        if(typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+        if(!options) {
+            options = {};
+        } else {
+            options = Object.assign({}, options);
+        }
+        for(let key in this.locals) {
+            options[key] = this.locals[key];
+        }
+
+        if(options._locals) {
+            for(let key in options._locals) {
+                options[key] = options._locals[key];
+            }
+        }
+
+        if(options.cache == null) {
+            options.cache = this.enabled('view cache');
+        }
+
+        let view;
+        if(options.cache) {
+            view = this.cache[name];
+        }
+
+        if(!view) {
+            const View = this.get('view');
+            view = new View(name, {
+                defaultEngine: this.get('view engine'),
+                root: this.get('views'),
+                engines: this.engines
+            });
+            if(!view.path) {
+                const dirs = Array.isArray(view.root) && view.root.length > 1
+                    ? 'directories "' + view.root.slice(0, -1).join('", "') + '" or "' + view.root[view.root.length - 1] + '"'
+                    : 'directory "' + view.root + '"';
+
+                const err = new Error(`Failed to lookup view "${name}" in views ${dirs}`);
+                err.view = view;
+                return callback(err);
+            }
+
+            if(options.cache) {
+                this.cache[name] = view;
+            }
+        }
+
+        try {
+            view.render(options, callback);
+        } catch(err) {
+            callback(err);
+        }
     }
 }
 

@@ -95,8 +95,8 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - ✅ app.path()
 - ⚠️ app.param() (deprecated `app.param(callback)` is not supported)
 - ✅ app.engine()
-- ❌ app.render()
-- ❌ app.locals
+- ✅ app.render()
+- ✅ app.locals
 - ✅ app.settings
 - ✅ app.engines
 - ✅ app.on("mount")
@@ -114,9 +114,9 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - ✅ strict routing
 - ✅ subdomain offset
 - ✅ trust proxy
-- ❌ views
-- ❌ view cache
-- ❌ view engine
+- ✅ views
+- ✅ view cache
+- ✅ view engine
 - ✅ x-powered-by
 
 ### Request
@@ -162,7 +162,7 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - ✅ res.app
 - ✅ res.headersSent
 - ✅ res.req
-- ❌ res.locals
+- ✅ res.locals
 - ✅ res.append()
 - ✅ res.attachment()
 - ✅ res.cookie()
@@ -176,7 +176,7 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - ✅ res.links()
 - ✅ res.location()
 - ✅ res.redirect()
-- ❌ res.render()
+- ✅ res.render()
 - ✅ res.send()
 - ⚠️ res.sendFile() (`options` not supported yet)
 - ✅ res.sendStatus()
@@ -201,3 +201,6 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - ✅ body-parser
 - ✅ serve-static
 
+## Tested view engines
+
+- ✅ pug

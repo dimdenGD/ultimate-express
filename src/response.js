@@ -62,6 +62,7 @@ export default class Response extends Writable {
         this.aborted = false;
         this.socket = new Socket(this);
         this.app = app;
+        this.locals = {};
         this.aborted = false;
         this.statusCode = 200;
         this.headers = {
@@ -288,6 +289,24 @@ export default class Response extends Writable {
             }
         }
         return this;
+    }
+    render(view, options, callback) {
+        if(typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+        if(!options) {
+            options = {};
+        } else {
+            options = Object.assign({}, options);
+        }
+        options._locals = this.locals;
+        const done = callback || ((err, str) => {
+            if(err) return this.req.next(err);
+            this.send(str);
+        });
+
+        this.app.render(view, options, done);
     }
     cookie(name, value, options) {
         if(!options) {
