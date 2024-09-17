@@ -23,7 +23,9 @@ class Application extends Router {
         }
         this.cache = {};
         this.engines = {};
-        this.locals = {};
+        this.locals = {
+            settings: this.settings
+        };
         this.port = undefined;
         for(const key in defaultSettings) {
             if(!this.settings[key]) {

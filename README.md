@@ -203,5 +203,11 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 
 ## Tested view engines
 
+Any Express view engine should work. Here's list of engines we include in our test suite:
+
+- ✅ ejs
 - ✅ pug
+- ✅ express-dot-engine
 - ✅ express-art-template
+- ✅ express-handlebars
+- ✅ swig

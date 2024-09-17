@@ -1,9 +1,12 @@
-// must support pug engine
+// must support mustache engine
 
 import express from "express";
+import mustacheExpress from 'mustache-express';
 
 const app = express();
-app.set('view engine', 'pug');
+
+app.engine('mustache', mustacheExpress());
+app.set('view engine', 'mustache');
 app.set('views', 'tests/parts');
 
 app.get('/test', (req, res) => {

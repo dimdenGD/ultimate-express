@@ -1,9 +1,12 @@
-// must support pug engine
+// must support handlebars engine
 
 import express from "express";
+import { engine } from 'express-handlebars';
 
 const app = express();
-app.set('view engine', 'pug');
+
+app.engine('handlebars', engine());
+app.set('view engine', 'handlebars');
 app.set('views', 'tests/parts');
 
 app.get('/test', (req, res) => {

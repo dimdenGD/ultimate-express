@@ -1,14 +1,14 @@
-// must support pug engine
+// must support ejs engine
 
 import express from "express";
 
 const app = express();
-app.set('view engine', 'pug');
+app.set('view engine', 'ejs');
 app.set('views', 'tests/parts');
 
 app.get('/test', (req, res) => {
     res.locals.asdf = 'locals test';
-    res.render('index', { title: 'Hey', message: 'Hello there!' });
+    res.render('index.ejs', { title: 'Hey', message: 'Hello there!' });
 });
 
 app.use((err, req, res, next) => {

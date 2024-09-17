@@ -1,9 +1,12 @@
-// must support pug engine
+// must support swig engine
 
 import express from "express";
+import swig from 'swig';
 
 const app = express();
-app.set('view engine', 'pug');
+
+app.engine('swig', swig.renderFile);
+app.set('view engine', 'swig');
 app.set('views', 'tests/parts');
 
 app.get('/test', (req, res) => {

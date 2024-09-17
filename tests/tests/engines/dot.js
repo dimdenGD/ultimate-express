@@ -1,14 +1,17 @@
-// must support pug engine
+// must support doT engine
 
 import express from "express";
+import dot from "express-dot-engine";
 
 const app = express();
-app.set('view engine', 'pug');
+
+app.engine('dot', dot.__express);
+app.set('view engine', 'dot');
 app.set('views', 'tests/parts');
 
 app.get('/test', (req, res) => {
     res.locals.asdf = 'locals test';
-    res.render('index', { title: 'Hey', message: 'Hello there!' });
+    res.render('index.ejs', { title: 'Hey', message: 'Hello there!' });
 });
 
 app.use((err, req, res, next) => {
