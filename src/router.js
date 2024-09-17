@@ -17,6 +17,7 @@ export default class Router extends EventEmitter {
     #routes = [];
     #paramCallbacks = new Map();
     #mountpathCache = new Map();
+    #paramFunction;
     constructor(settings = {}) {
         super();
 
@@ -259,14 +260,23 @@ export default class Router extends EventEmitter {
 
     param(name, fn) {
         if(typeof name === 'function') {
-            throw new Error('app.param(callback) is not supported, use app.param(name, callback) instead');
-        }
-        let names = Array.isArray(name) ? name : [name];
-        for(let name of names) {
-            if(!this.#paramCallbacks.has(name)) {
-                this.#paramCallbacks.set(name, []);
+            deprecated('app.param(callback)', 'app.param(name, callback)', true);
+            this.#paramFunction = name;
+        } else {
+            if(this.#paramFunction) {
+                if(!this.#paramCallbacks.has(name)) {
+                    this.#paramCallbacks.set(name, []);
+                }
+                this.#paramCallbacks.get(name).push(this.#paramFunction(name, fn));
+            } else {
+                let names = Array.isArray(name) ? name : [name];
+                for(let name of names) {
+                    if(!this.#paramCallbacks.has(name)) {
+                        this.#paramCallbacks.set(name, []);
+                    }
+                    this.#paramCallbacks.get(name).push(fn);
+                }
             }
-            this.#paramCallbacks.get(name).push(fn);
         }
     }
 
