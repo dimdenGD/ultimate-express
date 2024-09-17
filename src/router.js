@@ -1,6 +1,7 @@
 import { patternToRegex, needsConversionToRegex, deprecated } from "./utils.js";
 import Response from './response.js';
 import Request from './request.js';
+import { EventEmitter } from "tseep";
 
 let routeKey = 0;
 
@@ -12,11 +13,13 @@ const methods = [
     'checkout', 'merge', 'm-search', 'notify', 'subscribe', 'unsubscribe', 'search'
 ];
 
-export default class Router {
+export default class Router extends EventEmitter {
     #routes = [];
     #paramCallbacks = new Map();
     #mountpathCache = new Map();
     constructor(settings = {}) {
+        super();
+
         this.errorRoute = undefined;
         this.mountpath = '/';
         this.settings = settings;
@@ -339,6 +342,7 @@ export default class Router {
                 callback.mountpath = path;
                 callback.parent = this;
             }
+            callback.emit('mount', this);
         }
         this.#createRoute('USE', path, this, ...callbacks);
     }
