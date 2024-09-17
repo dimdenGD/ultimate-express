@@ -4,7 +4,7 @@ import typeis from 'type-is';
 import parseRange from 'range-parser';
 import proxyaddr from 'proxy-addr';
 import fresh from 'fresh';
-import { EventEmitter } from "tseep";
+import { Readable } from 'stream';
 
 const discardedDuplicates = [
     "age", "authorization", "content-length", "content-type", "etag", "expires",
@@ -13,7 +13,7 @@ const discardedDuplicates = [
     "server", "user-agent"
 ];
 
-export default class Request extends EventEmitter {
+export default class Request extends Readable {
     #cachedQuery = null;
     #cachedHeaders = null;
     #cachedDistinctHeaders = null;
@@ -44,6 +44,7 @@ export default class Request extends EventEmitter {
         this.params = {};
         this._gotParams = new Set();
         this._stack = [];
+        this.bufferedData = Buffer.alloc(0);
 
         const additionalMethods = this.app.get('body methods');
         // skip reading body for non-POST requests
@@ -56,13 +57,21 @@ export default class Request extends EventEmitter {
         ) {
             this._res.onData((ab, isLast) => {
                 const chunk = Buffer.from(ab);
-                this.emit('data', chunk);
-                if(isLast) {
-                    this.emit('end');
+                if(this.bufferedData.length || !this.push(chunk)) {
+                    this.bufferedData = Buffer.concat([this.bufferedData, chunk]);
+                }
+                if(isLast && this.bufferedData.length === 0) {
+                    this.push(null);
                 }
             });
-        } else {
-            this.emit('end');
+        }
+    }
+
+    _read(size) {
+        if(this.bufferedData.length > 0) {
+            const chunk = this.bufferedData.slice(0, size);
+            this.bufferedData = this.bufferedData.slice(size);
+            this.push(chunk);
         }
     }
 
