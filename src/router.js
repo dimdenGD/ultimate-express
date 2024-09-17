@@ -186,7 +186,10 @@ export default class Router extends EventEmitter {
                         }
                     }
                     if(i >= optimizedPath.length) {
-                        return response.status(404).send(this._generateErrorPage(`Cannot ${request.method} ${request.path}`));
+                        if(!response.headersSent) {
+                            response.status(404).send(this._generateErrorPage(`Cannot ${request.method} ${request.path}`));
+                        }
+                        return;
                     }
                     request.next = next;
                     optimizedPath[i].callback(request, response, next);
