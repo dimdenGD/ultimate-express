@@ -126,7 +126,7 @@ export function compileTrust(val) {
 const shownWarnings = new Set();
 export function deprecated(oldMethod, newMethod, full = false) {
     const err = new Error();
-    const pos = full ? err.stack.split('\n').slice(1).join('\n') : err.stack.split('\n')[index].trim().split('(').slice(1).join('(').split(')').slice(0, -1).join(')');
+    const pos = full ? err.stack.split('\n').slice(1).join('\n') : err.stack.split('\n')[3].trim().split('(').slice(1).join('(').split(')').slice(0, -1).join(')');
     if(shownWarnings.has(pos)) return;
     shownWarnings.add(pos);
     console.warn(`${new Date().toLocaleString('en-UK', {

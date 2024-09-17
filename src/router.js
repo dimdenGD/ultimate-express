@@ -169,7 +169,9 @@ export default class Router extends EventEmitter {
                 response.socket.emit('error', err);
             });
 
+            // no need to check because optimized routes are never using param
             await this.#preprocessRequest(request, response, route);
+
             let i = 0;
             try {
                 const next = (thingamabob) => {
@@ -214,48 +216,61 @@ export default class Router extends EventEmitter {
         return match?.groups ?? {};
     }
 
-    async #preprocessRequest(req, res, route) {
-        req.route = route;
-        if(typeof route.path === 'string' && route.path.includes(':') && route.pattern instanceof RegExp) {
-            let path = req.path;
-            if(req._stack.length > 0) {
-                path = path.replace(this.#getFullMountpath(req), '');
-            }
-            req.params = this.#extractParams(route.pattern, path);
+    #preprocessRequest(req, res, route) {
+        return new Promise(async resolve => {
+            req.route = route;
+            if(typeof route.path === 'string' && route.path.includes(':') && route.pattern instanceof RegExp) {
+                let path = req.path;
+                if(req._stack.length > 0) {
+                    path = path.replace(this.#getFullMountpath(req), '');
+                }
+                req.params = this.#extractParams(route.pattern, path);
 
-            for(let param in req.params) {
-                if(this.#paramCallbacks.has(param) && !req._gotParams.has(param)) {
-                    req._gotParams.add(param);
-                    for(let fn of this.#paramCallbacks.get(param)) {
-                        await new Promise(resolve => {
-                            req.next = resolve;
-                            fn(req, res, resolve, req.params[param], param);
-                        });
+                for(let param in req.params) {
+                    if(this.#paramCallbacks.has(param) && !req._gotParams.has(param)) {
+                        req._gotParams.add(param);
+                        for(let fn of this.#paramCallbacks.get(param)) {
+                            await new Promise(resolveRoute => {
+                                const next = (thingamabob) => {
+                                    if(thingamabob) {
+                                        if(thingamabob === 'route') {
+                                            resolveRoute('route');
+                                        } else {
+                                            this.#handleError(thingamabob, req, res);
+                                            resolve(false);
+                                        }
+                                    }
+                                    resolveRoute();
+                                };
+                                req.next = next;
+                                fn(req, res, next, req.params[param], param);
+                            });
+                        }
                     }
                 }
+            } else {
+                req.params = {};
             }
-        } else {
-            req.params = {};
-        }
 
-        if(route.use) {
-            req._stack.push(route.path);
-            req.url = req.path.replace(this.#getFullMountpath(req), '');
-            if(!req.url) {
-                req.url = '/';
+            if(route.use) {
+                req._stack.push(route.path);
+                req.url = req.path.replace(this.#getFullMountpath(req), '');
+                if(!req.url) {
+                    req.url = '/';
+                }
+                req.popAt = route.routeSkipKey + 1;
             }
-            req.popAt = route.routeSkipKey + 1;
-        }
-        if(req.popAt === route.routeKey) {
-            req._stack.pop();
-            req.url = req.path.replace(this.#getFullMountpath(req), '');
-            if(!req.url) {
-                req.url = '/';
+            if(req.popAt === route.routeKey) {
+                req._stack.pop();
+                req.url = req.path.replace(this.#getFullMountpath(req), '');
+                if(!req.url) {
+                    req.url = '/';
+                }
+                delete req.popAt;
             }
-            delete req.popAt;
-        }
 
-        return true;
+            resolve(true);
+        });
     }
 
     param(name, fn) {
@@ -320,16 +335,22 @@ export default class Router extends EventEmitter {
                         return resolve(this._routeRequest(req, res, routeIndex));
                     }
                     req.next = next;
-                    await this.#preprocessRequest(req, res, route);
-                    await route.callback(req, res, next);
+                    const continueRoute = await this.#preprocessRequest(req, res, route);
+                    if(continueRoute) {
+                        await route.callback(req, res, next);
+                    } else {
+                        resolve(true);
+                    }
                 } catch(err) {
                     if(this.errorRoute) {
                         const next = () => {
                             resolve(res.headersSent);
                         };
                         await this.errorRoute(err, req, res, next);
-                        return resolve(true);
+                    } else {
+                        this.#handleError(err, req, res);
                     }
+                    return resolve(true);
                 }
             }
         });
