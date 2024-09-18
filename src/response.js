@@ -11,27 +11,38 @@ const statuses = require("statuses");
 const { sign } = require("cookie-signature");
 const { EventEmitter } = require("tseep");
 const http = require("http");
+const os = require('os');
 
 const outgoingMessage = new http.OutgoingMessage();
 const symbols = Object.getOwnPropertySymbols(outgoingMessage);
 const kOutHeaders = symbols.find(s => s.toString() === 'Symbol(kOutHeaders)');
 
+const cpuCount = os.cpus().length;
+
+let fsWorker;
 let fsKey = 0;
 const fsCache = {};
-const fsWorker = new Worker(Path.join(__dirname, 'workers/fs.js'));
+// only create fs worker if cpuCount is greater than 1
+// otherwise it's not worth it
+if(cpuCount > 1) {
+    fsWorker = new Worker(Path.join(__dirname, 'workers/fs.js'));
 
-fsWorker.on('message', (message) => {
-    if(message.err) {
-        fsCache[message.key].reject(new Error(message.err));
-    } else {
-        fsCache[message.key].resolve(message.data);
-    }
-    delete fsCache[message.key];
-});
-fsWorker.unref();
+    fsWorker.on('message', (message) => {
+        if(message.err) {
+            fsCache[message.key].reject(new Error(message.err));
+        } else {
+            fsCache[message.key].resolve(message.data);
+        }
+        delete fsCache[message.key];
+    });
+    fsWorker.unref();
+}
 
 function readFile(path) {
     return new Promise((resolve, reject) => {
+        if(!fsWorker) {
+            return reject(new Error('fsWorker is not available'));
+        }
         const key = fsKey++;
         fsWorker.postMessage({ key, type: 'readFile', path });
         fsCache[key] = { resolve, reject };
@@ -240,7 +251,7 @@ module.exports = class Response extends Writable {
         }
 
         //there's no point in creating a stream when the file is small enough to fit in a single chunk
-        if(stat.size < 64 * 1024) { // 64kb - default highWaterMark
+        if(stat.size < 64 * 1024 && fsWorker) { // 64kb - default highWaterMark
             // get file using worker
             readFile(fullpath).then((data) => {
                 if(this._res.aborted) {
