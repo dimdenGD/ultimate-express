@@ -36,6 +36,7 @@
     "cookie": "^0.6.0",
     "cookie-session": "^2.1.0",
     "cookie-signature": "^1.2.1",
+    "express-rate-limit": "^7.4.0",
     "fresh": "^0.5.2",
     "mime-types": "^2.1.35",
     "proxy-addr": "^2.0.7",
