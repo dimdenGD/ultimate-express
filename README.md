@@ -210,6 +210,7 @@ Most of the middlewares that are compatible with Express are compatible with µE
 - ✅ [cors](https://npmjs.com/package/cors)
 - ✅ [errorhandler](https://npmjs.com/package/errorhandler)
 - ✅ [method-override](https://npmjs.com/package/method-override)
+- ✅ [multer](https://npmjs.com/package/multer)
 - ❌ [compression](https://npmjs.com/package/compression) (doesn't error, but doesn't compress)
 
 ## Tested view engines
