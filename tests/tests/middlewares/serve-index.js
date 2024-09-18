@@ -31,7 +31,7 @@ app.listen(13333, async () => {
 
     const texts = await Promise.all(responses.map(r => r.text()));
 
-    console.log(texts);
+    console.log(texts.map(i => i.slice(0, 100)));
 
     process.exit(0);
 
