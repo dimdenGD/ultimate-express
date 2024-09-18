@@ -201,21 +201,21 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 
 ## Tested middlewares
 
-- ✅ body-parser
-- ✅ cookie-parser
-- ✅ cookie-session
-- ✅ serve-static
-- ✅ cors
-- ✅ errorhandler
-- ❌ compression (doesn't error, but doesn't compress)
+- ✅ [body-parser](https://npmjs.com/package/body-parser)
+- ✅ [cookie-parser](https://npmjs.com/package/cookie-parser)
+- ✅ [cookie-session](https://npmjs.com/package/cookie-session)
+- ✅ [serve-static](https://npmjs.com/package/serve-static)
+- ✅ [cors](https://npmjs.com/package/cors)
+- ✅ [errorhandler](https://npmjs.com/package/errorhandler)
+- ❌ [compression](https://npmjs.com/package/compression) (doesn't error, but doesn't compress)
 
 ## Tested view engines
 
 Any Express view engine should work. Here's list of engines we include in our test suite:
 
-- ✅ ejs
-- ✅ pug
-- ✅ express-dot-engine
-- ✅ express-art-template
-- ✅ express-handlebars
-- ✅ swig
+- ✅ [ejs](https://npmjs.com/package/ejs)
+- ✅ [pug](https://npmjs.com/package/pug)
+- ✅ [express-dot-engine](https://npmjs.com/package/express-dot-engine)
+- ✅ [express-art-template](https://npmjs.com/package/express-art-template)
+- ✅ [express-handlebars](https://npmjs.com/package/express-handlebars)
+- ✅ [swig](https://npmjs.com/package/swig)
