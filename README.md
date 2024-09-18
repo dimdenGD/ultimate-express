@@ -207,6 +207,7 @@ Most of the middlewares that are compatible with Express are compatible with µE
 - ✅ [cookie-parser](https://npmjs.com/package/cookie-parser)
 - ✅ [cookie-session](https://npmjs.com/package/cookie-session)
 - ✅ [serve-static](https://npmjs.com/package/serve-static) (use `express.static()` instead for better performance)
+- ✅ [serve-index](https://npmjs.com/package/serve-index)
 - ✅ [cors](https://npmjs.com/package/cors)
 - ✅ [errorhandler](https://npmjs.com/package/errorhandler)
 - ✅ [method-override](https://npmjs.com/package/method-override)

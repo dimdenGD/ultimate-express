@@ -257,7 +257,7 @@ module.exports = class Router extends EventEmitter {
                 req.params = {};
             }
 
-            if(route.use) {
+            if(route.use && !req.popAt) {
                 req._stack.push(route.path);
                 req.url = req.path.replace(this.#getFullMountpath(req), '');
                 if(!req.url) {

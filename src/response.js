@@ -69,7 +69,6 @@ module.exports = class Response extends Writable {
         this.aborted = false;
         this.statusCode = 200;
         this.headers = {
-            'content-type': 'text/html',
             'keep-alive': 'timeout=10'
         };
         // support for node internal
@@ -115,6 +114,9 @@ module.exports = class Response extends Writable {
                         continue;
                     }
                     this._res.writeHeader(header, this.headers[header]);
+                }
+                if(!this.headers['content-type']) {
+                    this._res.writeHeader('content-type', 'text/html');
                 }
                 this.headersSent = true;
             }
@@ -169,6 +171,9 @@ module.exports = class Response extends Writable {
                         continue;
                     }
                     this._res.writeHeader(header, this.headers[header]);
+                }
+                if(!this.headers['content-type']) {
+                    this._res.writeHeader('content-type', 'text/html');
                 }
                 this.headersSent = true;
             }
@@ -499,6 +504,9 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
                         continue;
                     }
                     res._res.writeHeader(header, res.headers[header]);
+                }
+                if(!this.headers['content-type']) {
+                    this._res.writeHeader('content-type', 'text/html');
                 }
                 res.headersSent = true;
             }
