@@ -213,6 +213,7 @@ Most of the middlewares that are compatible with Express are compatible with µE
 - ✅ [method-override](https://npmjs.com/package/method-override)
 - ✅ [multer](https://npmjs.com/package/multer)
 - ✅ [response-time](https://npmjs.com/package/response-time)
+- ✅ [express-fileupload](https://npmjs.com/package/express-fileupload)
 - ✅ [express-session](https://npmjs.com/package/express-session)
 - ✅ [express-rate-limit](https://npmjs.com/package/express-rate-limit)
 - ✅ [vhost](https://npmjs.com/package/vhost)
