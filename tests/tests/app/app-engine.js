@@ -1,6 +1,6 @@
 // must support app.engine()
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 app.engine('asdf', function test() {});

@@ -1,6 +1,6 @@
 // must support res.cookie()
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 

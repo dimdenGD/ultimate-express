@@ -1,7 +1,7 @@
 // must support swig engine
 
-import express from "express";
-import swig from 'swig';
+const express = require("express");
+const swig = require("swig");
 
 const app = express();
 

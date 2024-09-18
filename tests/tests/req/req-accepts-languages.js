@@ -1,6 +1,6 @@
 // must support req.acceptsLanguages()
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 

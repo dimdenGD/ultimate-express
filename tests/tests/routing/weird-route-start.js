@@ -1,6 +1,6 @@
 // must match express behavior for non-slash route start
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 const router = express.Router();

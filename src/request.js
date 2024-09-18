@@ -1,10 +1,10 @@
-import { patternToRegex, deprecated } from "./utils.js";
-import accepts from 'accepts';
-import typeis from 'type-is';
-import parseRange from 'range-parser';
-import proxyaddr from 'proxy-addr';
-import fresh from 'fresh';
-import { Readable } from 'stream';
+const { patternToRegex, deprecated } = require("./utils.js");
+const accepts = require("accepts");
+const typeis = require("type-is");
+const parseRange = require("range-parser");
+const proxyaddr = require("proxy-addr");
+const fresh = require("fresh");
+const { Readable } = require("stream");
 
 const discardedDuplicates = [
     "age", "authorization", "content-length", "content-type", "etag", "expires",
@@ -13,7 +13,7 @@ const discardedDuplicates = [
     "server", "user-agent"
 ];
 
-export default class Request extends Readable {
+module.exports = class Request extends Readable {
     #cachedQuery = null;
     #cachedHeaders = null;
     #cachedDistinctHeaders = null;

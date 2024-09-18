@@ -1,6 +1,6 @@
 // must support simple "use"
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 

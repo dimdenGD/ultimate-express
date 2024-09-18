@@ -1,6 +1,6 @@
 // must support res.set(), res.header()
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 

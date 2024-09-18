@@ -1,6 +1,6 @@
 // must support next('route') in param
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 

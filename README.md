@@ -21,8 +21,8 @@ Similar projects based on uWebSockets:
 - For HTTPS, instead of doing this:
 
 ```js
-import https from 'https';
-import express from 'express';
+const https = require("https");
+const express = require("express");
 
 const app = express();
 
@@ -36,7 +36,7 @@ https.createServer({
 
 You have to pass `uwsOptions` to the `express()` constructor:
 ```js
-import express from 'u-express';
+const express = require("u-express");
 
 const app = express({
     uwsOptions: {

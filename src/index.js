@@ -1,6 +1,6 @@
-import Application from './application.js';
-import Router from './router.js';
-import bodyParser from 'body-parser';
+const Application = require("./application.js");
+const Router = require("./router.js");
+const bodyParser = require("body-parser");
 
 Application.Router = function() {
     return new Router();
@@ -11,4 +11,4 @@ Application.urlencoded = bodyParser.urlencoded;
 Application.text = bodyParser.text;
 Application.raw = bodyParser.raw;
 
-export default Application;
+module.exports = Application;

@@ -1,9 +1,7 @@
-import path from 'path';
-import fs from 'fs';
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
+const path = require("path");
+const fs = require("fs");
 
-export default class View {
+module.exports = class View {
     constructor(name, options) {
         this.name = name;
         this.options = options ? Object.assign({}, options) : {};

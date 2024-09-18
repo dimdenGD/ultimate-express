@@ -1,5 +1,5 @@
-import fs from 'fs';
-import { parentPort } from 'worker_threads';
+const fs = require("fs");
+const { parentPort } = require("worker_threads");
 
 parentPort.on('message', (message) => {
     if(message.type === 'readFile') {

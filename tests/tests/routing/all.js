@@ -1,6 +1,6 @@
 // must support app.all
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 

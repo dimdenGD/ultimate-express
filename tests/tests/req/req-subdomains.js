@@ -1,7 +1,7 @@
 // must support req.subdomains
 
-import net from "net";
-import express from "express";
+const net = require("net");
+const express = require("express");
 
 async function sendRequest(method, url, customHost) {
     // arrayHeaders is an array of [key, value] pairs

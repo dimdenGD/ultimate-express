@@ -1,13 +1,13 @@
-import mime from 'mime-types';
-import path from 'path';
-import proxyaddr from 'proxy-addr';
-import qs from 'qs';
+const mime = require("mime-types");
+const path = require("path");
+const proxyaddr = require("proxy-addr");
+const qs = require("qs");
 
-export function removeDuplicateSlashes(path) {
+function removeDuplicateSlashes(path) {
     return path.replace(/\/{2,}/g, '/');
 }
 
-export function patternToRegex(pattern, isPrefix = false) {
+function patternToRegex(pattern, isPrefix = false) {
     if(pattern instanceof RegExp) {
         return pattern;
     }
@@ -26,7 +26,7 @@ export function patternToRegex(pattern, isPrefix = false) {
     return new RegExp(`^${regexPattern}${isPrefix ? '(?=$|\/)' : '$'}`);
 }
 
-export function needsConversionToRegex(pattern) {
+function needsConversionToRegex(pattern) {
     if(pattern instanceof RegExp) {
         return false;
     }
@@ -62,13 +62,13 @@ function acceptParams(str) {
     return ret;
 }
 
-export function normalizeType(type) {
+function normalizeType(type) {
     return ~type.indexOf('/') ?
         acceptParams(type) :
         { value: (mime.lookup(type) || 'application/octet-stream'), params: {} };
 }
 
-export function stringify(value, replacer, spaces, escape) {
+function stringify(value, replacer, spaces, escape) {
     let json = replacer || spaces
         ? JSON.stringify(value, replacer, spaces)
         : JSON.stringify(value);
@@ -91,7 +91,7 @@ export function stringify(value, replacer, spaces, escape) {
     return json;
 }
 
-export const defaultSettings = {
+const defaultSettings = {
     'jsonp callback name': 'callback',
     'env': () => process.env.NODE_ENV ?? 'development',
     'etag': 'weak',
@@ -105,7 +105,7 @@ export const defaultSettings = {
     'case sensitive routing': true
 };
 
-export function compileTrust(val) {
+function compileTrust(val) {
     if (typeof val === 'function') return val;
   
     if (val === true) {
@@ -128,7 +128,7 @@ export function compileTrust(val) {
 }
 
 const shownWarnings = new Set();
-export function deprecated(oldMethod, newMethod, full = false) {
+function deprecated(oldMethod, newMethod, full = false) {
     const err = new Error();
     const pos = full ? err.stack.split('\n').slice(1).join('\n') : err.stack.split('\n')[3].trim().split('(').slice(1).join('(').split(')').slice(0, -1).join(')');
     if(shownWarnings.has(pos)) return;
@@ -153,4 +153,16 @@ Array.prototype.findStartingFrom = function(fn, index = 0) {
         }
     }
     return [-1, undefined];
+};
+
+module.exports = {
+    removeDuplicateSlashes,
+    patternToRegex,
+    needsConversionToRegex,
+    acceptParams,
+    normalizeType,
+    stringify,
+    defaultSettings,
+    compileTrust,
+    deprecated
 };

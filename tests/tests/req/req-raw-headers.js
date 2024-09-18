@@ -1,7 +1,7 @@
 // must support req.rawHeaders
 
-import net from "net";
-import express from "express";
+const net = require("net");
+const express = require("express");
 
 // this is needed to actually test multiple headers with the same name
 // because fetch just combines them into one

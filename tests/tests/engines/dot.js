@@ -1,7 +1,7 @@
 // must support doT engine
 
-import express from "express";
-import dot from "express-dot-engine";
+const express = require("express");
+const dot = require("express-dot-engine");
 
 const app = express();
 

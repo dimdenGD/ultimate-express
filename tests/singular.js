@@ -1,7 +1,7 @@
-import childProcess from 'child_process';
-import fs from 'fs';
-import exitHook from 'exit-hook';
-import { exit } from 'process';
+const childProcess = require("child_process");
+const fs = require("fs");
+const exitHook = require("exit-hook");
+const { exit } = require("process");
 
 let args = process.argv.slice(2);
 
@@ -18,10 +18,10 @@ if (!path) {
 if (u) {
     console.log('Running as µExpress');
     let code = fs.readFileSync(path, 'utf8');
-    fs.writeFileSync(path, code.replace(/import express from ['"]express['"];/g, 'import express from "../../../src/index.js";'));
+    fs.writeFileSync(path, code.replace(/const express = require("express");/g, 'const express = require("../../../src/index.js");'));
 } else {
     let code = fs.readFileSync(path, 'utf8');
-    fs.writeFileSync(path, code.replace(`import express from "../../../src/index.js";`, `import express from "express";`));
+    fs.writeFileSync(path, code.replace(`const express = require("../../../src/index.js");`, `const express = require("express");`));
     console.log('Running as normal Express');
 }
 
@@ -37,5 +37,5 @@ node.stderr.on('data', data => {
 
 exitHook(() => {
     let code = fs.readFileSync(path, 'utf8');
-    fs.writeFileSync(path, code.replaceAll(`import express from "../../../src/index.js";`, `import express from "express";`));
+    fs.writeFileSync(path, code.replaceAll(`const express = require("../../../src/index.js");`, `const express = require("express");`));
 });

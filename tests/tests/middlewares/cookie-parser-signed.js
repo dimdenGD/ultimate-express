@@ -1,7 +1,7 @@
 // must support cookie parser with signed cookies
 
-import express from "express";
-import cookieParser from "cookie-parser";
+const express = require("express");
+const cookieParser = require("cookie-parser");
 
 const app = express();
 

@@ -1,7 +1,7 @@
-import { patternToRegex, needsConversionToRegex, deprecated } from "./utils.js";
-import Response from './response.js';
-import Request from './request.js';
-import { EventEmitter } from "tseep";
+const { patternToRegex, needsConversionToRegex, deprecated } = require("./utils.js");
+const Response = require("./response.js");
+const Request = require("./request.js");
+const { EventEmitter } = require("tseep");
 
 let routeKey = 0;
 
@@ -13,7 +13,7 @@ const methods = [
     'checkout', 'merge', 'm-search', 'notify', 'subscribe', 'unsubscribe', 'search'
 ];
 
-export default class Router extends EventEmitter {
+module.exports = class Router extends EventEmitter {
     #routes = [];
     #paramCallbacks = new Map();
     #mountpathCache = new Map();

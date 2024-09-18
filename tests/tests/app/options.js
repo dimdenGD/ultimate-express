@@ -1,6 +1,6 @@
 // must support setting and getting options
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 

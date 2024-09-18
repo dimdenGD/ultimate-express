@@ -1,6 +1,6 @@
 // must support req.fresh and req.stale
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 

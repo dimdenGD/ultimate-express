@@ -1,6 +1,6 @@
 // must support array and regex routes
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 

@@ -1,6 +1,6 @@
 // must support a lot of param routes
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 

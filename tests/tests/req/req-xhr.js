@@ -1,6 +1,6 @@
 // must support req.xhr
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 

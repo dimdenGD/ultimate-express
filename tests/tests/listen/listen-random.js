@@ -1,6 +1,6 @@
 // must open random port
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 

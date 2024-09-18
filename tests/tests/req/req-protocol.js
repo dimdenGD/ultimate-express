@@ -1,6 +1,6 @@
 // must support req.protocol and req.secure
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 

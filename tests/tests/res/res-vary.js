@@ -1,6 +1,6 @@
 // must support res.vary()
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 

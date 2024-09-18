@@ -1,6 +1,6 @@
 // must support "query parser"
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 const app2 = express();

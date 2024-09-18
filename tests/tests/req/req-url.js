@@ -1,6 +1,6 @@
 // must support req.url
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 const router = express.Router();

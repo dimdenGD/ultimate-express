@@ -1,7 +1,7 @@
 // must support mustache engine
 
-import express from "express";
-import mustacheExpress from 'mustache-express';
+const express = require("express");
+const mustacheExpress = require("mustache-express");
 
 const app = express();
 

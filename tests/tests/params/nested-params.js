@@ -1,6 +1,6 @@
 // must match nested params express behavior
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 const router = express.Router();

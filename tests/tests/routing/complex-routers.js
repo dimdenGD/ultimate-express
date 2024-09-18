@@ -1,6 +1,6 @@
 // must support complex routers
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 const router = new express.Router();

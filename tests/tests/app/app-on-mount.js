@@ -1,6 +1,6 @@
 // must emit 'mount' when using subapp
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 const student = express();

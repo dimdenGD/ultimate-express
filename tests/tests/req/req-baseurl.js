@@ -1,6 +1,6 @@
 // must support req.baseUrl
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 const greet = express.Router()

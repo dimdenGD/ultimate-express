@@ -1,6 +1,6 @@
 // must support res.append()
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 

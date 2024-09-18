@@ -1,21 +1,19 @@
-import cookie from 'cookie';
-import mime from 'mime-types';
-import vary from 'vary';
-import { normalizeType, stringify, deprecated } from './utils.js';
-import { Writable } from 'stream';
-import { isAbsolute } from 'path';
-import fs from 'fs';
-import { join as pathJoin, resolve as pathResolve, basename as pathBasename, dirname as pathDirname } from 'path';
-import { Worker } from 'worker_threads';
-import statuses from 'statuses';
-import { sign } from 'cookie-signature';
-import { fileURLToPath } from 'node:url';
-import { EventEmitter } from "tseep";
+const cookie = require("cookie");
+const mime = require("mime-types");
+const vary = require("vary");
+const { normalizeType, stringify, deprecated } = require("./utils.js");
+const { Writable } = require("stream");
+const { isAbsolute } = require("path");
+const fs = require("fs");
+const Path = require("path");
+const { Worker } = require("worker_threads");
+const statuses = require("statuses");
+const { sign } = require("cookie-signature");
+const { EventEmitter } = require("tseep");
 
-const __dirname = pathDirname(fileURLToPath(import.meta.url));
 let fsKey = 0;
 const fsCache = {};
-const fsWorker = new Worker(pathJoin(__dirname, 'workers/fs.js'));
+const fsWorker = new Worker(Path.join(__dirname, 'workers/fs.js'));
 
 fsWorker.on('message', (message) => {
     if(message.err) {
@@ -53,7 +51,7 @@ class Socket extends EventEmitter {
     }
 }
 
-export default class Response extends Writable {
+module.exports = class Response extends Writable {
     constructor(res, req, app) {
         super();
         this._req = req;
@@ -187,8 +185,8 @@ export default class Response extends Writable {
         if(!options.root && !isAbsolute(path)) {
             throw new TypeError('path must be absolute or specify root to res.sendFile');
         }
-        const fullpath = options.root ? pathResolve(pathJoin(options.root, path)) : path;
-        if(options.root && !fullpath.startsWith(pathResolve(options.root))) {
+        const fullpath = options.root ? Path.resolve(Path.join(options.root, path)) : path;
+        if(options.root && !fullpath.startsWith(Path.resolve(options.root))) {
             throw new Error('Forbidden');
         }
         const stat = fs.statSync(fullpath);
@@ -235,7 +233,7 @@ export default class Response extends Writable {
             opts = filename;
         }
         if(!name) {
-            name = pathBasename(path);
+            name = Path.basename(path);
         }
         if(!opts.root) {
             opts.root = process.cwd();

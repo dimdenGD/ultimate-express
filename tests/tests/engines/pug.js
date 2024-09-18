@@ -1,6 +1,6 @@
 // must support pug engine
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 app.set('view engine', 'pug');

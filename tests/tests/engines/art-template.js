@@ -1,7 +1,7 @@
 // must support art template engine
 
-import express from "express";
-import artTemplate from "express-art-template";
+const express = require("express");
+const artTemplate = require("express-art-template");
 
 const app = express();
 

@@ -1,12 +1,12 @@
-import uWS from 'uWebSockets.js';
-import Response from './response.js';
-import Request from './request.js';
-import Router from './router.js';
-import { removeDuplicateSlashes, defaultSettings, compileTrust } from './utils.js';
-import querystring from 'querystring';
-import qs from 'qs';
-import ViewClass from './view.js';
-import path from 'path';
+const uWS = require("uWebSockets.js");
+const Response = require("./response.js");
+const Request = require("./request.js");
+const Router = require("./router.js");
+const { removeDuplicateSlashes, defaultSettings, compileTrust } = require("./utils.js");
+const querystring = require("querystring");
+const qs = require("qs");
+const ViewClass = require("./view.js");
+const path = require("path");
 
 class Application extends Router {
     constructor(settings = {}) {
@@ -215,6 +215,6 @@ class Application extends Router {
     }
 }
 
-export default function(options) {
+module.exports = function(options) {
     return new Application(options);
 }

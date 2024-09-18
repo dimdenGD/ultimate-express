@@ -1,6 +1,6 @@
 // must support existent next("route") (optimized)
 
-import express from "express";
+const express = require("express");
 
 const app = express();
 app.set('env', 'production');

@@ -1,7 +1,7 @@
 // must support serve static
 
-import express from "express";
-import serveStatic from "serve-static";
+const express = require("express");
+const serveStatic = require("serve-static");
 
 const app = express();
 

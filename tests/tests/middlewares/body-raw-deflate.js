@@ -1,8 +1,8 @@
 // must support deflate raw body parser
 
-import express from "express";
-import bodyParser from "body-parser";
-import { deflate } from 'pako';
+const express = require("express");
+const bodyParser = require("body-parser");
+const { deflate } = require("pako");
 
 const app = express();
 

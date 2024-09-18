@@ -1,4 +1,4 @@
-import uWS from 'uWebSockets.js';
+const uWS = require("uWebSockets.js");
 
 const app = uWS.App();
 

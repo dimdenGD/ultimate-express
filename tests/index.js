@@ -3,14 +3,12 @@
 // npm run test tests/tests/routing - runs all tests in the routing category
 // npm run test tests/tests/listen/listen-random.js - runs the test at tests/tests/listen/listen-random.js
 
-import fs from 'fs';
-import path from 'path';
-import test from 'node:test';
-import childProcess from 'node:child_process';
-import { fileURLToPath } from 'node:url';
-import assert from 'node:assert';
+const fs = require("fs");
+const path = require("path");
+const test = require("node:test");
+const childProcess = require("node:child_process");
+const assert = require("node:assert");
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const testPath = path.join(__dirname, 'tests');
 
 let testCategories = fs.readdirSync(testPath).sort((a, b) => parseInt(a) - parseInt(b));
@@ -34,7 +32,7 @@ for (const testCategory of testCategories) {
                 }
             }
             let testPath = path.join(__dirname, 'tests', testCategory, testName);
-            let testCode = fs.readFileSync(testPath, 'utf8').replace(`import express from "../../../src/index.js";`, 'import express from "express";');
+            let testCode = fs.readFileSync(testPath, 'utf8').replace(`const express = require("../../../src/index.js");`, 'const express = require("express");');
             fs.writeFileSync(testPath, testCode);
             let testDescription = testCode.split('\n')[0].slice(2).trim();
             if(testDescription.endsWith('OFF')) {
@@ -46,7 +44,7 @@ for (const testCategory of testCategories) {
                     try {
                         let expressOutput = childProcess.execSync(`node ${testPath}`).toString();
 
-                        fs.writeFileSync(testPath, testCode.replace(`import express from "express";`, `import express from "../../../src/index.js";`));
+                        fs.writeFileSync(testPath, testCode.replace(`const express = require("express");`, `const express = require("../../../src/index.js");`));
                         let uExpressOutput = childProcess.execSync(`node ${testPath}`).toString();
 
                         assert.strictEqual(uExpressOutput, expressOutput);

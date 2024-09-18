@@ -1,8 +1,8 @@
 // must support gzipped raw body parser
 
-import express from "express";
-import bodyParser from "body-parser";
-import { gzip } from 'pako';
+const express = require("express");
+const bodyParser = require("body-parser");
+const { gzip } = require("pako");
 
 const app = express();
 
