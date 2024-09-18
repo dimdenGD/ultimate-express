@@ -187,6 +187,7 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - ✅ res.vary()
 - ✅ res.removeHeader()
 - ✅ res.write()
+- ✅ res.writeHead()
 
 ### Router
 

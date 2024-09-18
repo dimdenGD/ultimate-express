@@ -187,7 +187,7 @@ module.exports = class Request extends Readable {
         if(this.method !== 'HEAD' && this.method !== 'GET') {
             return false;
         }
-        if((this.res._statusCode >= 200 && this.res._statusCode < 300) || this.res._statusCode === 304) {
+        if((this.res.statusCode >= 200 && this.res.statusCode < 300) || this.res.statusCode === 304) {
             return fresh(this.headers, {
                 'etag': this.res.get('etag'),
                 'last-modified': this.res.get('last-modified'),
