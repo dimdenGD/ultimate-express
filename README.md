@@ -203,6 +203,7 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - ✅ body-parser
 - ✅ serve-static
 - ❌ compression (doesn't error, but doesn't compress)
+- ✅ cookie-session
 
 ## Tested view engines
 

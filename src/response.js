@@ -10,6 +10,11 @@ const { Worker } = require("worker_threads");
 const statuses = require("statuses");
 const { sign } = require("cookie-signature");
 const { EventEmitter } = require("tseep");
+const http = require("http");
+
+const outgoingMessage = new http.OutgoingMessage();
+const symbols = Object.getOwnPropertySymbols(outgoingMessage);
+const kOutHeaders = symbols.find(s => s.toString() === 'Symbol(kOutHeaders)');
 
 let fsKey = 0;
 const fsCache = {};
@@ -67,6 +72,16 @@ module.exports = class Response extends Writable {
             'content-type': 'text/html',
             'keep-alive': 'timeout=10'
         };
+        // support for node internal
+        this[kOutHeaders] = new Proxy(this.headers, {
+            set: (obj, prop, value) => {
+                this.set(prop, value[1]);
+                return true;
+            },
+            get: (obj, prop) => {
+                return obj[prop];
+            }
+        });
         this.body = undefined;
         if(this.app.get('x-powered-by')) {
             this.set('x-powered-by', 'uExpress');
@@ -93,19 +108,43 @@ module.exports = class Response extends Writable {
         }
         this._res.cork(() => {
             if(!this.headersSent) {
-                this._res.writeStatus(this.statusCode.toString());
-                for(const header in this.headers) {
-                    if(header === 'content-length') {
-                        continue;
-                    }
-                    this._res.writeHeader(header, this.headers[header]);
-                }
-                this.headersSent = true;
+                this.writeHead(this.statusCode, undefined, this.headers, true);
             }
             const ab = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
             this._res.write(ab);
             callback();
         });
+    }
+    writeHead(statusCode, statusMessage, headers = this.headers, corked = false) {
+        if(typeof statusMessage === 'object') {
+            headers = statusMessage;
+            statusMessage = undefined;
+        }
+        this.headersSent = true;
+        if(corked) {
+            this._res.writeStatus(statusCode.toString());
+            for(const header in headers) {
+                if(header === 'content-length') {
+                    continue;
+                }
+                this._res.writeHeader(header, headers[header]);
+            }
+        } else {
+            this._res.cork(() => {
+                this._res.writeStatus(statusCode.toString());
+                for(const header in headers) {
+                    if(header === 'content-length') {
+                        continue;
+                    }
+                    this._res.writeHeader(header, headers[header]);
+                }
+            })
+        }
+    }
+    _implicitHeader() {
+        // compatibility function
+        // usually should send headers but this is useless for us
+        return;
     }
     status(code) {
         if(this.headersSent) {
@@ -121,22 +160,8 @@ module.exports = class Response extends Writable {
         if(this.finished) {
             return;
         }
+        
         this._res.cork(() => {
-            if(!this.headersSent) {
-                this.headersSent = true;
-                if(this.req.fresh) {
-                    this._res.writeStatus('304');
-                    this.socket.emit('close');
-                    return this._res.end();
-                }
-                this._res.writeStatus(this.statusCode.toString());
-                for(const header in this.headers) {
-                    if(header === 'content-length') {
-                        continue;
-                    }
-                    this._res.writeHeader(header, this.headers[header]);
-                }
-            }
             this._res.end(data);
             this.socket.emit('close');
         });
@@ -165,6 +190,16 @@ module.exports = class Response extends Writable {
             }
         } else {
             body = String(body);
+        }
+        if(!this.headersSent) {
+            if(this.req.fresh) {
+                if(!this.headersSent) {
+                    this._res.writeStatus('304');
+                }
+                this.socket.emit('close');
+                return this._res.end();
+            }
+            this.writeHead(this.statusCode);
         }
         return this.end(body);
     }
@@ -251,6 +286,9 @@ module.exports = class Response extends Writable {
                 this.set(header, field[header]);
             }
         } else {
+            if(field === 'set-cookie' && Array.isArray(value)) {
+                value = value.join('; ');
+            }
             this.headers[field.toLowerCase()] = String(value);
         }
         return this;
@@ -453,11 +491,7 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
         }
         res._res.cork(() => {
             if(!res.headersSent) {
-                res._res.writeStatus(res.statusCode.toString());
-                for(const header in res.headers) {
-                    res._res.writeHeader(header, res.headers[header]);
-                }
-                res.headersSent = true;
+                res.writeHead(res._statusCode, undefined, res.headers, true);
             }
             const ab = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
         

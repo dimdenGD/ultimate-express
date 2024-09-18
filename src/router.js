@@ -210,6 +210,7 @@ module.exports = class Router extends EventEmitter {
                 }
             });
         }
+        console.error(err);
         response.status(500).send(this._generateErrorPage(err, true));
     }
 
