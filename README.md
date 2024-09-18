@@ -17,6 +17,7 @@ Similar projects based on uWebSockets:
 ## Differences from Express
 
 - `case sensitive routing` is enabled by default.
+- `Content-Length` header is not sent, as uWS uses chunked transfer encoding.
 - request body is only read for POST, PUT and PATCH requests by default. You can add additional methods by setting `body methods` to array with uppercased methods.
 - For HTTPS, instead of doing this:
 

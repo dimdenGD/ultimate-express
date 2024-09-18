@@ -108,37 +108,29 @@ module.exports = class Response extends Writable {
         }
         this._res.cork(() => {
             if(!this.headersSent) {
-                this.writeHead(this.statusCode, undefined, this.headers, true);
+                this.writeHead(this.statusCode);
+                this._res.writeStatus(this.statusCode.toString());
+                for(const header in this.headers) {
+                    if(header === 'content-length') {
+                        continue;
+                    }
+                    this._res.writeHeader(header, this.headers[header]);
+                }
+                this.headersSent = true;
             }
             const ab = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
             this._res.write(ab);
             callback();
         });
     }
-    writeHead(statusCode, statusMessage, headers = this.headers, corked = false) {
-        if(typeof statusMessage === 'object') {
+    writeHead(statusCode, statusMessage, headers) {
+        this.statusCode = statusCode;
+        if(!headers) {
+            if(!statusMessage) return;
             headers = statusMessage;
-            statusMessage = undefined;
         }
-        this.headersSent = true;
-        if(corked) {
-            this._res.writeStatus(statusCode.toString());
-            for(const header in headers) {
-                if(header === 'content-length') {
-                    continue;
-                }
-                this._res.writeHeader(header, headers[header]);
-            }
-        } else {
-            this._res.cork(() => {
-                this._res.writeStatus(statusCode.toString());
-                for(const header in headers) {
-                    if(header === 'content-length') {
-                        continue;
-                    }
-                    this._res.writeHeader(header, headers[header]);
-                }
-            })
+        for(let header in headers) {
+            this.set(header, headers[header]);
         }
     }
     _implicitHeader() {
@@ -162,6 +154,24 @@ module.exports = class Response extends Writable {
         }
         
         this._res.cork(() => {
+            if(!this.headersSent) {
+                if(this.req.fresh) {
+                    if(!this.headersSent) {
+                        this._res.writeStatus('304');
+                    }
+                    this.headersSent = true;
+                    this.socket.emit('close');
+                    return this._res.end();
+                }
+                this._res.writeStatus(this.statusCode.toString());
+                for(const header in this.headers) {
+                    if(header === 'content-length') {
+                        continue;
+                    }
+                    this._res.writeHeader(header, this.headers[header]);
+                }
+                this.headersSent = true;
+            }
             this._res.end(data);
             this.socket.emit('close');
         });
@@ -191,16 +201,7 @@ module.exports = class Response extends Writable {
         } else {
             body = String(body);
         }
-        if(!this.headersSent) {
-            if(this.req.fresh) {
-                if(!this.headersSent) {
-                    this._res.writeStatus('304');
-                }
-                this.socket.emit('close');
-                return this._res.end();
-            }
-            this.writeHead(this.statusCode);
-        }
+        this.writeHead(this.statusCode);
         return this.end(body);
     }
     sendFile(path, options = {}, callback) {
@@ -491,7 +492,15 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
         }
         res._res.cork(() => {
             if(!res.headersSent) {
-                res.writeHead(res._statusCode, undefined, res.headers, true);
+                res.writeHead(res.statusCode);
+                res._res.writeStatus(res.statusCode.toString());
+                for(const header in res.headers) {
+                    if(header === 'content-length') {
+                        continue;
+                    }
+                    res._res.writeHeader(header, res.headers[header]);
+                }
+                res.headersSent = true;
             }
             const ab = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
         
