@@ -206,6 +206,7 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - ✅ cookie-session
 - ✅ serve-static
 - ✅ cors
+- ✅ errorhandler
 - ❌ compression (doesn't error, but doesn't compress)
 
 ## Tested view engines
