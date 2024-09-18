@@ -201,7 +201,7 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 
 ## Tested middlewares
 
-Most of the middlewares that are compatible with Express are compatible with µExpress. Here's list of middlewares that we test for compatibility (and the ones that are confirmed to not work):
+Most of the middlewares that are compatible with Express are compatible with µExpress. Here's list of middlewares that we test for compatibility:
 
 - ✅ [body-parser](https://npmjs.com/package/body-parser)
 - ✅ [cookie-parser](https://npmjs.com/package/cookie-parser)
@@ -214,6 +214,10 @@ Most of the middlewares that are compatible with Express are compatible with µE
 - ✅ [multer](https://npmjs.com/package/multer)
 - ✅ [response-time](https://npmjs.com/package/response-time)
 - ✅ [express-session](https://npmjs.com/package/express-session)
+- ✅ [vhost](https://npmjs.com/package/vhost)
+
+Middlewares that are confirmed to not work:
+
 - ❌ [compression](https://npmjs.com/package/compression) (doesn't error, but doesn't compress)
 
 ## Tested view engines

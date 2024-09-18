@@ -66,6 +66,7 @@
     "response-time": "^2.3.2",
     "serve-index": "^1.9.1",
     "serve-static": "^1.16.2",
-    "swig": "^1.4.2"
+    "swig": "^1.4.2",
+    "vhost": "^3.0.2"
   }
 }

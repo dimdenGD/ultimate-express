@@ -22,7 +22,7 @@ app.listen(13333, async () => {
     const response = await fetch('http://localhost:13333/abc');
     const cookie = response.headers.get('Set-Cookie').match(/connect.sid=(.*?);/)[1];
     const text = await response.text();
-    console.log(text, cookie, response.status);
+    console.log(text, response.status);
 
     const response2 = await fetch('http://localhost:13333/abc', {
         headers: {
