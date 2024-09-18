@@ -117,6 +117,11 @@ module.exports = class Response extends Writable {
     sendStatus(code) {
         return this.status(code).send(statuses.message[+code] ?? code.toString());
     }
+    _implicitHeader() {
+        // compatibility function
+        // usually should send headers but this is useless for us
+        return;
+    }
     end(data) {
         if(this.finished) {
             return;
