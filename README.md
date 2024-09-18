@@ -201,11 +201,12 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 
 ## Tested middlewares
 
-- ✅ cookie-parser
 - ✅ body-parser
-- ✅ serve-static
-- ❌ compression (doesn't error, but doesn't compress)
+- ✅ cookie-parser
 - ✅ cookie-session
+- ✅ serve-static
+- ✅ cors
+- ❌ compression (doesn't error, but doesn't compress)
 
 ## Tested view engines
 

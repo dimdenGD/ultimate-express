@@ -49,6 +49,7 @@
   },
   "devDependencies": {
     "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
     "ejs": "^3.1.10",
     "exit-hook": "^2.2.1",
     "express": "^4.19.2",
