@@ -235,6 +235,10 @@ module.exports = class Response extends Writable {
             return this.status(404).send(this.app._generateErrorPage(`Cannot ${this.req.method} ${this.req.path}`));
         }
 
+        if(!this.get('Content-Type')) {
+            this.type(mime.lookup(fullpath));
+        }
+
         //there's no point in creating a stream when the file is small enough to fit in a single chunk
         if(stat.size < 64 * 1024) { // 64kb - default highWaterMark
             // get file using worker
