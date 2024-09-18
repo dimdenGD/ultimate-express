@@ -201,12 +201,15 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 
 ## Tested middlewares
 
+Most of the middlewares that are compatible with Express are compatible with µExpress. Here's list of middlewares that we test for compatibility (and the ones that are confirmed to not work):
+
 - ✅ [body-parser](https://npmjs.com/package/body-parser)
 - ✅ [cookie-parser](https://npmjs.com/package/cookie-parser)
 - ✅ [cookie-session](https://npmjs.com/package/cookie-session)
-- ✅ [serve-static](https://npmjs.com/package/serve-static)
+- ✅ [serve-static](https://npmjs.com/package/serve-static) (use `express.static()` instead for better performance)
 - ✅ [cors](https://npmjs.com/package/cors)
 - ✅ [errorhandler](https://npmjs.com/package/errorhandler)
+- ✅ [method-override](https://npmjs.com/package/method-override)
 - ❌ [compression](https://npmjs.com/package/compression) (doesn't error, but doesn't compress)
 
 ## Tested view engines
