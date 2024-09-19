@@ -165,6 +165,17 @@ function decode (path) {
 
 const UP_PATH_REGEXP = /(?:^|[\\/])\.\.(?:[\\/]|$)/;
 
+function containsDotFile(parts) {
+    for(let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if(part.length > 1 && part[0] === '.') {
+            return true;
+        }
+    }
+  
+    return false;
+}  
+
 module.exports = {
     removeDuplicateSlashes,
     patternToRegex,
@@ -176,5 +187,6 @@ module.exports = {
     compileTrust,
     deprecated,
     UP_PATH_REGEXP,
-    decode
+    decode,
+    containsDotFile
 };

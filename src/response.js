@@ -1,7 +1,7 @@
 const cookie = require("cookie");
 const mime = require("mime-types");
 const vary = require("vary");
-const { normalizeType, stringify, deprecated, UP_PATH_REGEXP, decode } = require("./utils.js");
+const { normalizeType, stringify, deprecated, UP_PATH_REGEXP, decode, containsDotFile } = require("./utils.js");
 const { Writable } = require("stream");
 const { isAbsolute } = require("path");
 const fs = require("fs");
@@ -251,11 +251,27 @@ module.exports = class Response extends Writable {
             this.status(403);
             return callback(new Error('Forbidden'));
         }
+        const parts = Path.normalize(path).split(Path.sep);
         const fullpath = options.root ? Path.resolve(Path.join(options.root, path)) : path;
         if(options.root && !fullpath.startsWith(Path.resolve(options.root))) {
             this.status(403);
             return callback(new Error('Forbidden'));
         }
+
+        if(containsDotFile(parts)) {
+            switch(options.dotfiles) {
+                case 'allow':
+                    break;
+                case 'deny':
+                    this.status(403);
+                    return callback(new Error('Forbidden'));
+                case 'ignore':
+                default:
+                    this.status(404);
+                    return callback(new Error('Not found'));
+            }
+        }
+
         let stat;
         try {
             stat = fs.statSync(fullpath);
