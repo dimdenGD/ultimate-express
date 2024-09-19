@@ -12,6 +12,7 @@ const { sign } = require("cookie-signature");
 const { EventEmitter } = require("tseep");
 const http = require("http");
 const os = require('os');
+const ms = require('ms');   
 
 const outgoingMessage = new http.OutgoingMessage();
 const symbols = Object.getOwnPropertySymbols(outgoingMessage);
@@ -234,6 +235,18 @@ module.exports = class Response extends Writable {
         if(!callback) {
             callback = this.req.next;
         }
+        if(typeof options.maxAge === 'string') {
+            options.maxAge = ms(options.maxAge);
+        }
+        if(!options.maxAge) {
+            options.maxAge = 0;
+        }
+        if(!options.lastModified) {
+            options.lastModified = true;
+        }
+        if(!options.cacheControl) {
+            options.cacheControl = true;
+        }
         if(!options.root && !isAbsolute(path)) {
             this.status(500);
             return callback(new Error('path must be absolute or specify root to res.sendFile'));
@@ -285,6 +298,18 @@ module.exports = class Response extends Writable {
 
         if(!this.get('Content-Type')) {
             this.type(mime.lookup(fullpath));
+        }
+
+        if(options.cacheControl) {
+            this.set('Cache-Control', `public, max-age=${options.maxAge / 1000}` + (options.immutable ? ', immutable' : ''));
+        }
+        if(options.lastModified) {
+            this.set('Last-Modified', stat.mtime.toUTCString());
+        }
+        if(options.headers) {
+            for(const header in options.headers) {
+                this.set(header, options.headers[header]);
+            }
         }
 
         //there's no point in creating a stream when the file is small enough to fit in a single chunk

@@ -180,7 +180,15 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - ✅ res.redirect()
 - ✅ res.render()
 - ✅ res.send()
-- ⚠️ res.sendFile() (`options` not supported yet)
+- ⚠️ res.sendFile() - not all options are supported:
+- - ✅ options.maxAge
+- - ✅ options.root
+- - ✅ options.lastModified
+- - ✅ options.headers
+- - ✅ options.dotfiles
+- - ❌ options.acceptRanges
+- - ✅ options.cacheControl
+- - ✅ options.immutable
 - ✅ res.sendStatus()
 - ✅ res.header(), res.setHeader(), res.set()
 - ✅ res.status()
