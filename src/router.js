@@ -166,14 +166,11 @@ module.exports = class Router extends EventEmitter {
                 err.code = 'ECONNRESET';
                 response.aborted = true;
                 response.socket.emit('error', err);
-            });
-
-            // no need to check because optimized routes are never using param
-            await this.#preprocessRequest(request, response, route);
+            });            
 
             let i = 0;
             try {
-                const next = (thingamabob) => {
+                const next = async (thingamabob) => {
                     i++;
                     if(thingamabob) {
                         if(thingamabob === 'route') {
@@ -192,9 +189,11 @@ module.exports = class Router extends EventEmitter {
                         return;
                     }
                     request.next = next;
+                    await this.#preprocessRequest(request, response, optimizedPath[i]);
                     optimizedPath[i].callback(request, response, next);
                 }
                 request.next = next;
+                await this.#preprocessRequest(request, response, optimizedPath[0]);
                 optimizedPath[0].callback(request, response, next);
             } catch(err) {
                 this.#handleError(err, request, response);

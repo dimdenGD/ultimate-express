@@ -41,6 +41,7 @@ for (const testCategory of testCategories) {
 
             await new Promise(resolve => {
                 test(testDescription, () => {
+                    process.stdout.write(testDescription + '...');
                     try {
                         let expressOutput = childProcess.execSync(`node ${testPath}`).toString();
 
@@ -48,7 +49,9 @@ for (const testCategory of testCategories) {
                         let uExpressOutput = childProcess.execSync(`node ${testPath}`).toString();
 
                         assert.strictEqual(uExpressOutput, expressOutput);
+                        console.log('\x1b[32mOK\x1b[0m');
                     } catch (error) {
+                        console.log('\x1b[31mFAIL\x1b[0m');
                         throw error;
                     } finally {
                         fs.writeFileSync(testPath, testCode);
