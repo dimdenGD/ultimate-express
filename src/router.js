@@ -189,12 +189,21 @@ module.exports = class Router extends EventEmitter {
                         return;
                     }
                     request.next = next;
-                    await this.#preprocessRequest(request, response, optimizedPath[i]);
-                    optimizedPath[i].callback(request, response, next);
+                    const continueRoute = await this.#preprocessRequest(request, response, optimizedPath[i]);
+                    if(continueRoute === 'route') {
+                        next('route');
+                    } else if(continueRoute) {
+                        await optimizedPath[i].callback(request, response, next);
+                    }
                 }
+
                 request.next = next;
-                await this.#preprocessRequest(request, response, optimizedPath[0]);
-                optimizedPath[0].callback(request, response, next);
+                const continueRoute = await this.#preprocessRequest(request, response, optimizedPath[0]);;
+                if(continueRoute === 'route') {
+                    next('route');
+                } else if(continueRoute) {
+                    await optimizedPath[0].callback(request, response, next);
+                }
             } catch(err) {
                 this.#handleError(err, request, response);
             }
@@ -264,13 +273,14 @@ module.exports = class Router extends EventEmitter {
                 }
                 req.popAt = route.routeSkipKey + 1;
             }
-            if(req.popAt === route.routeKey) {
+            if(route.routeKey >= req.popAt) {
                 req._stack.pop();
                 req.url = req.path.replace(this.#getFullMountpath(req), '');
                 if(!req.url) {
                     req.url = '/';
                 }
                 delete req.popAt;
+            } else {
             }
 
             resolve(true);
