@@ -155,6 +155,16 @@ Array.prototype.findStartingFrom = function(fn, index = 0) {
     return [-1, undefined];
 };
 
+function decode (path) {
+    try {
+        return decodeURIComponent(path)
+    } catch (err) {
+        return -1
+    }
+}
+
+const UP_PATH_REGEXP = /(?:^|[\\/])\.\.(?:[\\/]|$)/;
+
 module.exports = {
     removeDuplicateSlashes,
     patternToRegex,
@@ -164,5 +174,7 @@ module.exports = {
     stringify,
     defaultSettings,
     compileTrust,
-    deprecated
+    deprecated,
+    UP_PATH_REGEXP,
+    decode
 };

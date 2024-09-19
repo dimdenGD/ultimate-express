@@ -1,7 +1,7 @@
 const cookie = require("cookie");
 const mime = require("mime-types");
 const vary = require("vary");
-const { normalizeType, stringify, deprecated } = require("./utils.js");
+const { normalizeType, stringify, deprecated, UP_PATH_REGEXP, decode } = require("./utils.js");
 const { Writable } = require("stream");
 const { isAbsolute } = require("path");
 const fs = require("fs");
@@ -235,10 +235,25 @@ module.exports = class Response extends Writable {
             callback = this.req.next;
         }
         if(!options.root && !isAbsolute(path)) {
+            this.status(500);
             return callback(new Error('path must be absolute or specify root to res.sendFile'));
+        }
+        path = decode(path);
+        if(path === -1) {
+            this.status(400);
+            return callback(new Error('Bad Request'));
+        }
+        if(~path.indexOf('\0')) {
+            this.status(400);
+            return callback(new Error('Bad Request'));
+        }
+        if(UP_PATH_REGEXP.test(path)) {
+            this.status(403);
+            return callback(new Error('Forbidden'));
         }
         const fullpath = options.root ? Path.resolve(Path.join(options.root, path)) : path;
         if(options.root && !fullpath.startsWith(Path.resolve(options.root))) {
+            this.status(403);
             return callback(new Error('Forbidden'));
         }
         let stat;
@@ -248,9 +263,9 @@ module.exports = class Response extends Writable {
             return callback(err);
         }
         if(stat.isDirectory()) {
-            return callback(new Error(`Cannot ${this.req.method} ${this.req.path}`));
+            this.status(404);
+            return callback(new Error(`Not found`));
         }
-
 
         if(!this.get('Content-Type')) {
             this.type(mime.lookup(fullpath));
@@ -567,5 +582,4 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
             res.socket.emit('error', e);
         }
     });
-  }
-  
+}
