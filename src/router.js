@@ -280,7 +280,6 @@ module.exports = class Router extends EventEmitter {
                     req.url = '/';
                 }
                 delete req.popAt;
-            } else {
             }
 
             resolve(true);

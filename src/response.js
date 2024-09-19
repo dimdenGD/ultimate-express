@@ -223,9 +223,6 @@ module.exports = class Response extends Writable {
     sendFile(path, options = {}, callback) {
         // TODO: support options
         // TODO: support Range
-        if(!path) {
-            throw new TypeError('path argument is required to res.sendFile');
-        }
         if(typeof path !== 'string') {
             throw new TypeError('path argument is required to res.sendFile');
         }
@@ -234,17 +231,26 @@ module.exports = class Response extends Writable {
             options = {};
         }
         if(!options) options = {};
+        if(!callback) {
+            callback = this.req.next;
+        }
         if(!options.root && !isAbsolute(path)) {
-            throw new TypeError('path must be absolute or specify root to res.sendFile');
+            return callback(new Error('path must be absolute or specify root to res.sendFile'));
         }
         const fullpath = options.root ? Path.resolve(Path.join(options.root, path)) : path;
         if(options.root && !fullpath.startsWith(Path.resolve(options.root))) {
-            throw new Error('Forbidden');
+            return callback(new Error('Forbidden'));
         }
-        const stat = fs.statSync(fullpath);
+        let stat;
+        try {
+            stat = fs.statSync(fullpath);
+        } catch(err) {
+            return callback(err);
+        }
         if(stat.isDirectory()) {
-            return this.status(404).send(this.app._generateErrorPage(`Cannot ${this.req.method} ${this.req.path}`));
+            return callback(new Error(`Cannot ${this.req.method} ${this.req.path}`));
         }
+
 
         if(!this.get('Content-Type')) {
             this.type(mime.lookup(fullpath));
