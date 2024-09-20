@@ -160,7 +160,12 @@ module.exports = class Response extends Writable {
             if(!data && this.headers['content-length']) {
                 this._res.endWithoutBody(this.headers['content-length'].toString());
             } else {
-                this._res.end(data);
+                if(this.req.method === 'HEAD') {
+                    const length = Buffer.byteLength(data ?? '');
+                    this._res.endWithoutBody(length.toString());
+                } else {
+                    this._res.end(data);
+                }
             }
             this.socket.emit('close');
         });
@@ -320,6 +325,11 @@ module.exports = class Response extends Writable {
                 len = ranges[0].end - ranges[0].start + 1;
                 ranged = true;
             }
+        }
+
+        if(this.req.method === 'HEAD') {
+            this.set('Content-Length', stat.size);
+            return this.end();
         }
 
         // serve smaller files using workers

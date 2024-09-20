@@ -99,6 +99,7 @@ module.exports = class Router extends EventEmitter {
                     routeKey: routeKey++,
                     use: method === 'USE',
                     all: method === 'ALL' || method === 'USE',
+                    gettable: method === 'GET' || method === 'HEAD',
                 };
                 routes.push(route);
                 if(typeof route.pattern === 'string' && route.pattern !== '/*' && !this.parent && this.get('case sensitive routing')) {
@@ -122,9 +123,15 @@ module.exports = class Router extends EventEmitter {
             if(r.routeKey > route.routeKey) {
                 break;
             }
+            // if the methods are not the same, and its not an all method, skip it
             if(!r.all && r.method !== route.method) {
-                continue;
+                // check if the methods are compatible (GET and HEAD)
+                if(!(r.method === 'HEAD' && route.method === 'GET')) {
+                    continue;
+                }
             }
+
+
             if(
                 (r.pattern instanceof RegExp && r.pattern.test(route.path)) ||
                 (typeof r.pattern === 'string' && (r.pattern === route.path || r.pattern === '/*'))
@@ -156,7 +163,7 @@ module.exports = class Router extends EventEmitter {
         } else if(method === 'delete') {
             method = 'del';
         }
-        this.uwsApp[method](route.path, async (res, req) => {
+        const fn = async (res, req) => {
             const request = new Request(req, res, this);
             const response = new Response(res, request, this);
             request.res = response;
@@ -166,7 +173,7 @@ module.exports = class Router extends EventEmitter {
                 err.code = 'ECONNRESET';
                 response.aborted = true;
                 response.socket.emit('error', err);
-            });            
+            });
 
             let i = 0;
             try {
@@ -207,7 +214,11 @@ module.exports = class Router extends EventEmitter {
             } catch(err) {
                 this.#handleError(err, request, response);
             }
-        });
+        };
+        this.uwsApp[method](route.path, fn);
+        if(method === 'get') {
+            this.uwsApp.head(route.path, fn);
+        }
     }
 
     #handleError(err, request, response) {
@@ -310,7 +321,7 @@ module.exports = class Router extends EventEmitter {
 
     async _routeRequest(req, res, startIndex = 0) {
         return new Promise(async (resolve) => {
-            let [routeIndex, route] = this.#routes.findStartingFrom(r => (r.all || r.method === req.method) && this.#pathMatches(r, req), startIndex);
+            let [routeIndex, route] = this.#routes.findStartingFrom(r => (r.all || r.method === req.method || (r.gettable && req.method === 'HEAD')) && this.#pathMatches(r, req), startIndex);
             if(!route) return resolve(false);
 
             if(route.callback instanceof Router) {
