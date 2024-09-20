@@ -3,9 +3,6 @@
 const express = require("express");
 
 const app = express();
-const router = express.Router();
-const router2 = express.Router();
-const router3 = express.Router();
 
 app.get("test", (req, res) => {
     res.send("test");
