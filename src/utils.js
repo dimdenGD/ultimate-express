@@ -3,6 +3,7 @@ const path = require("path");
 const proxyaddr = require("proxy-addr");
 const qs = require("qs");
 const etag = require("etag");
+const { Stats } = require("fs");
 
 function removeDuplicateSlashes(path) {
     return path.replace(/\/{2,}/g, '/');
@@ -96,6 +97,7 @@ const defaultSettings = {
     'jsonp callback name': 'callback',
     'env': () => process.env.NODE_ENV ?? 'development',
     'etag': 'weak',
+    'etag fn': () => createETagGenerator({ weak: true }),
     'query parser': 'extended',
     'query parser fn': () => qs.parse,
     'subdomain offset': 2,
@@ -246,7 +248,7 @@ function isPreconditionFailure(req, res) {
 
 function createETagGenerator(options) {
     return function generateETag (body, encoding) {
-        const buf = !Buffer.isBuffer(body) ? Buffer.from(body, encoding) : body;
+        const buf = !(body instanceof Stats) && !Buffer.isBuffer(body) ? Buffer.from(body, encoding) : body;
         return etag(buf, options);
     }
 }  

@@ -191,7 +191,8 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - - ✅ options.cacheControl
 - - ✅ options.immutable
 - - ✅ Range header
-- - ❌ If-Match header
+- - ✅ Setting ETag header
+- - ✅ If-Match header
 - - ✅ If-Modified-Since header
 - - ✅ If-Unmodified-Since header
 - ✅ res.sendStatus()

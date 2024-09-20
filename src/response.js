@@ -226,8 +226,6 @@ module.exports = class Response extends Writable {
         return this.end(body);
     }
     sendFile(path, options = {}, callback) {
-        // TODO: support options
-        // TODO: support Range
         if(typeof path !== 'string') {
             throw new TypeError('path argument is required to res.sendFile');
         }
@@ -239,6 +237,7 @@ module.exports = class Response extends Writable {
         if(!callback) {
             callback = this.req.next;
         }
+        // default options
         if(typeof options.maxAge === 'string') {
             options.maxAge = ms(options.maxAge);
         }
@@ -254,6 +253,8 @@ module.exports = class Response extends Writable {
         if(typeof options.acceptRanges === 'undefined') {
             options.acceptRanges = true;
         }
+
+        // path checks
         if(!options.root && !isAbsolute(path)) {
             this.status(500);
             return callback(new Error('path must be absolute or specify root to res.sendFile'));
@@ -278,6 +279,7 @@ module.exports = class Response extends Writable {
             return callback(new Error('Forbidden'));
         }
 
+        // dotfile checks
         if(containsDotFile(parts)) {
             switch(options.dotfiles) {
                 case 'allow':
@@ -303,6 +305,7 @@ module.exports = class Response extends Writable {
             return callback(new Error(`Not found`));
         }
 
+        // headers
         if(!this.get('Content-Type')) {
             this.type(mime.lookup(fullpath));
         }
@@ -319,12 +322,19 @@ module.exports = class Response extends Writable {
             }
         }
 
+        // etag
+        const etagFn = this.app.get('etag fn');
+        if(!this.headers['etag'] && etagFn) {
+            this.set('etag', etagFn(stat));
+        }
+
         // conditional requests
         if(isPreconditionFailure(this.req, this)) {
             this.status(412);
             return callback(new Error('Precondition Failed'));
         }
 
+        // range requests
         let offset = 0, len = stat.size, ranged = false;
         if(options.acceptRanges && this.req.headers.range) {
             let ranges = this.req.range(stat.size, {
