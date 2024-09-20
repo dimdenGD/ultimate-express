@@ -2,6 +2,7 @@ const mime = require("mime-types");
 const path = require("path");
 const proxyaddr = require("proxy-addr");
 const qs = require("qs");
+const etag = require("etag");
 
 function removeDuplicateSlashes(path) {
     return path.replace(/\/{2,}/g, '/');
@@ -243,6 +244,13 @@ function isPreconditionFailure(req, res) {
     return false;
 }
 
+function createETagGenerator(options) {
+    return function generateETag (body, encoding) {
+        const buf = !Buffer.isBuffer(body) ? Buffer.from(body, encoding) : body;
+        return etag(buf, options);
+    }
+}  
+
 module.exports = {
     removeDuplicateSlashes,
     patternToRegex,
@@ -258,5 +266,6 @@ module.exports = {
     containsDotFile,
     parseTokenList,
     parseHttpDate,
-    isPreconditionFailure
+    isPreconditionFailure,
+    createETagGenerator
 };

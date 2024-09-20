@@ -108,7 +108,7 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 
 - ✅ case sensitive routing
 - ✅ env
-- ❌ etag
+- ✅ etag
 - ✅ jsonp callback name
 - ✅ json escape
 - ✅ json replacer

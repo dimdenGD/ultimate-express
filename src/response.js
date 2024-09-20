@@ -169,6 +169,10 @@ module.exports = class Response extends Writable {
         
         this._res.cork(() => {
             if(!this.headersSent) {
+                const etagFn = this.app.get('etag fn');
+                if(data && !this.headers['etag'] && etagFn) {
+                    this.set('etag', etagFn(data, this.req));
+                }
                 if(this.req.fresh) {
                     if(!this.headersSent) {
                         this._res.writeStatus('304');

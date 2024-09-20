@@ -2,7 +2,7 @@ const uWS = require("uWebSockets.js");
 const Response = require("./response.js");
 const Request = require("./request.js");
 const Router = require("./router.js");
-const { removeDuplicateSlashes, defaultSettings, compileTrust } = require("./utils.js");
+const { removeDuplicateSlashes, defaultSettings, compileTrust, createETagGenerator } = require("./utils.js");
 const querystring = require("querystring");
 const qs = require("qs");
 const ViewClass = require("./view.js");
@@ -66,6 +66,25 @@ class Application extends Router {
         } else if(key === 'views') {
             this.settings[key] = path.resolve(value);
             return this;
+        } else if(key === 'etag') {
+            if(typeof value === 'function') {
+                this.settings['etag fn'] = value;
+            } else {
+                switch(value) {
+                    case true:
+                    case 'weak':
+                        this.settings['etag fn'] = createETagGenerator({ weak: true });
+                        break;
+                    case 'strong':
+                        this.settings['etag fn'] = createETagGenerator({ weak: false });
+                        break;
+                    case false:
+                        delete this.settings['etag fn'];
+                        break;
+                    default:
+                        throw new Error(`Invalid etag mode: ${value}`);
+                }
+            }
         }
 
         this.settings[key] = value;
