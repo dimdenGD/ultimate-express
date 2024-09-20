@@ -260,6 +260,14 @@ module.exports = class Router extends EventEmitter {
                     path = path.replace(this.#getFullMountpath(req), '');
                 }
                 req.params = this.#extractParams(route.pattern, path);
+                
+                if(isRouter) {
+                    req._paramStack.push(req.params);
+                } else if(req._paramStack.length > 0) {
+                    for(let params of req._paramStack) {
+                        req.params = {...params, ...req.params};
+                    }
+                }
 
                 for(let param in req.params) {
                     if(this.#paramCallbacks.has(param) && !req._gotParams.has(param)) {
@@ -287,6 +295,13 @@ module.exports = class Router extends EventEmitter {
                 }
             } else {
                 req.params = {};
+                if(isRouter) {
+                    req._paramStack.push(req.params);
+                } else if(req._paramStack.length > 0) {
+                    for(let params of req._paramStack) {
+                        req.params = {...params, ...req.params};
+                    }
+                }
             }
 
             if(isRouter) {
@@ -307,6 +322,7 @@ module.exports = class Router extends EventEmitter {
     }
 
     #postprocessRequest(req, res, routeKey) {
+        req._paramStack.pop();
         if(routeKey >= req.popAt) {
             req._stack.pop();
 
@@ -361,6 +377,7 @@ module.exports = class Router extends EventEmitter {
                     if(routed) return resolve(true);
                     
                     req._stack.pop();
+                    req._paramStack.pop();
                     req._opPath = (req._stack.length > 0 ? req.path.replace(this.#getFullMountpath(req), '') : req.path) + (req.endsWithSlash && req.path !== '/' && this.get('strict routing') ? '/' : '');
                     req.url = req._opPath + req.urlQuery;
                     if(req.app.parent && route.callback.constructor.name === 'Application') {
