@@ -219,8 +219,8 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - ✅ router.use()
 - ✅ router.param(name, callback)
 - ✅ router.param(callback)
-- ❌ options.caseSensitive
-- ❌ options.strict
+- ✅ options.caseSensitive
+- ✅ options.strict
 - ❌ options.mergeParams
 
 ## Tested middlewares

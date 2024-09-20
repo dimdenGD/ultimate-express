@@ -25,6 +25,15 @@ module.exports = class Router extends EventEmitter {
         this.mountpath = '/';
         this.settings = settings;
 
+        if(typeof settings.caseSensitive !== 'undefined') {
+            this.settings['case sensitive routing'] = settings.caseSensitive;
+            delete this.settings.caseSensitive;
+        }
+        if(typeof settings.strict !== 'undefined') {
+            this.settings['strict routing'] = settings.strict;
+            delete this.settings.strict;
+        }
+
         for(let method of methods) {
             this[method] = (path, ...callbacks) => {
                 this.#createRoute(method.toUpperCase(), path, this, ...callbacks);
@@ -102,7 +111,7 @@ module.exports = class Router extends EventEmitter {
                     gettable: method === 'GET' || method === 'HEAD',
                 };
                 routes.push(route);
-                if(typeof route.pattern === 'string' && route.pattern !== '/*' && !this.parent && this.get('case sensitive routing')) {
+                if(typeof route.pattern === 'string' && route.pattern !== '/*' && !this.parent && this.get('case sensitive routing') && this.uwsApp) {
                     // the only methods that uWS supports natively
                     if(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE'].includes(method)) {
                         this.#optimizeRoute(route, this.#routes);
@@ -326,7 +335,7 @@ module.exports = class Router extends EventEmitter {
 
             if(route.callback instanceof Router) {
                 req._stack.push(route.path);
-                req._opPath = req.path.replace(this.#getFullMountpath(req), '');
+                req._opPath = req.path.replace(this.#getFullMountpath(req), '') + (req.endsWithSlash && req.path !== '/' && this.get('strict routing') ? '/' : '');
                 req.url = req._opPath + req.urlQuery;
                 if(route.callback.constructor.name === 'Application') {
                     req.app = route.callback;
@@ -336,9 +345,9 @@ module.exports = class Router extends EventEmitter {
                 if(routed) return resolve(true);
 
                 req._stack.pop();
-                req._opPath = req._stack.length > 0 ? req.path.replace(this.#getFullMountpath(req), '') : req.path;
+                req._opPath = (req._stack.length > 0 ? req.path.replace(this.#getFullMountpath(req), '') : req.path) + (req.endsWithSlash && req.path !== '/' && this.get('strict routing') ? '/' : '');
                 req.url = req._opPath + req.urlQuery;
-                if(route.callback.constructor.name === 'Application' && req.app.parent) {
+                if(req.app.parent && route.callback.constructor.name === 'Application') {
                     req.app = req.app.parent;
                 }
                 return resolve(this._routeRequest(req, res, routeIndex + 1));

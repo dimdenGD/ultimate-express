@@ -64,7 +64,7 @@ class Application extends Router {
         }
         this.port = undefined;
         for(const key in defaultSettings) {
-            if(!this.settings[key]) {
+            if(typeof this.settings[key] === 'undefined') {
                 if(typeof defaultSettings[key] === 'function') {
                     this.settings[key] = defaultSettings[key]();
                 } else {

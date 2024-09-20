@@ -35,13 +35,14 @@ module.exports = class Request extends Readable {
         this.url = this.originalUrl;
         const iq = this.url.indexOf('?');
         this.path = iq !== -1 ? this.url.substring(0, iq) : this.url;
-        // remove trailing slash
-        if(this.path[this.path.length - 1] === '/' && this.path !== '/') {
-            this.path = this.path.slice(0, -1);
-        }
+        this.endsWithSlash = this.path[this.path.length - 1] === '/';
         this._opPath = this.path;
+        if(this.endsWithSlash && this.path !== '/' && !this.app.get('strict routing')) {
+            this._opPath = this._opPath.slice(0, -1);
+        }
         this.method = req.getMethod().toUpperCase();
         this.params = {};
+
         this._gotParams = new Set();
         this._stack = [];
         this.bufferedData = Buffer.alloc(0);
