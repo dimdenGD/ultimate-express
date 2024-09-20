@@ -195,7 +195,9 @@ module.exports = class Router extends EventEmitter {
                                 i++;
                             }
                         } else {
+                            this.#postprocessRequest(request, response, i);
                             this.#handleError(thingamabob, request, response);
+                            return;
                         }
                     }
                     this.#postprocessRequest(request, response, i);
