@@ -198,12 +198,14 @@ module.exports = class Router extends EventEmitter {
                             this.#handleError(thingamabob, request, response);
                         }
                     }
+                    this.#postprocessRequest(request, response, i);
                     if(i >= optimizedPath.length) {
                         if(!response.headersSent) {
                             response.status(404).send(this._generateErrorPage(`Cannot ${request.method} ${request.path}`));
                         }
                         return;
                     }
+                    
                     request.next = next;
                     const continueRoute = await this.#preprocessRequest(request, response, optimizedPath[i]);
                     if(continueRoute === 'route') {
@@ -297,17 +299,21 @@ module.exports = class Router extends EventEmitter {
                 }
                 req.popAt = route.routeSkipKey + 1;
             }
-            if(route.routeKey >= req.popAt) {
-                req._stack.pop();
-                req.url = req.path.replace(this.#getFullMountpath(req), '');
-                if(!req.url) {
-                    req.url = '/';
-                }
-                delete req.popAt;
-            }
 
             resolve(true);
         });
+    }
+
+    #postprocessRequest(req, res, routeKey) {
+        if(routeKey >= req.popAt) {
+            req._stack.pop();
+
+            req.url = req.path.replace(this.#getFullMountpath(req), '');
+            if(!req.url) {
+                req.url = '/';
+            }
+            delete req.popAt;
+        }
     }
 
     param(name, fn) {
@@ -374,8 +380,10 @@ module.exports = class Router extends EventEmitter {
                                 throw thingamabob;
                             }
                         }
+                        this.#postprocessRequest(req, res, routeIndex);
                         return resolve(this._routeRequest(req, res, routeIndex));
                     }
+
                     req.next = next;
                     const continueRoute = await this.#preprocessRequest(req, res, route);
                     if(continueRoute === 'route') {
