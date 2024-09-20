@@ -65,7 +65,7 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 
 3. Do not set `body methods` to read body of requests with GET method or other methods that don't need a body. Reading body makes server about 10k req/sec slower.
 
-4. By default, µExpress creates up to 2 worker threads (depends on number of CPU cores) for reading files. You can change this number by setting `fsThreads` to a different number in `express()`, or set to 0 to disable thread pool for file reading (`express({ fsThreads: 0 })`). Threads are shared between all express() instances, with largest fsThreads number being used.
+4. By default, µExpress creates 1 worker thread for reading files (or 0 if your CPU has only 1 core). You can change this number by setting `fsThreads` to a different number in `express()`, or set to 0 to disable thread pool for file reading (`express({ fsThreads: 0 })`). Threads are shared between all express() instances, with largest fsThreads number being used. Creating a lot of threads will not necessarily improve performance.
 
 ## Compatibility
 

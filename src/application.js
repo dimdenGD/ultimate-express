@@ -40,7 +40,7 @@ class Application extends Router {
             settings.uwsOptions = {};
         }
         if(typeof settings.fsThreads !== 'number') {
-            settings.fsThreads = Math.min(2, cpuCount - 1);
+            settings.fsThreads = cpuCount > 1 ? 1 : 0;
         }
         if(settings.uwsOptions.key_file_name && settings.uwsOptions.cert_file_name) {
             this.uwsApp = uWS.SSLApp(settings.uwsOptions);

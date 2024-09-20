@@ -319,7 +319,7 @@ module.exports = class Response extends Writable {
         }
 
         // serve smaller files using workers
-        if(this.app.fsWorkers.length && stat.size < 1024 * 1024 * Math.min(1.5, this.app.fsWorkers.length) && !ranged) {
+        if(this.app.fsWorkers.length && stat.size < 1024 * 1024 && !ranged) {
             this.app.readFileWithWorker(fullpath).then((data) => {
                 if(this._res.aborted) {
                     return;
