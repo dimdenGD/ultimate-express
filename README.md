@@ -17,7 +17,7 @@ Similar projects based on uWebSockets:
 ## Differences from Express
 
 - `case sensitive routing` is enabled by default.
-- `Content-Length` header is not sent, as uWS uses chunked transfer encoding.
+- Depending on how you send response, `Content-Length` header may be overwritten or not sent at all. On simple responses, uWS sets it automatically, but on streaming responses, it's not sent, and uWS uses chunked transfer encoding.
 - request body is only read for POST, PUT and PATCH requests by default. You can add additional methods by setting `body methods` to array with uppercased methods.
 - For HTTPS, instead of doing this:
 
@@ -102,6 +102,7 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - ✅ app.settings
 - ✅ app.engines
 - ✅ app.on("mount")
+- ✅ HEAD method
 
 ### Application settings
 
@@ -180,13 +181,13 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - ✅ res.redirect()
 - ✅ res.render()
 - ✅ res.send()
-- ⚠️ res.sendFile() - not all options are supported:
+- ✅ res.sendFile()
 - - ✅ options.maxAge
 - - ✅ options.root
 - - ✅ options.lastModified
 - - ✅ options.headers
 - - ✅ options.dotfiles
-- - ❌ options.acceptRanges
+- - ✅ options.acceptRanges
 - - ✅ options.cacheControl
 - - ✅ options.immutable
 - ✅ res.sendStatus()

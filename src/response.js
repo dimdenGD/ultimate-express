@@ -238,14 +238,17 @@ module.exports = class Response extends Writable {
         if(typeof options.maxAge === 'string') {
             options.maxAge = ms(options.maxAge);
         }
-        if(!options.maxAge) {
+        if(typeof options.maxAge === 'undefined') {
             options.maxAge = 0;
         }
-        if(!options.lastModified) {
+        if(typeof options.lastModified === 'undefined') {
             options.lastModified = true;
         }
-        if(!options.cacheControl) {
+        if(typeof options.cacheControl === 'undefined') {
             options.cacheControl = true;
+        }
+        if(typeof options.acceptRanges === 'undefined') {
+            options.acceptRanges = true;
         }
         if(!options.root && !isAbsolute(path)) {
             this.status(500);
@@ -312,8 +315,27 @@ module.exports = class Response extends Writable {
             }
         }
 
+        let offset = 0, len = stat.size, ranged = false;
+        if(options.acceptRanges && this.req.headers.range) {
+            let ranges = this.req.range(stat.size, {
+                combine: true
+            });
+            if(ranges === -1) {
+                this.status(416);
+                this.set('Content-Range', `bytes */${stat.size}`);
+                return callback(new Error('Range Not Satisfiable'));
+            }
+            if(ranges !== -2 && ranges.length === 1) {
+                this.status(206);
+                this.set('Content-Range', `bytes ${ranges[0].start}-${ranges[0].end}/${stat.size}`);
+                offset = ranges[0].start;
+                len = ranges[0].end - ranges[0].start + 1;
+                ranged = true;
+            }
+        }
+
         //there's no point in creating a stream when the file is small enough to fit in a single chunk
-        if(stat.size < 64 * 1024 && fsWorker) { // 64kb - default highWaterMark
+        if(stat.size < 64 * 1024 && fsWorker && !ranged) { // 64kb - default highWaterMark
             // get file using worker
             readFile(fullpath).then((data) => {
                 if(this._res.aborted) {
@@ -325,8 +347,13 @@ module.exports = class Response extends Writable {
                 if(callback) callback(err);
             });
         } else {
-            const file = fs.createReadStream(fullpath);
-            pipeStreamOverResponse(this, file, stat.size, callback);
+            let opts = {};
+            if(ranged) {
+                opts.start = offset;
+                opts.end = Math.max(offset, offset + len - 1);
+            }
+            const file = fs.createReadStream(fullpath, opts);
+            pipeStreamOverResponse(this, file, len, callback);
         }
     }
     download(path, filename, options, callback) {
@@ -582,8 +609,8 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
                     }
                     res._res.writeHeader(header, res.headers[header]);
                 }
-                if(!this.headers['content-type']) {
-                    this._res.writeHeader('content-type', 'text/html');
+                if(!res.headers['content-type']) {
+                    res._res.writeHeader('content-type', 'text/html');
                 }
                 res.headersSent = true;
             }
