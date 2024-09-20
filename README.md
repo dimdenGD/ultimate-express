@@ -202,7 +202,7 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - - ✅ If-Match header
 - - ✅ If-Modified-Since header
 - - ✅ If-Unmodified-Since header
-- - ❌ If-Range header
+- - ✅ If-Range header
 - ✅ res.sendStatus()
 - ✅ res.header(), res.setHeader(), res.set()
 - ✅ res.status()

@@ -251,7 +251,24 @@ function createETagGenerator(options) {
         const buf = !(body instanceof Stats) && !Buffer.isBuffer(body) ? Buffer.from(body, encoding) : body;
         return etag(buf, options);
     }
-}  
+}
+
+function isRangeFresh(req, res) {
+    const ifRange = req.headers['if-range'];
+    if(!ifRange) {
+        return true;
+    }
+
+    // if-range as etag
+    if(ifRange.indexOf('"') !== -1) {
+        const etag = res.get('etag');
+        return Boolean(etag && ifRange.indexOf(etag) !== -1);
+    }
+
+    // if-range as modified date
+    const lastModified = res.get('Last-Modified');
+    return parseHttpDate(lastModified) <= parseHttpDate(ifRange);
+}
 
 module.exports = {
     removeDuplicateSlashes,
@@ -269,5 +286,6 @@ module.exports = {
     parseTokenList,
     parseHttpDate,
     isPreconditionFailure,
-    createETagGenerator
+    createETagGenerator,
+    isRangeFresh
 };

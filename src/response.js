@@ -1,7 +1,10 @@
 const cookie = require("cookie");
 const mime = require("mime-types");
 const vary = require("vary");
-const { normalizeType, stringify, deprecated, UP_PATH_REGEXP, decode, containsDotFile, isPreconditionFailure } = require("./utils.js");
+const { 
+    normalizeType, stringify, deprecated, UP_PATH_REGEXP, decode,
+    containsDotFile, isPreconditionFailure, isRangeFresh
+} = require("./utils.js");
 const { Writable } = require("stream");
 const { isAbsolute } = require("path");
 const fs = require("fs");
@@ -313,6 +316,14 @@ module.exports = class Response extends Writable {
             let ranges = this.req.range(stat.size, {
                 combine: true
             });
+
+            // if-range
+            if(!isRangeFresh(this.req, this)) {
+                console.log('not fresh');
+                ranges = -2;
+            }
+
+
             if(ranges === -1) {
                 this.status(416);
                 this.set('Content-Range', `bytes */${stat.size}`);
