@@ -6,7 +6,6 @@ const { Writable } = require("stream");
 const { isAbsolute } = require("path");
 const fs = require("fs");
 const Path = require("path");
-const { Worker } = require("worker_threads");
 const statuses = require("statuses");
 const { sign } = require("cookie-signature");
 const { EventEmitter } = require("tseep");
@@ -17,41 +16,6 @@ const ms = require('ms');
 const outgoingMessage = new http.OutgoingMessage();
 const symbols = Object.getOwnPropertySymbols(outgoingMessage);
 const kOutHeaders = symbols.find(s => s.toString() === 'Symbol(kOutHeaders)');
-
-const cpuCount = os.cpus().length;
-
-let fsWorker;
-let fsKey = 0;
-const fsCache = {};
-// only create fs worker if cpuCount is greater than 1
-// otherwise it's not worth it
-if(cpuCount > 1) {
-    fsWorker = new Worker(Path.join(__dirname, 'workers/fs.js'));
-
-    fsWorker.on('message', (message) => {
-        if(message.err) {
-            fsCache[message.key].reject(new Error(message.err));
-        } else {
-            fsCache[message.key].resolve(message.data);
-        }
-        delete fsCache[message.key];
-    });
-    fsWorker.unref();
-}
-
-function readFile(path) {
-    return new Promise((resolve, reject) => {
-        if(!fsWorker) {
-            return reject(new Error('fsWorker is not available'));
-        }
-        const key = fsKey++;
-        fsWorker.postMessage({ key, type: 'readFile', path });
-        fsCache[key] = { resolve, reject };
-        if(key > 1000000) {
-            fsKey = 0;
-        }
-    });
-}
 
 class Socket extends EventEmitter {
     constructor(response) {
@@ -354,10 +318,9 @@ module.exports = class Response extends Writable {
             }
         }
 
-        //there's no point in creating a stream when the file is small enough to fit in a single chunk
-        if(stat.size < 64 * 1024 && fsWorker && !ranged) { // 64kb - default highWaterMark
-            // get file using worker
-            readFile(fullpath).then((data) => {
+        // serve smaller files using workers
+        if(stat.size < 1024 * 1024 * Math.min(1.5, this.app.fsThreads.length) && fsWorker && !ranged) {
+            this.app.readFileWithWorker(fullpath).then((data) => {
                 if(this._res.aborted) {
                     return;
                 }
@@ -367,6 +330,7 @@ module.exports = class Response extends Writable {
                 if(callback) callback(err);
             });
         } else {
+            // larger files or range requests are piped over response
             let opts = {};
             if(ranged) {
                 opts.start = offset;

@@ -7,12 +7,40 @@ const querystring = require("querystring");
 const qs = require("qs");
 const ViewClass = require("./view.js");
 const path = require("path");
+const os = require("os");
+const { Worker } = require("worker_threads");
+
+const cpuCount = os.cpus().length;
+
+let fsWorkers = [];
+let fsKey = 0;
+const fsCache = {};
+
+function createFsWorker() {
+    const fsWorker = new Worker(path.join(__dirname, 'workers/fs.js'));
+    fsWorkers.push(fsWorker);
+
+    fsWorker.on('message', (message) => {
+        if(message.err) {
+            fsCache[message.key].reject(new Error(message.err));
+        } else {
+            fsCache[message.key].resolve(message.data);
+        }
+        delete fsCache[message.key];
+    });
+    fsWorker.unref();
+
+    return fsWorker;
+}
 
 class Application extends Router {
     constructor(settings = {}) {
         super(settings);
         if(!settings?.uwsOptions) {
             settings.uwsOptions = {};
+        }
+        if(typeof settings.fsThreads !== 'number') {
+            settings.fsThreads = Math.min(2, cpuCount - 1);
         }
         if(settings.uwsOptions.key_file_name && settings.uwsOptions.cert_file_name) {
             this.uwsApp = uWS.SSLApp(settings.uwsOptions);
@@ -26,6 +54,14 @@ class Application extends Router {
         this.locals = {
             settings: this.settings
         };
+        this.fsWorkers = [];
+        for(let i = 0; i < settings.fsThreads; i++) {
+            if(fsWorkers[i]) {
+                this.fsWorkers[i] = fsWorkers[i];
+            } else {
+                this.fsWorkers[i] = createFsWorker();
+            }
+        }
         this.port = undefined;
         for(const key in defaultSettings) {
             if(!this.settings[key]) {
@@ -39,6 +75,20 @@ class Application extends Router {
         this.set('view', ViewClass);
         this.set('views', path.resolve('views'));
     }
+
+    readFileWithWorker(path) {
+        return new Promise((resolve, reject) => {
+            const fsWorker = this.fsWorkers[Math.floor(Math.random() * this.fsWorkers.length)];
+            console.log(Math.floor(Math.random() * this.fsWorkers.length));
+            const key = fsKey++;
+            fsWorker.postMessage({ key, type: 'readFile', path });
+            fsCache[key] = { resolve, reject };
+            if(key > 1000000) {
+                fsKey = 0;
+            }
+        });
+    }
+
 
     set(key, value) {
         if(key === 'trust proxy') {
