@@ -157,7 +157,11 @@ module.exports = class Response extends Writable {
                 }
                 this.headersSent = true;
             }
-            this._res.end(data);
+            if(!data && this.headers['content-length']) {
+                this._res.endWithoutBody(this.headers['content-length'].toString());
+            } else {
+                this._res.end(data);
+            }
             this.socket.emit('close');
         });
 

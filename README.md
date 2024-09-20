@@ -4,7 +4,9 @@ The *Ultimate* Express. Fastest http server with **full** Express compatibility,
 
 This library is an extremely fast re-implementation of Express.js.
 It is designed to be a drop-in replacement for Express.js, with the same API and functionality, while being much faster. It is not a fork of Express.js.  
-To make sure µExpress matches behavior of Express in all cases, we run all tests with Express first, and then with µExpress and compare results to make sure they match.
+To make sure µExpress matches behavior of Express in all cases, we run all tests with Express first, and then with µExpress and compare results to make sure they match.  
+
+![Node.js >= 16.0.0](https://img.shields.io/badge/Node.js-%3E=16.0.0-green)
 
 ## Difference from similar projects
 
@@ -65,7 +67,7 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 
 3. Do not set `body methods` to read body of requests with GET method or other methods that don't need a body. Reading body makes server about 10k req/sec slower.
 
-4. By default, µExpress creates 1 worker thread for reading files (or 0 if your CPU has only 1 core). You can change this number by setting `fsThreads` to a different number in `express()`, or set to 0 to disable thread pool for file reading (`express({ fsThreads: 0 })`). Threads are shared between all express() instances, with largest fsThreads number being used. Creating a lot of threads will not necessarily improve performance.
+4. By default, µExpress creates 1 worker thread for reading files (or 0 if your CPU has only 1 core). You can change this number by setting `fsThreads` to a different number in `express()`, or set to 0 to disable thread pool for file reading (`express({ fsThreads: 0 })`). Threads are shared between all express() instances, with largest fsThreads number being used. Using more threads will not necessarily improve performance.
 
 ## Compatibility
 

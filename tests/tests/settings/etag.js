@@ -30,6 +30,7 @@ app.listen(13333, async () => {
                 fetch('http://localhost:13335/abc'),
             ]);
             console.log(outputs.map(res => res.headers.get('etag')));
+            process.exit(0);
         });
     });
 });
