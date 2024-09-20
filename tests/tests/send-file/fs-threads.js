@@ -1,6 +1,6 @@
 // must support fs threads
 
-const express = require("../../../src/index.js");
+const express = require("express");
 
 const app = express({ fsThreads: 0 });
 const app2 = express({ fsThreads: 2 });
