@@ -615,9 +615,7 @@ module.exports = class Response extends Writable {
 function pipeStreamOverResponse(res, readStream, totalSize, callback) {
     readStream.on('data', (chunk) => {
         if(res.aborted) {
-            const err = new Error("Request aborted");
-            err.code = "ECONNABORTED";
-            return readStream.destroy(err);
+            return readStream.destroy();
         }
         res._res.cork(() => {
             if(!res.headersSent) {
