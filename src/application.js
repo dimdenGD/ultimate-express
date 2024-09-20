@@ -79,7 +79,6 @@ class Application extends Router {
     readFileWithWorker(path) {
         return new Promise((resolve, reject) => {
             const fsWorker = this.fsWorkers[Math.floor(Math.random() * this.fsWorkers.length)];
-            console.log(Math.floor(Math.random() * this.fsWorkers.length));
             const key = fsKey++;
             fsWorker.postMessage({ key, type: 'readFile', path });
             fsCache[key] = { resolve, reject };
