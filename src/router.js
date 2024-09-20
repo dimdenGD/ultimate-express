@@ -247,7 +247,7 @@ module.exports = class Router extends EventEmitter {
         return match?.groups ?? {};
     }
 
-    #preprocessRequest(req, res, route) {
+    #preprocessRequest(req, res, route, isRouter = false) {
         return new Promise(async resolve => {
             req.route = route;
             if(typeof route.path === 'string' && route.path.includes(':') && route.pattern instanceof RegExp) {
@@ -283,6 +283,10 @@ module.exports = class Router extends EventEmitter {
                 }
             } else {
                 req.params = {};
+            }
+
+            if(isRouter) {
+                return resolve(true);
             }
 
             if(route.use && !req.popAt) {
@@ -334,21 +338,26 @@ module.exports = class Router extends EventEmitter {
             if(!route) return resolve(false);
 
             if(route.callback instanceof Router) {
-                req._stack.push(route.path);
-                req._opPath = req.path.replace(this.#getFullMountpath(req), '') + (req.endsWithSlash && req.path !== '/' && this.get('strict routing') ? '/' : '');
-                req.url = req._opPath + req.urlQuery;
-                if(route.callback.constructor.name === 'Application') {
-                    req.app = route.callback;
-                }
+                const continueRoute = await this.#preprocessRequest(req, res, route, true);
 
-                const routed = await route.callback._routeRequest(req, res, 0);
-                if(routed) return resolve(true);
-
-                req._stack.pop();
-                req._opPath = (req._stack.length > 0 ? req.path.replace(this.#getFullMountpath(req), '') : req.path) + (req.endsWithSlash && req.path !== '/' && this.get('strict routing') ? '/' : '');
-                req.url = req._opPath + req.urlQuery;
-                if(req.app.parent && route.callback.constructor.name === 'Application') {
-                    req.app = req.app.parent;
+                if(!continueRoute) {
+                    return resolve(true);
+                } else if(continueRoute !== 'route') {
+                    req._stack.push(route.path);
+                    req._opPath = req.path.replace(this.#getFullMountpath(req), '') + (req.endsWithSlash && req.path !== '/' && this.get('strict routing') ? '/' : '');
+                    req.url = req._opPath + req.urlQuery;
+                    if(route.callback.constructor.name === 'Application') {
+                        req.app = route.callback;
+                    }
+                    const routed = await route.callback._routeRequest(req, res, 0);
+                    if(routed) return resolve(true);
+                    
+                    req._stack.pop();
+                    req._opPath = (req._stack.length > 0 ? req.path.replace(this.#getFullMountpath(req), '') : req.path) + (req.endsWithSlash && req.path !== '/' && this.get('strict routing') ? '/' : '');
+                    req.url = req._opPath + req.urlQuery;
+                    if(req.app.parent && route.callback.constructor.name === 'Application') {
+                        req.app = req.app.parent;
+                    }
                 }
                 return resolve(this._routeRequest(req, res, routeIndex + 1));
             } else {
