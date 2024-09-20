@@ -285,7 +285,6 @@ module.exports = class Response extends Writable {
         if(!this.get('Content-Type')) {
             this.type(mime.lookup(fullpath));
         }
-
         if(options.cacheControl) {
             this.set('Cache-Control', `public, max-age=${options.maxAge / 1000}` + (options.immutable ? ', immutable' : ''));
         }
@@ -319,10 +318,8 @@ module.exports = class Response extends Writable {
 
             // if-range
             if(!isRangeFresh(this.req, this)) {
-                console.log('not fresh');
                 ranges = -2;
             }
-
 
             if(ranges === -1) {
                 this.status(416);
