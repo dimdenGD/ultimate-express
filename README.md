@@ -190,6 +190,7 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - - ✅ options.acceptRanges
 - - ✅ options.cacheControl
 - - ✅ options.immutable
+- - ✅ Range header
 - ✅ res.sendStatus()
 - ✅ res.header(), res.setHeader(), res.set()
 - ✅ res.status()
