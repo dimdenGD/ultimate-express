@@ -1,7 +1,7 @@
 const cookie = require("cookie");
 const mime = require("mime-types");
 const vary = require("vary");
-const { normalizeType, stringify, deprecated, UP_PATH_REGEXP, decode, containsDotFile } = require("./utils.js");
+const { normalizeType, stringify, deprecated, UP_PATH_REGEXP, decode, containsDotFile, isPreconditionFailure } = require("./utils.js");
 const { Writable } = require("stream");
 const { isAbsolute } = require("path");
 const fs = require("fs");
@@ -313,6 +313,12 @@ module.exports = class Response extends Writable {
             for(const header in options.headers) {
                 this.set(header, options.headers[header]);
             }
+        }
+
+        // conditional requests
+        if(isPreconditionFailure(this.req, this)) {
+            this.status(412);
+            return callback(new Error('Precondition Failed'));
         }
 
         let offset = 0, len = stat.size, ranged = false;

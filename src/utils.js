@@ -174,7 +174,74 @@ function containsDotFile(parts) {
     }
   
     return false;
-}  
+}
+
+function parseTokenList(str) {
+    let end = 0;
+    const list = [];
+    let start = 0;
+  
+    // gather tokens
+    for (let i = 0, len = str.length; i < len; i++) {
+        switch(str.charCodeAt(i)) {
+            case 0x20: /*   */
+                if (start === end) {
+                    start = end = i + 1;
+                }
+                break;
+            case 0x2c: /* , */
+                if (start !== end) {
+                    list.push(str.substring(start, end));
+                }
+                start = end = i + 1;
+                break;
+            default:
+                end = i + 1;
+                break;
+        }
+    }
+  
+    // final token
+    if (start !== end) {
+        list.push(str.substring(start, end));
+    }
+  
+    return list;
+}
+
+
+function parseHttpDate(date) {
+    const timestamp = date && Date.parse(date);
+    return typeof timestamp === 'number' ? timestamp : NaN;
+}
+
+function isPreconditionFailure(req, res) {
+    const match = req.headers['if-match'];
+
+    // if-match
+    if(match) {
+        const etag = res.get('etag');
+        return !etag || (match !== '*' && parseTokenList(match).every(match => {
+            return match !== etag && match !== 'W/' + etag && 'W/' + match !== etag;
+        }));
+    }
+
+    // if-unmodified-since
+    const unmodifiedSince = parseHttpDate(req.headers['if-unmodified-since']);
+    if(!isNaN(unmodifiedSince)) {
+        const lastModified = parseHttpDate(res.get('Last-Modified'));
+        return isNaN(lastModified) || lastModified > unmodifiedSince;
+    }
+
+    // if-modified-since
+    const modifiedSince = parseHttpDate(req.headers['if-modified-since']);
+    if(!isNaN(modifiedSince)) {
+        const lastModified = parseHttpDate(res.get('Last-Modified'));
+        return isNaN(lastModified) || lastModified <= modifiedSince;
+    }
+
+    return false;
+}
 
 module.exports = {
     removeDuplicateSlashes,
@@ -188,5 +255,8 @@ module.exports = {
     deprecated,
     UP_PATH_REGEXP,
     decode,
-    containsDotFile
+    containsDotFile,
+    parseTokenList,
+    parseHttpDate,
+    isPreconditionFailure
 };
