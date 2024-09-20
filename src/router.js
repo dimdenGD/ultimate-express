@@ -251,7 +251,7 @@ module.exports = class Router extends EventEmitter {
         return match?.groups ?? {};
     }
 
-    #preprocessRequest(req, res, route, isRouter = false) {
+    #preprocessRequest(req, res, route, router) {
         return new Promise(async resolve => {
             req.route = route;
             if(typeof route.path === 'string' && route.path.includes(':') && route.pattern instanceof RegExp) {
@@ -261,7 +261,7 @@ module.exports = class Router extends EventEmitter {
                 }
                 req.params = this.#extractParams(route.pattern, path);
                 
-                if(isRouter) {
+                if(router && router.settings.mergeParams) {
                     req._paramStack.push(req.params);
                 } else if(req._paramStack.length > 0) {
                     for(let params of req._paramStack) {
@@ -295,7 +295,7 @@ module.exports = class Router extends EventEmitter {
                 }
             } else {
                 req.params = {};
-                if(isRouter) {
+                if(router && router.settings.mergeParams) {
                     req._paramStack.push(req.params);
                 } else if(req._paramStack.length > 0) {
                     for(let params of req._paramStack) {
@@ -304,7 +304,7 @@ module.exports = class Router extends EventEmitter {
                 }
             }
 
-            if(isRouter) {
+            if(router) {
                 return resolve(true);
             }
 
@@ -322,7 +322,6 @@ module.exports = class Router extends EventEmitter {
     }
 
     #postprocessRequest(req, res, routeKey) {
-        req._paramStack.pop();
         if(routeKey >= req.popAt) {
             req._stack.pop();
 
@@ -362,7 +361,7 @@ module.exports = class Router extends EventEmitter {
             if(!route) return resolve(false);
 
             if(route.callback instanceof Router) {
-                const continueRoute = await this.#preprocessRequest(req, res, route, true);
+                const continueRoute = await this.#preprocessRequest(req, res, route, route.callback);
 
                 if(!continueRoute) {
                     return resolve(true);
