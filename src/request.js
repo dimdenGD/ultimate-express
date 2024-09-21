@@ -87,9 +87,9 @@ module.exports = class Request extends Readable {
         if(!trust) {
             return this.get('host');
         }
-        let val = this.get('x-forwarded-host');
+        let val = this.headers['x-forwarded-host'];
         if (!val || !trust(this.connection.remoteAddress, 0)) {
-            val = this.get('Host');
+            val = this.headers['host'];
         } else if (val.indexOf(',') !== -1) {
             // Note: X-Forwarded-Host is normally only ever a
             //       single value, but this is to be safe.
@@ -106,7 +106,7 @@ module.exports = class Request extends Readable {
 
     get hostname() {
         const host = this.#host;
-        if(!host) return this.get('host').split(':')[0];
+        if(!host) return this.headers['host'].split(':')[0];
         const offset = host[0] === '[' ? host.indexOf(']') + 1 : 0;
         const index = host.indexOf(':', offset);
         return index !== -1 ? host.slice(0, index) : host;
@@ -139,7 +139,7 @@ module.exports = class Request extends Readable {
         if(!trust(this.connection.remoteAddress, 0)) {
             return proto;
         }
-        const header = this.get('x-forwarded-proto') || proto;
+        const header = this.headers['x-forwarded-proto'] || proto;
         const index = header.indexOf(',');
 
         return index !== -1 ? header.slice(0, index).trim() : header.trim();
@@ -173,7 +173,7 @@ module.exports = class Request extends Readable {
     }
 
     get xhr() {
-        return this.get('x-requested-with') === 'XMLHttpRequest';
+        return this.headers['x-requested-with'] === 'XMLHttpRequest';
     }
 
     get connection() {
@@ -191,8 +191,8 @@ module.exports = class Request extends Readable {
         }
         if((this.res.statusCode >= 200 && this.res.statusCode < 300) || this.res.statusCode === 304) {
             return fresh(this.headers, {
-                'etag': this.res.get('etag'),
-                'last-modified': this.res.get('last-modified'),
+                'etag': this.res.headers['etag'],
+                'last-modified': this.res.headers['last-modified'],
             });
         }
         return false;
@@ -250,7 +250,7 @@ module.exports = class Request extends Readable {
     }
 
     range(size, options) {
-        const range = this.get('range');
+        const range = this.headers['range'];
         if(!range) return;
         return parseRange(size, range, options);
     }
@@ -262,7 +262,7 @@ module.exports = class Request extends Readable {
         }
         let headers = {};
         this.#rawHeadersEntries.forEach((val) => {
-            const key = val[0];
+            const key = val[0].toLowerCase();
             const value = val[1];
             if(headers[key]) {
                 if(discardedDuplicates.includes(key)) {
