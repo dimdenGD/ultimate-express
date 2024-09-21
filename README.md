@@ -84,17 +84,7 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 - ✅ express.Router()
 - ✅ express.json()
 - ✅ express.urlencoded()
-- 🚧 express.static()
-- - ✅ options.etag
-- - ✅ options.index
-- - ✅ options.maxAge
-- - ✅ options.lastModified
-- - ✅ options.dotfiles
-- - ✅ options.immutable
-- - ✅ options.setHeaders
-- - ✅ options.fallthrough
-- - ✅ options.redirect
-- - ✅ options.extensions
+- ✅ express.static()
 - ✅ express.text()
 - ✅ express.raw()
 
