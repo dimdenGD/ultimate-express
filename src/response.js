@@ -328,11 +328,11 @@ module.exports = class Response extends Writable {
         }
 
         // if-modified-since
-        const modifiedSince = this.req.headers['if-modified-since'];
-        const lastModified = this.headers['last-modified'];
+        let modifiedSince = this.req.headers['if-modified-since'];
+        let lastModified = this.headers['last-modified'];
         if(options.lastModified && lastModified && modifiedSince) {
-            const lastModified = parseHttpDate(lastModified);
-            const modifiedSince = parseHttpDate(modifiedSince);
+            modifiedSince = parseHttpDate(modifiedSince);
+            lastModified = parseHttpDate(lastModified);
 
             if(!isNaN(lastModified) && !isNaN(modifiedSince) && lastModified <= modifiedSince) {
                 this.status(304);
