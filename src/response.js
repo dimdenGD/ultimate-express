@@ -210,9 +210,8 @@ module.exports = class Response extends Writable {
             options = {};
         }
         if(!options) options = {};
-        if(!callback) {
-            callback = this.req.next;
-        }
+        let done = callback;
+        if(!done) done = this.req.next;
         // default options
         if(typeof options.maxAge === 'string') {
             options.maxAge = ms(options.maxAge);
@@ -242,26 +241,26 @@ module.exports = class Response extends Writable {
         // path checks
         if(!options.root && !isAbsolute(path)) {
             this.status(500);
-            return callback(new Error('path must be absolute or specify root to res.sendFile'));
+            return done(new Error('path must be absolute or specify root to res.sendFile'));
         }
         path = decode(path);
         if(path === -1) {
             this.status(400);
-            return callback(new Error('Bad Request'));
+            return done(new Error('Bad Request'));
         }
         if(~path.indexOf('\0')) {
             this.status(400);
-            return callback(new Error('Bad Request'));
+            return done(new Error('Bad Request'));
         }
         if(UP_PATH_REGEXP.test(path)) {
             this.status(403);
-            return callback(new Error('Forbidden'));
+            return done(new Error('Forbidden'));
         }
         const parts = Path.normalize(path).split(Path.sep);
         const fullpath = options.root ? Path.resolve(Path.join(options.root, path)) : path;
         if(options.root && !fullpath.startsWith(Path.resolve(options.root))) {
             this.status(403);
-            return callback(new Error('Forbidden'));
+            return done(new Error('Forbidden'));
         }
 
         // dotfile checks
@@ -271,11 +270,11 @@ module.exports = class Response extends Writable {
                     break;
                 case 'deny':
                     this.status(403);
-                    return callback(new Error('Forbidden'));
+                    return done(new Error('Forbidden'));
                 case 'ignore':
                 default:
                     this.status(404);
-                    return callback(new Error('Not found'));
+                    return done(new Error('Not found'));
             }
         }
 
@@ -284,11 +283,11 @@ module.exports = class Response extends Writable {
             try {
                 stat = fs.statSync(fullpath);
             } catch(err) {
-                return callback(err);
+                return done(err);
             }
             if(stat.isDirectory()) {
                 this.status(404);
-                return callback(new Error(`Not found`));
+                return done(new Error(`Not found`));
             }
         }
 
@@ -320,11 +319,10 @@ module.exports = class Response extends Writable {
             this.req.noEtag = true;
         }
 
-
         // conditional requests
         if(isPreconditionFailure(this.req, this)) {
             this.status(412);
-            return callback(new Error('Precondition Failed'));
+            return done(new Error('Precondition Failed'));
         }
 
         // if-modified-since
@@ -355,7 +353,7 @@ module.exports = class Response extends Writable {
             if(ranges === -1) {
                 this.status(416);
                 this.set('Content-Range', `bytes */${stat.size}`);
-                return callback(new Error('Range Not Satisfiable'));
+                return done(new Error('Range Not Satisfiable'));
             }
             if(ranges !== -2 && ranges.length === 1) {
                 this.status(206);
