@@ -85,11 +85,11 @@ module.exports = class Request extends Readable {
     get #host() {
         const trust = this.app.get('trust proxy fn');
         if(!trust) {
-            return this._req.getHeader('host');
+            return this.get('host');
         }
-        let val = this._req.getHeader('x-forwarded-host');
+        let val = this.get('x-forwarded-host');
         if (!val || !trust(this.connection.remoteAddress, 0)) {
-            val = this._req.getHeader('Host');
+            val = this.get('Host');
         } else if (val.indexOf(',') !== -1) {
             // Note: X-Forwarded-Host is normally only ever a
             //       single value, but this is to be safe.
@@ -139,7 +139,7 @@ module.exports = class Request extends Readable {
         if(!trust(this.connection.remoteAddress, 0)) {
             return proto;
         }
-        const header = this._req.getHeader('x-forwarded-proto') || proto;
+        const header = this.get('x-forwarded-proto') || proto;
         const index = header.indexOf(',');
 
         return index !== -1 ? header.slice(0, index).trim() : header.trim();
@@ -173,7 +173,7 @@ module.exports = class Request extends Readable {
     }
 
     get xhr() {
-        return this._req.getHeader('x-requested-with') === 'XMLHttpRequest';
+        return this.get('x-requested-with') === 'XMLHttpRequest';
     }
 
     get connection() {
@@ -250,7 +250,7 @@ module.exports = class Request extends Readable {
     }
 
     range(size, options) {
-        const range = this._req.getHeader('range');
+        const range = this.get('range');
         if(!range) return;
         return parseRange(size, range, options);
     }
