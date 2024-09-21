@@ -21,8 +21,10 @@ function static(root, options) {
         let _path = req.url;
         let fullpath = path.resolve(path.join(options.root, req.url));
         if(options.root && !fullpath.startsWith(path.resolve(options.root))) {
-            res.status(403);
-            return next(!options.fallthrough ? new Error('Forbidden') : undefined);
+            if(!options.fallthrough) {
+                res.status(403);
+                return next(new Error('Forbidden'));
+            } else return next();
         }
 
         let stat;
@@ -43,9 +45,10 @@ function static(root, options) {
                 }
             }
             if(!stat) {
-                res.status(404);
-                next(!options.fallthrough ? err.message : undefined);
-                return;
+                if(!options.fallthrough) {
+                    res.status(404);
+                    return next(err.message);
+                } else return next();
             }
         }
 
@@ -53,8 +56,10 @@ function static(root, options) {
             if(!req.endsWithSlash) {
                 if(options.redirect) return res.redirect(301, req.path + '/');
                 else {
-                    res.status(404);
-                    return next(!options.fallthrough ? new Error('Not found') : undefined);
+                    if(!options.fallthrough) {
+                        res.status(404);
+                        return next(new Error('Not found'));
+                    } else return next();
                 }
             }
             if(options.index) {
@@ -62,8 +67,10 @@ function static(root, options) {
                     stat = fs.statSync(path.join(fullpath, options.index));
                     _path = path.join(req.url, options.index);
                 } catch(err) {
-                    res.status(404);
-                    return next(!options.fallthrough ? new Error('Not found') : undefined);
+                    if(!options.fallthrough) {
+                        res.status(404);
+                        return next(new Error('Not found'));
+                    } else return next();
                 }
             } else {
 
