@@ -4,9 +4,9 @@ const express = require("express");
 
 const app = express();
 
-const _send = app.response.send;
+const _send = express.response.send;
 
-app.response.send = function(body) {
+express.response.send = function(body) {
     console.log('send', body);
     return _send.call(this, body);
 }
