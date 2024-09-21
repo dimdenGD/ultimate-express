@@ -324,21 +324,21 @@ module.exports = class Response extends Writable {
         // conditional requests
         if(isPreconditionFailure(this.req, this)) {
             this.status(412);
-            this.set('Content-Security-Policy', "default-src 'none'");
-            this.set('X-Content-Type-Options', 'nosniff');
-            return this.end("Precondition Failed");
+            return callback(new Error('Precondition Failed'));
         }
 
         // if-modified-since
-        const modifiedSince = parseHttpDate(this.req.headers['if-modified-since']);
-        if(!isNaN(modifiedSince)) {
-            const lastModified = parseHttpDate(this.headers['last-modified']);
-            if(lastModified <= modifiedSince) {
+        const modifiedSince = this.req.headers['if-modified-since'];
+        const lastModified = this.headers['last-modified'];
+        if(options.lastModified && lastModified && modifiedSince) {
+            const lastModified = parseHttpDate(lastModified);
+            const modifiedSince = parseHttpDate(modifiedSince);
+
+            if(!isNaN(lastModified) && !isNaN(modifiedSince) && lastModified <= modifiedSince) {
                 this.status(304);
                 return this.end();
             };
         }
-
 
         // range requests
         let offset = 0, len = stat.size, ranged = false;
@@ -355,9 +355,7 @@ module.exports = class Response extends Writable {
             if(ranges === -1) {
                 this.status(416);
                 this.set('Content-Range', `bytes */${stat.size}`);
-                this.set('Content-Security-Policy', "default-src 'none'");
-                this.set('X-Content-Type-Options', 'nosniff');
-                return this.end("Range Not Satisfiable");
+                return callback(new Error('Range Not Satisfiable'));
             }
             if(ranges !== -2 && ranges.length === 1) {
                 this.status(206);

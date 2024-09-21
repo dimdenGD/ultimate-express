@@ -46,5 +46,12 @@ app.listen(13333, async () => {
         }
     });
     console.log((await response5.text()).slice(0, 10), response5.headers.get('Content-Range'), response5.headers.get('Content-Length'), response5.status);
+
+    const response6 = await fetch('http://localhost:13333/test', {
+        headers: {
+            Range: 'bytes=99999999999999999999999999-999999999999999999999999999999'
+        }
+    });
+    console.log((await response6.text()).slice(0, 10), response6.headers.get('Content-Range'), response6.headers.get('Content-Length'), response6.status);
     process.exit(0);
 });
