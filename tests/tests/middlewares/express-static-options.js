@@ -16,8 +16,13 @@ app.use('/static6', express.static('tests/parts', { dotfiles: 'ignore' }));
 app.use('/static7', express.static('tests/parts', { fallthrough: false }));
 app.use('/static8', express.static('tests/parts', { etag: false }));
 app.use('/static9', express.static('tests/parts', { extensions: ['jpg'] }));
+app.use('/static10', express.static('tests/parts', { setHeaders: (res, path, stat) => {
+    console.log(path, stat.size);
+    res.set('X-Test', 'test');
+} }));
 
 app.use((err, req, res, next) => {
+
     res.status(500).send(err);
 });
 
@@ -59,5 +64,9 @@ app.listen(13333, async () => {
     const response10 = await fetch('http://localhost:13333/static9/big');
     console.log(response10.status, response10.headers.get('Content-Type'));
 
+    const response11 = await fetch('http://localhost:13333/static10/index.html');
+    console.log(response11.headers.get('X-Test'));
+
     process.exit(0);
+
 });

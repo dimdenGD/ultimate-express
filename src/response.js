@@ -308,6 +308,9 @@ module.exports = class Response extends Writable {
                 this.set(header, options.headers[header]);
             }
         }
+        if(options.setHeaders) {
+            options.setHeaders(this, fullpath, stat);
+        }
 
         // etag
         if(options.etag && !this.headers['etag'] && etagFn) {

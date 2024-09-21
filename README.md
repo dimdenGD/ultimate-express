@@ -91,7 +91,7 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 - - ✅ options.lastModified
 - - ✅ options.dotfiles
 - - ✅ options.immutable
-- - ❌ options.setHeaders
+- - ✅ options.setHeaders
 - - ✅ options.fallthrough
 - - ✅ options.redirect
 - - ✅ options.extensions
