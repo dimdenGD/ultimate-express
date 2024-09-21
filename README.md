@@ -14,7 +14,7 @@ Similar projects based on uWebSockets:
 
 - `express` on Bun - since Bun uses uWS for its HTTP module, Express is about 2.5 times faster than on Node.js with 25k req/sec instead of 10k req/sec normally, but still slower than µExpress at 60k req/sec because it doesn't do uWS-specific optimizations.
 - `hyper-express` - while having a similar API to Express, it's very far from being a drop-in replacement, and implements most of the functionality differently. This creates a lot of random quirks and issues, making the switch quite difficult. Built in middlewares are also very different.
-- `uwebsockets-express` - this library is closer to being a drop-in replacement, but misses a lot of APIs, depends on Express by calling it's methods under the hood, doesn't try to optimize routing by using native uWS router, and is about 2 times slower than µExpress.
+- `uwebsockets-express` - this library is closer to being a drop-in replacement, but misses a lot of APIs, depends on Express by calling it's methods under the hood and doesn't try to optimize routing by using native uWS router.
 
 ## Differences from Express
 
@@ -74,9 +74,9 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 
 ## Compatibility
 
-✅ - Full support (all features and options are supported)
-🚧 - Partial support (some options are not supported)
-❌ - Not supported
+✅ - Full support (all features and options are supported)  
+🚧 - Partial support (some options are not supported)  
+❌ - Not supported  
 
 ### express
 
@@ -94,7 +94,7 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 - - ❌ options.setHeaders
 - - ✅ options.fallthrough
 - - ✅ options.redirect
-- - ❌ options.extensions
+- - ✅ options.extensions
 - ✅ express.text()
 - ✅ express.raw()
 

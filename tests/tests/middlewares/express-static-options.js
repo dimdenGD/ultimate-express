@@ -15,6 +15,7 @@ app.use('/static5', express.static('tests/parts', { dotfiles: 'deny' }));
 app.use('/static6', express.static('tests/parts', { dotfiles: 'ignore' }));
 app.use('/static7', express.static('tests/parts', { fallthrough: false }));
 app.use('/static8', express.static('tests/parts', { etag: false }));
+app.use('/static9', express.static('tests/parts', { extensions: ['jpg'] }));
 
 app.use((err, req, res, next) => {
     res.status(500).send(err);
@@ -55,12 +56,8 @@ app.listen(13333, async () => {
     const response9 = await fetch('http://localhost:13333/static/index.html');
     console.log(response9.headers.get('ETag'));
 
+    const response10 = await fetch('http://localhost:13333/static9/big');
+    console.log(response10.status, response10.headers.get('Content-Type'));
+
     process.exit(0);
-
-
-
-
-
-
-
 });

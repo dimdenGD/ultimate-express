@@ -6,6 +6,15 @@ function static(root, options) {
     if(typeof options.index === 'undefined') options.index = 'index.html';
     if(typeof options.redirect === 'undefined') options.redirect = true;
     if(typeof options.fallthrough === 'undefined') options.fallthrough = true;
+    if(options.extensions) {
+        if(typeof options.extensions !== 'string' && !Array.isArray(options.extensions)) {
+            throw new Error('extensions must be a string or an array');
+        }
+        if(!Array.isArray(options.extensions)) {
+            options.extensions = [options.extensions];
+        }
+        options.extensions = options.extensions.map(ext => ext.startsWith('.') ? ext.slice(1) : ext);
+    }
     options.root = root;
 
     return (req, res, next) => {
@@ -20,8 +29,24 @@ function static(root, options) {
         try {
             stat = fs.statSync(fullpath);
         } catch(err) {
-            res.status(404);
-            return next(!options.fallthrough ? err.message : undefined);
+            const ext = path.extname(fullpath);
+            let i = 0;
+            if(ext === '' && options.extensions) {
+                while(i < options.extensions.length) {
+                    try {
+                        stat = fs.statSync(fullpath + '.' + options.extensions[i]);
+                        _path = req.url.split('?')[0] + '.' + options.extensions[i];
+                        break;
+                    } catch(err) {
+                        i++;
+                    }
+                }
+            }
+            if(!stat) {
+                res.status(404);
+                next(!options.fallthrough ? err.message : undefined);
+                return;
+            }
         }
 
         if(stat.isDirectory()) {
