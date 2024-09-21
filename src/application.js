@@ -186,12 +186,11 @@ class Application extends Router {
             port = 0;
         }
         this.uwsApp.listen(port, socket => {
-            this.port = uWS.us_socket_local_port(socket);
             if(!socket) {
-                let err = new Error('EADDRINUSE: address already in use ' + this.port);
-                err.code = 'EADDRINUSE';
+                let err = new Error('Failed to listen on port ' + port + '. No permission or address already in use.');
                 throw err;
             }
+            this.port = uWS.us_socket_local_port(socket);
             callback(this.port);
         });
     }
