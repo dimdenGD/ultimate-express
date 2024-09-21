@@ -137,7 +137,7 @@ module.exports = class Response extends Writable {
         this._res.cork(() => {
             if(!this.headersSent) {
                 const etagFn = this.app.get('etag fn');
-                if(data && !this.headers['etag'] && etagFn) {
+                if(data && !this.headers['etag'] && etagFn && !this.req.noEtag) {
                     this.set('etag', etagFn(data, this.req));
                 }
                 if(this.req.fresh) {
@@ -310,9 +310,13 @@ module.exports = class Response extends Writable {
         }
 
         // etag
-        if(!this.headers['etag'] && etagFn) {
+        if(options.etag && !this.headers['etag'] && etagFn) {
             this.set('etag', etagFn(stat));
         }
+        if(!options.etag) {
+            this.req.noEtag = true;
+        }
+
 
         // conditional requests
         if(isPreconditionFailure(this.req, this)) {

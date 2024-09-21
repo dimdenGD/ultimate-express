@@ -74,7 +74,9 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 
 ## Compatibility
 
-WORK IN PROGRESS. Features with ❌ will be implemented in the future.
+✅ - Full support (all features and options are supported)
+🚧 - Partial support (some options are not supported)
+❌ - Not supported
 
 ### express
 
@@ -82,7 +84,7 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - ✅ express.Router()
 - ✅ express.json()
 - ✅ express.urlencoded()
-- ✅ express.static()
+- 🚧 express.static()
 - - ✅ options.etag
 - - ✅ options.index
 - - ✅ options.maxAge
@@ -90,8 +92,8 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - - ✅ options.dotfiles
 - - ✅ options.immutable
 - - ❌ options.setHeaders
-- - ❌ options.fallthrough
-- - ❌ options.redirect
+- - ✅ options.fallthrough
+- - ✅ options.redirect
 - - ❌ options.extensions
 - ✅ express.text()
 - ✅ express.raw()
@@ -165,7 +167,8 @@ WORK IN PROGRESS. Features with ❌ will be implemented in the future.
 - ✅ req.stale
 - ✅ req.subdomains
 - ✅ req.xhr
-- ⚠️ req.connection, req.socket (only `encrypted`, `remoteAddress`, `localPort` and `remotePort` are supported)
+- 🚧 req.route (route implementation is different from Express)
+- 🚧 req.connection, req.socket (only `encrypted`, `remoteAddress`, `localPort` and `remotePort` are supported)
 - ✅ req.accepts()
 - ✅ req.acceptsCharsets()
 - ✅ req.acceptsEncodings()

@@ -238,13 +238,21 @@ module.exports = class Router extends EventEmitter {
         if(this.errorRoute) {
             return this.errorRoute(err, request, response, () => {
                 if(!response.headersSent) {
-                    response.status(500).send(this._generateErrorPage(err, true));
+                    if(response.statusCode === 200) {
+                        response.statusCode = 500;
+                    }
+                    response.send(this._generateErrorPage(err, true));
                 }
             });
         }
         console.error(err);
-        response.status(500).send(this._generateErrorPage(err, true));
+        if(response.statusCode === 200) {
+            response.statusCode = 500;
+        }
+        response.send(this._generateErrorPage(err, true));
     }
+
+
 
     #extractParams(pattern, path) {
         let match = pattern.exec(path);

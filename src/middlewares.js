@@ -3,31 +3,45 @@ const path = require('path');
 
 function static(root, options) {
     if(!options) options = {};
-    if(!options.index) options.index = 'index.html';
+    if(typeof options.index === 'undefined') options.index = 'index.html';
+    if(typeof options.redirect === 'undefined') options.redirect = true;
+    if(typeof options.fallthrough === 'undefined') options.fallthrough = true;
     options.root = root;
+
     return (req, res, next) => {
         let _path = req.url;
         let fullpath = path.resolve(path.join(options.root, req.url));
         if(options.root && !fullpath.startsWith(path.resolve(options.root))) {
-            return next(!options.passthrough ? new Error('Forbidden') : undefined);
+            res.status(403);
+            return next(!options.fallthrough ? new Error('Forbidden') : undefined);
         }
 
         let stat;
         try {
             stat = fs.statSync(fullpath);
         } catch(err) {
-            return next();
+            res.status(404);
+            return next(!options.fallthrough ? err.message : undefined);
         }
 
         if(stat.isDirectory()) {
+            if(!req.endsWithSlash) {
+                if(options.redirect) return res.redirect(301, req.path + '/');
+                else {
+                    res.status(404);
+                    return next(!options.fallthrough ? new Error('Not found') : undefined);
+                }
+            }
             if(options.index) {
                 try {
                     stat = fs.statSync(path.join(fullpath, options.index));
                     _path = path.join(req.url, options.index);
                 } catch(err) {
-                    return next();
+                    res.status(404);
+                    return next(!options.fallthrough ? new Error('Not found') : undefined);
                 }
             } else {
+
                 return next();
             }
         }
@@ -36,7 +50,7 @@ function static(root, options) {
 
         return res.sendFile(_path, options, e => {
             if(e) {
-                next(!options.passthrough ? e : undefined);
+                next(!options.fallthrough ? e : undefined);
             }
         });
     }
