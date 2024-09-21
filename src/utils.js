@@ -236,13 +236,6 @@ function isPreconditionFailure(req, res) {
         return isNaN(lastModified) || lastModified > unmodifiedSince;
     }
 
-    // if-modified-since
-    const modifiedSince = parseHttpDate(req.headers['if-modified-since']);
-    if(!isNaN(modifiedSince)) {
-        const lastModified = parseHttpDate(res.get('Last-Modified'));
-        return isNaN(lastModified) || lastModified <= modifiedSince;
-    }
-
     return false;
 }
 

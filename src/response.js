@@ -3,7 +3,7 @@ const mime = require("mime-types");
 const vary = require("vary");
 const { 
     normalizeType, stringify, deprecated, UP_PATH_REGEXP, decode,
-    containsDotFile, isPreconditionFailure, isRangeFresh
+    containsDotFile, isPreconditionFailure, isRangeFresh, parseHttpDate
 } = require("./utils.js");
 const { Writable } = require("stream");
 const { isAbsolute } = require("path");
@@ -324,8 +324,21 @@ module.exports = class Response extends Writable {
         // conditional requests
         if(isPreconditionFailure(this.req, this)) {
             this.status(412);
-            return callback(new Error('Precondition Failed'));
+            this.set('Content-Security-Policy', "default-src 'none'");
+            this.set('X-Content-Type-Options', 'nosniff');
+            return this.end("Precondition Failed");
         }
+
+        // if-modified-since
+        const modifiedSince = parseHttpDate(this.req.headers['if-modified-since']);
+        if(!isNaN(modifiedSince)) {
+            const lastModified = parseHttpDate(this.headers['last-modified']);
+            if(lastModified <= modifiedSince) {
+                this.status(304);
+                return this.end();
+            };
+        }
+
 
         // range requests
         let offset = 0, len = stat.size, ranged = false;
@@ -342,7 +355,9 @@ module.exports = class Response extends Writable {
             if(ranges === -1) {
                 this.status(416);
                 this.set('Content-Range', `bytes */${stat.size}`);
-                return callback(new Error('Range Not Satisfiable'));
+                this.set('Content-Security-Policy', "default-src 'none'");
+                this.set('X-Content-Type-Options', 'nosniff');
+                return this.end("Range Not Satisfiable");
             }
             if(ranges !== -2 && ranges.length === 1) {
                 this.status(206);
