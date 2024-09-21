@@ -24,8 +24,13 @@ module.exports = class Router extends EventEmitter {
         this.errorRoute = undefined;
         this.mountpath = '/';
         this.settings = settings;
+        this._request = Request;
+        this._response = Response;
+        this.request = this._request.prototype;
+        this.response = this._response.prototype;
 
         if(typeof settings.caseSensitive !== 'undefined') {
+
             this.settings['case sensitive routing'] = settings.caseSensitive;
             delete this.settings.caseSensitive;
         }
@@ -173,8 +178,8 @@ module.exports = class Router extends EventEmitter {
             method = 'del';
         }
         const fn = async (res, req) => {
-            const request = new Request(req, res, this);
-            const response = new Response(res, request, this);
+            const request = new this._request(req, res, this);
+            const response = new this._response(res, request, this);
             request.res = response;
             response.req = request;
             res.onAborted(() => {

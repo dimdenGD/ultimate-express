@@ -1,6 +1,4 @@
 const uWS = require("uWebSockets.js");
-const Response = require("./response.js");
-const Request = require("./request.js");
 const Router = require("./router.js");
 const { removeDuplicateSlashes, defaultSettings, compileTrust, createETagGenerator } = require("./utils.js");
 const querystring = require("querystring");
@@ -161,8 +159,8 @@ class Application extends Router {
     #createRequestHandler() {
         this.uwsApp.any('/*', async (res, req) => {
 
-            const request = new Request(req, res, this);
-            const response = new Response(res, req, this);
+            const request = new this._request(req, res, this);
+            const response = new this._response(res, request, this);
             request.res = response;
             response.req = request;
             res.onAborted(() => {

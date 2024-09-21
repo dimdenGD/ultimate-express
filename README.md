@@ -2,7 +2,7 @@
 
 The *Ultimate* Express. Fastest http server with **full** Express compatibility, based on µWebSockets.
 
-This library is an extremely fast re-implementation of Express.js 4.
+This library is a very fast re-implementation of Express.js 4.
 It is designed to be a drop-in replacement for Express.js, with the same API and functionality, while being much faster. It is not a fork of Express.js.  
 To make sure µExpress matches behavior of Express in all cases, we run all tests with Express first, and then with µExpress and compare results to make sure they match.  
 
@@ -17,6 +17,8 @@ Similar projects based on uWebSockets:
 - `uwebsockets-express` - this library is closer to being a drop-in replacement, but misses a lot of APIs, depends on Express by calling it's methods under the hood and doesn't try to optimize routing by using native uWS router.
 
 ## Differences from Express
+
+In a lot of cases, you can just replace `require("express")` with `require("u-express")` and everything works the same. But there are some differences:
 
 - `case sensitive routing` is enabled by default.
 - Depending on how you send response, `Content-Length` header may be overwritten or not sent at all:
@@ -87,6 +89,8 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 - ✅ express.static()
 - ✅ express.text()
 - ✅ express.raw()
+- ✅ express.response
+- ✅ express.request
 
 ### Application
 
