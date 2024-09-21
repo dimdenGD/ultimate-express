@@ -185,7 +185,15 @@ class Application extends Router {
             callback = port;
             port = 0;
         }
-        this.uwsApp.listen(port, socket => {
+        let fn = 'listen';
+        if(typeof port !== 'number') {
+            if(!isNaN(Number(port))) {
+                port = Number(port);
+            } else {
+                fn = 'listen_unix';
+            }
+        }
+        this.uwsApp[fn](port, socket => {
             if(!socket) {
                 let err = new Error('Failed to listen on port ' + port + '. No permission or address already in use.');
                 throw err;
