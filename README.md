@@ -89,8 +89,9 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 - ✅ express.static()
 - ✅ express.text()
 - ✅ express.raw()
-- ✅ express.response
-- ✅ express.request
+- 🚧 express.request (this is a Request.prototype, use express._request to get actual request class)
+- 🚧 express.response (this is a Response.prototype, use express._response to get actual response class)
+
 
 ### Application
 
