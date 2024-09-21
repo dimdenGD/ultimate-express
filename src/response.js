@@ -13,8 +13,8 @@ const statuses = require("statuses");
 const { sign } = require("cookie-signature");
 const { EventEmitter } = require("tseep");
 const http = require("http");
-const os = require('os');
 const ms = require('ms');   
+const etag = require("etag");
 
 const outgoingMessage = new http.OutgoingMessage();
 const symbols = Object.getOwnPropertySymbols(outgoingMessage);
@@ -229,6 +229,15 @@ module.exports = class Response extends Writable {
         if(typeof options.acceptRanges === 'undefined') {
             options.acceptRanges = true;
         }
+        if(typeof options.etag === 'undefined') {
+            options.etag = this.app.get('etag') !== false;
+        }
+        let etagFn = this.app.get('etag fn');
+        if(options.etag && !etagFn) {
+            etagFn = stat => {
+                return etag(stat, { weak: true });
+            }
+        }
 
         // path checks
         if(!options.root && !isAbsolute(path)) {
@@ -270,20 +279,23 @@ module.exports = class Response extends Writable {
             }
         }
 
-        let stat;
-        try {
-            stat = fs.statSync(fullpath);
-        } catch(err) {
-            return callback(err);
-        }
-        if(stat.isDirectory()) {
-            this.status(404);
-            return callback(new Error(`Not found`));
+        let stat = options._stat;
+        if(!stat) {
+            try {
+                stat = fs.statSync(fullpath);
+            } catch(err) {
+                return callback(err);
+            }
+            if(stat.isDirectory()) {
+                this.status(404);
+                return callback(new Error(`Not found`));
+            }
         }
 
         // headers
         if(!this.get('Content-Type')) {
-            this.type(mime.lookup(fullpath));
+            const m = mime.lookup(fullpath);
+            if(m) this.type(m);
         }
         if(options.cacheControl) {
             this.set('Cache-Control', `public, max-age=${options.maxAge / 1000}` + (options.immutable ? ', immutable' : ''));
@@ -298,7 +310,6 @@ module.exports = class Response extends Writable {
         }
 
         // etag
-        const etagFn = this.app.get('etag fn');
         if(!this.headers['etag'] && etagFn) {
             this.set('etag', etagFn(stat));
         }
