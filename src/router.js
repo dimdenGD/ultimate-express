@@ -1,4 +1,4 @@
-const { patternToRegex, needsConversionToRegex, deprecated } = require("./utils.js");
+const { patternToRegex, needsConversionToRegex, deprecated, findIndexStartingFrom } = require("./utils.js");
 const Response = require("./response.js");
 const Request = require("./request.js");
 const { EventEmitter } = require("tseep");
@@ -370,8 +370,9 @@ module.exports = class Router extends EventEmitter {
 
     async _routeRequest(req, res, startIndex = 0) {
         return new Promise(async (resolve) => {
-            let [routeIndex, route] = this.#routes.findStartingFrom(r => (r.all || r.method === req.method || (r.gettable && req.method === 'HEAD')) && this.#pathMatches(r, req), startIndex);
-            if(!route) return resolve(false);
+            let routeIndex = findIndexStartingFrom(this.#routes, r => (r.all || r.method === req.method || (r.gettable && req.method === 'HEAD')) && this.#pathMatches(r, req), startIndex);
+            if(routeIndex === -1) return resolve(false);
+            const route = this.#routes[routeIndex];
 
             if(route.callback instanceof Router) {
                 const continueRoute = await this.#preprocessRequest(req, res, route, route.callback);

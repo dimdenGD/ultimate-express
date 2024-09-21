@@ -149,13 +149,13 @@ function deprecated(oldMethod, newMethod, full = false) {
     })} u-express deprecated ${oldMethod}: Use ${newMethod} instead at ${pos}`);
 }
 
-Array.prototype.findStartingFrom = function(fn, index = 0) {
-    for(let i = index; i < this.length; i++) {
-        if(fn(this[i], i, this)) {
-            return [i, this[i]];
+function findIndexStartingFrom(arr, fn, index = 0) {
+    for(let i = index; i < arr.length; i++) {
+        if(fn(arr[i], i, arr)) {
+            return i;
         }
     }
-    return [-1, undefined];
+    return -1;
 };
 
 function decode (path) {
@@ -280,5 +280,6 @@ module.exports = {
     parseHttpDate,
     isPreconditionFailure,
     createETagGenerator,
-    isRangeFresh
+    isRangeFresh,
+    findIndexStartingFrom
 };
