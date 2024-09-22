@@ -1,6 +1,6 @@
 // must support express-fileupload middleware with temp file
 
-const express = require("../../../src/index.js");
+const express = require("express");
 const fileUpload = require("express-fileupload");
 const fs = require("fs");
 
