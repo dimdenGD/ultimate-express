@@ -47,6 +47,7 @@ module.exports = class Request extends Readable {
         this._stack = [];
         this._paramStack = [];
         this.bufferedData = Buffer.alloc(0);
+        this.receivedData = false;
 
         const additionalMethods = this.app.get('body methods');
         // skip reading body for non-POST requests
@@ -58,22 +59,33 @@ module.exports = class Request extends Readable {
             (additionalMethods && additionalMethods.includes(this.method))
         ) {
             this._res.onData((ab, isLast) => {
+                // make stream actually readable
+                this.receivedData = true;
+                // instead of pushing data immediately, buffer it
+                // because writable streams cant handle the amount of data uWS gives (usually 512kb+)
                 const chunk = Buffer.from(ab);
-                if(this.bufferedData.length || !this.push(chunk)) {
-                    this.bufferedData = Buffer.concat([this.bufferedData, chunk]);
-                }
-                if(isLast && this.bufferedData.length === 0) {
-                    this.push(null);
+                this.bufferedData = Buffer.concat([this.bufferedData, chunk]);
+                if(isLast) {
+                    // once its done start pushing data
+                    this._read();
                 }
             });
+        } else {
+            this.receivedData = true;
         }
     }
 
-    _read(size) {
+    async _read() {
+        if(!this.receivedData) {
+            return;
+        }
         if(this.bufferedData.length > 0) {
-            const chunk = this.bufferedData.slice(0, size);
-            this.bufferedData = this.bufferedData.slice(size);
+            // push 64kb chunks
+            const chunk = this.bufferedData.subarray(0, 1024 * 64);
+            this.bufferedData = this.bufferedData.subarray(1024 * 64);
             this.push(chunk);
+        } else {
+            this.push(null);
         }
     }
 
