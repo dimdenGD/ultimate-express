@@ -5,6 +5,7 @@ const express = require("express");
 const app = express();
 
 app.param('test', async function (req, res, next, id) {
+    console.log('param:', id);
     if(id === 'test') {
         next('route');
     } else {

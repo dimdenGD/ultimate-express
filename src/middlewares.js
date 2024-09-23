@@ -18,8 +18,10 @@ function static(root, options) {
     options.root = root;
 
     return (req, res, next) => {
-        let _path = req.url;
-        let fullpath = path.resolve(path.join(options.root, req.url));
+        const iq = req.url.indexOf('?');
+        let url = iq !== -1 ? req.url.substring(0, iq) : req.url;
+        let _path = url;
+        let fullpath = path.resolve(path.join(options.root, url));
         if(options.root && !fullpath.startsWith(path.resolve(options.root))) {
             if(!options.fallthrough) {
                 res.status(403);
@@ -37,7 +39,7 @@ function static(root, options) {
                 while(i < options.extensions.length) {
                     try {
                         stat = fs.statSync(fullpath + '.' + options.extensions[i]);
-                        _path = req.url.split('?')[0] + '.' + options.extensions[i];
+                        _path = url + '.' + options.extensions[i];
                         break;
                     } catch(err) {
                         i++;
@@ -65,7 +67,7 @@ function static(root, options) {
             if(options.index) {
                 try {
                     stat = fs.statSync(path.join(fullpath, options.index));
-                    _path = path.join(req.url, options.index);
+                    _path = path.join(url, options.index);
                 } catch(err) {
                     if(!options.fallthrough) {
                         res.status(404);
