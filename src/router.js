@@ -184,6 +184,7 @@ module.exports = class Router extends EventEmitter {
             if(routed) {
                 return;
             }
+            response.status(404);
             response.send(this._generateErrorPage(`Cannot ${request.method} ${request.path}`, false));
         };
         this.uwsApp[method](route.path, fn);
