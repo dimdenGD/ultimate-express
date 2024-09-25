@@ -14,13 +14,13 @@ const methods = [
 ];
 
 module.exports = class Router extends EventEmitter {
-    #routes = [];
     #paramCallbacks = new Map();
     #mountpathCache = new Map();
     #paramFunction;
     constructor(settings = {}) {
         super();
 
+        this._routes = [];
         this.errorRoute = undefined;
         this.mountpath = '/';
         this.settings = settings;
@@ -30,13 +30,16 @@ module.exports = class Router extends EventEmitter {
         this.response = this._response.prototype;
 
         if(typeof settings.caseSensitive !== 'undefined') {
-
             this.settings['case sensitive routing'] = settings.caseSensitive;
             delete this.settings.caseSensitive;
         }
         if(typeof settings.strict !== 'undefined') {
             this.settings['strict routing'] = settings.strict;
             delete this.settings.strict;
+        }
+
+        if(typeof this.settings['case sensitive routing'] === 'undefined') {
+            this.settings['case sensitive routing'] = true;
         }
 
         for(let method of methods) {
@@ -63,7 +66,7 @@ module.exports = class Router extends EventEmitter {
         return this.#createRoute('DELETE', path, this, ...callbacks);
     }
 
-    #getFullMountpath(req) {
+    getFullMountpath(req) {
         let fullStack = req._stack.join("");
         let fullMountpath = this.#mountpathCache.get(fullStack);
         if(!fullMountpath) {
@@ -113,14 +116,71 @@ module.exports = class Router extends EventEmitter {
                 gettable: method === 'GET' || method === 'HEAD',
             };
             routes.push(route);
+            // normal routes optimization
             if(typeof route.pattern === 'string' && route.pattern !== '/*' && !this.parent && this.get('case sensitive routing') && this.uwsApp) {
                 // the only methods that uWS supports natively
                 if(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE'].includes(method)) {
-                    this.#optimizeRoute(route, this.#routes);
+                    const optimizedPath = this.#optimizeRoute(route, this._routes);
+                    if(optimizedPath) {
+                        this.#registerUwsRoute(route, optimizedPath);
+                    }
+                }
+            }
+            // router optimization
+            if(
+                route.use && !needsConversionToRegex(path) && path !== '/*' && // must be predictable path
+                this.get('case sensitive routing') && // uWS only supports case sensitive routing
+                callbacks.filter(c => c instanceof Router).length === 1 && // only 1 router can be optimized per route
+                callbacks[callbacks.length - 1] instanceof Router // the router must be the last callback
+            ) {
+                let callbacksBeforeRouter = [];
+                for(let callback of callbacks) {
+                    if(callback instanceof Router) {
+                        // get optimized path to router
+                        let optimizedPathToRouter = this.#optimizeRoute(route, this._routes);
+                        if(!optimizedPathToRouter) {
+                            break;
+                        }
+                        optimizedPathToRouter = optimizedPathToRouter.slice(0, -1); // remove last element, which is the router itself
+                        if(optimizedPathToRouter) {
+                            // wait for routes in router to be registered
+                            setTimeout(() => {
+                                if(!this.listenCalled) {
+                                    return; // can only optimize router whos parent is listening
+                                }
+                                for(let cbroute of callback._routes) {
+                                    if(!needsConversionToRegex(cbroute.path)) {
+                                        let optimizedRouterPath = this.#optimizeRoute(cbroute, callback._routes);
+                                        if(optimizedRouterPath) {
+                                            optimizedRouterPath = optimizedRouterPath.slice(0, -1);
+                                            const optimizedPath = [...optimizedPathToRouter, {
+                                                ...route,
+                                                // fake route to update req._opPath and req.url
+                                                callbacks: [
+                                                    (req, res, next) => {
+                                                        next('skipPop');
+                                                    }
+                                                ]
+                                            }, ...optimizedRouterPath];
+                                            this.#registerUwsRoute({
+                                                ...cbroute,
+                                                path: route.path + cbroute.path,
+                                                pattern: route.path + cbroute.path
+                                            }, optimizedPath);
+                                        }
+                                    }
+                                }
+                            }, 100);
+                        }
+                        // only 1 router can be optimized per route
+                        break;
+                    } else {
+                        callbacksBeforeRouter.push(route);
+                    }
                 }
             }
         }
-        this.#routes.push(...routes);
+        this._routes.push(...routes);
 
         return parent;
     }
@@ -148,15 +208,13 @@ module.exports = class Router extends EventEmitter {
                 (r.pattern instanceof RegExp && r.pattern.test(route.path)) ||
                 (typeof r.pattern === 'string' && (r.pattern === route.path || r.pattern === '/*'))
             ) {
-                if(r.callback instanceof Router) {
-                    return false; // cant optimize nested routers
-                } else {
-                    optimizedPath.push(r);
+                if(r.callbacks.some(c => c instanceof Router)) {
+                    return false; // cant optimize nested routers with matches
                 }
+                optimizedPath.push(r);
             }
         }
         optimizedPath.push(route);
-        this.#registerUwsRoute(route, optimizedPath);
 
         return optimizedPath;
     }
@@ -187,6 +245,7 @@ module.exports = class Router extends EventEmitter {
             response.status(404);
             response.send(this._generateErrorPage(`Cannot ${request.method} ${request.path}`, false));
         };
+        route.optimizedPath = optimizedPath;
         this.uwsApp[method](route.path, fn);
         if(method === 'get') {
             this.uwsApp.head(route.path, fn);
@@ -222,7 +281,7 @@ module.exports = class Router extends EventEmitter {
             if(typeof route.path === 'string' && route.path.includes(':') && route.pattern instanceof RegExp) {
                 let path = req.path;
                 if(req._stack.length > 0) {
-                    path = path.replace(this.#getFullMountpath(req), '');
+                    path = path.replace(this.getFullMountpath(req), '');
                 }
                 req.params = this.#extractParams(route.pattern, path);
                 if(req._paramStack.length > 0) {
@@ -289,7 +348,7 @@ module.exports = class Router extends EventEmitter {
         }
     }
 
-    async _routeRequest(req, res, startIndex = 0, routes = this.#routes, skipCheck = false) {
+    async _routeRequest(req, res, startIndex = 0, routes = this._routes, skipCheck = false) {
         return new Promise(async (resolve) => {
             let routeIndex = skipCheck ? startIndex : findIndexStartingFrom(routes, r => (r.all || r.method === req.method || (r.gettable && req.method === 'HEAD')) && this.#pathMatches(r, req), startIndex);
             const route = routes[routeIndex];
@@ -299,18 +358,18 @@ module.exports = class Router extends EventEmitter {
             if(route.use) {
                 req._stack.push(route.path);
                 req._opPath = 
-                    req.path.replace(this.#getFullMountpath(req), '') + 
+                    req.path.replace(this.getFullMountpath(req), '') + 
                     (req.endsWithSlash && req.path !== '/' && this.get('strict routing') ? '/' : '');
                 req.url = req._opPath + req.urlQuery;
                 if(req.url === '') req.url = '/';
             }
             const next = async (thingamabob) => {
                 if(thingamabob) {
-                    if(thingamabob === 'route') {
-                        if(route.use) {
+                    if(thingamabob === 'route' || thingamabob === 'skipPop') {
+                        if(route.use && thingamabob !== 'skipPop') {
                             req._stack.pop();
                             req._opPath = 
-                                (req._stack.length > 0 ? req.path.replace(this.#getFullMountpath(req), '') : req.path) + 
+                                (req._stack.length > 0 ? req.path.replace(this.getFullMountpath(req), '') : req.path) + 
                                 (req.endsWithSlash && req.path !== '/' && this.get('strict routing') ? '/' : '');
                             req.url = req._opPath + req.urlQuery;
                             if(req.url === '') req.url = '/';

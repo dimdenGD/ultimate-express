@@ -1,4 +1,4 @@
-// must support existent next("route") (optimized)
+// must support unoptimized after optimized OFF
 
 const express = require("express");
 
@@ -7,16 +7,11 @@ app.set('env', 'production');
 
 app.get('/test', (req, res, next) => {
     console.log('1');
-    next("route");
+    next();
 });
 
-app.get('/test', (req, res) => {
+app.get('/:test', (req, res) => {
     console.log('2');
-    res.send('Hello World');
-});
-
-app.get('/test', (req, res) => {
-    console.log('3');
     res.send('Hello World');
 });
 

@@ -5,17 +5,17 @@ const express = require("express");
 const app = express();
 app.set('env', 'production');
 
-app.get('te*st', (req, res, next) => {
+app.get('/te*st', (req, res, next) => {
     console.log('1');
     next("route");
 });
 
-app.get('te*st', (req, res) => {
+app.get('/te*st', (req, res) => {
     console.log('2');
     res.send('Hello World');
 });
 
-app.get('te*st', (req, res) => {
+app.get('/te*st', (req, res) => {
     console.log('3');
     res.send('Hello World');
 });

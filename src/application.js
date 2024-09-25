@@ -52,6 +52,7 @@ class Application extends Router {
         this.locals = {
             settings: this.settings
         };
+        this.listenCalled = false;
         this.fsWorkers = [];
         for(let i = 0; i < settings.fsThreads; i++) {
             if(fsWorkers[i]) {
@@ -193,6 +194,7 @@ class Application extends Router {
                 fn = 'listen_unix';
             }
         }
+        this.listenCalled = true;
         this.uwsApp[fn](port, socket => {
             if(!socket) {
                 let err = new Error('Failed to listen on port ' + port + '. No permission or address already in use.');
