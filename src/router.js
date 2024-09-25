@@ -116,7 +116,7 @@ module.exports = class Router extends EventEmitter {
             if(typeof route.pattern === 'string' && route.pattern !== '/*' && !this.parent && this.get('case sensitive routing') && this.uwsApp) {
                 // the only methods that uWS supports natively
                 if(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE'].includes(method)) {
-                    // this.#optimizeRoute(route, this.#routes);
+                    this.#optimizeRoute(route, this.#routes);
                 }
             }
         }
@@ -127,7 +127,9 @@ module.exports = class Router extends EventEmitter {
 
     // if route is a simple string, its possible to pre-calculate its path
     // and then create a native uWS route for it, which is much faster
-    #optimizeRoute(route, routes, optimizedPath = [], stack = []) {
+    #optimizeRoute(route, routes) {
+        const optimizedPath = [];
+
         for(let i = 0; i < routes.length; i++) {
             const r = routes[i];
             if(r.routeKey > route.routeKey) {
@@ -141,99 +143,54 @@ module.exports = class Router extends EventEmitter {
                 }
             }
 
-
+            // check if the paths match
             if(
                 (r.pattern instanceof RegExp && r.pattern.test(route.path)) ||
                 (typeof r.pattern === 'string' && (r.pattern === route.path || r.pattern === '/*'))
             ) {
                 if(r.callback instanceof Router) {
-                    stack.push(r.path);
-                    this.#optimizeRoute(r, r.callback.#routes, optimizedPath, stack);
+                    return false; // cant optimize nested routers
                 } else {
-                    optimizedPath.push({
-                        ...r,
-                        fullpath: stack.map(s => s.path).join('') + r.path,
-                    });
+                    optimizedPath.push(r);
                 }
             }
         }
-        if(!stack.length) {
-            optimizedPath.push(route);
-            // this.#registerUwsRoute(route, optimizedPath);
-        } else {
-            stack.pop();
-        }
+        optimizedPath.push(route);
+        this.#registerUwsRoute(route, optimizedPath);
+
         return optimizedPath;
     }
 
-    // #registerUwsRoute(route, optimizedPath) {
-    //     let method = route.method.toLowerCase();
-    //     if(method === 'all') {
-    //         method = 'any';
-    //     } else if(method === 'delete') {
-    //         method = 'del';
-    //     }
-    //     const fn = async (res, req) => {
-    //         const request = new this._request(req, res, this);
-    //         const response = new this._response(res, request, this);
-    //         request.res = response;
-    //         response.req = request;
-    //         res.onAborted(() => {
-    //             const err = new Error('Connection closed');
-    //             err.code = 'ECONNRESET';
-    //             response.aborted = true;
-    //             response.socket.emit('error', err);
-    //         });
+    #registerUwsRoute(route, optimizedPath) {
+        let method = route.method.toLowerCase();
+        if(method === 'all') {
+            method = 'any';
+        } else if(method === 'delete') {
+            method = 'del';
+        }
+        const fn = async (res, req) => {
+            const request = new this._request(req, res, this);
+            const response = new this._response(res, request, this);
+            request.res = response;
+            response.req = request;
+            res.onAborted(() => {
+                const err = new Error('Connection closed');
+                err.code = 'ECONNRESET';
+                response.aborted = true;
+                response.socket.emit('error', err);
+            });
 
-    //         let i = 0;
-    //         try {
-    //             const next = async (thingamabob) => {
-    //                 i++;
-    //                 if(thingamabob) {
-    //                     if(thingamabob === 'route') {
-    //                         let routeSkipKey = optimizedPath[i - 1].routeSkipKey;
-    //                         while(optimizedPath[i - 1] && optimizedPath[i - 1].routeKey !== routeSkipKey && i < optimizedPath.length) {
-    //                             i++;
-    //                         }
-    //                     } else {
-    //                         this.#postprocessRequest(request, response, i);
-    //                         this.#handleError(thingamabob, request, response);
-    //                         return;
-    //                     }
-    //                 }
-    //                 this.#postprocessRequest(request, response, i);
-    //                 if(i >= optimizedPath.length) {
-    //                     if(!response.headersSent) {
-    //                         response.status(404).send(this._generateErrorPage(`Cannot ${request.method} ${request.path}`));
-    //                     }
-    //                     return;
-    //                 }
-                    
-    //                 request.next = next;
-    //                 const continueRoute = await this.#preprocessRequest(request, response, optimizedPath[i]);
-    //                 if(continueRoute === 'route') {
-    //                     next('route');
-    //                 } else if(continueRoute) {
-    //                     await optimizedPath[i].callback(request, response, next);
-    //                 }
-    //             }
-
-    //             request.next = next;
-    //             const continueRoute = await this.#preprocessRequest(request, response, optimizedPath[0]);;
-    //             if(continueRoute === 'route') {
-    //                 next('route');
-    //             } else if(continueRoute) {
-    //                 await optimizedPath[0].callback(request, response, next);
-    //             }
-    //         } catch(err) {
-    //             this.#handleError(err, request, response);
-    //         }
-    //     };
-    //     this.uwsApp[method](route.path, fn);
-    //     if(method === 'get') {
-    //         this.uwsApp.head(route.path, fn);
-    //     }
-    // }
+            const routed = await this._routeRequest(request, response, 0, optimizedPath, true);
+            if(routed) {
+                return;
+            }
+            response.send(this._generateErrorPage(`Cannot ${request.method} ${request.path}`, false));
+        };
+        this.uwsApp[method](route.path, fn);
+        if(method === 'get') {
+            this.uwsApp.head(route.path, fn);
+        }
+    }
 
     #handleError(err, request, response) {
         if(this.errorRoute) {
@@ -331,11 +288,11 @@ module.exports = class Router extends EventEmitter {
         }
     }
 
-    async _routeRequest(req, res, startIndex = 0) {
+    async _routeRequest(req, res, startIndex = 0, routes = this.#routes, skipCheck = false) {
         return new Promise(async (resolve) => {
-            let routeIndex = findIndexStartingFrom(this.#routes, r => (r.all || r.method === req.method || (r.gettable && req.method === 'HEAD')) && this.#pathMatches(r, req), startIndex);
-            if(routeIndex === -1) return resolve(false);
-            const route = this.#routes[routeIndex];
+            let routeIndex = skipCheck ? startIndex : findIndexStartingFrom(routes, r => (r.all || r.method === req.method || (r.gettable && req.method === 'HEAD')) && this.#pathMatches(r, req), startIndex);
+            const route = routes[routeIndex];
+            if(!route) return resolve(false);
             let callbackindex = 0;
             const continueRoute = await this.#preprocessRequest(req, res, route);
             if(route.use) {
@@ -360,7 +317,7 @@ module.exports = class Router extends EventEmitter {
                                 req.app = req.app.parent;
                             }
                         }
-                        return resolve(this._routeRequest(req, res, routeIndex + 1));
+                        return resolve(this._routeRequest(req, res, routeIndex + 1, routes, skipCheck));
                     } else {
                         this.#handleError(thingamabob, req, res);
                         return resolve(true);
@@ -400,77 +357,6 @@ module.exports = class Router extends EventEmitter {
         });
     }
 
-    // async _routeRequest(req, res, startIndex = 0) {
-    //     return new Promise(async (resolve) => {
-    //         let routeIndex = findIndexStartingFrom(this.#routes, r => (r.all || r.method === req.method || (r.gettable && req.method === 'HEAD')) && this.#pathMatches(r, req), startIndex);
-    //         if(routeIndex === -1) return resolve(false);
-    //         const route = this.#routes[routeIndex];
-
-    //         if(route.callback instanceof Router) {
-    //             const continueRoute = await this.#preprocessRequest(req, res, route, route.callback);
-
-    //             if(!continueRoute) {
-    //                 return resolve(true);
-    //             } else if(continueRoute !== 'route') {
-    //                 req._stack.push(route.path);
-    //                 req._opPath = req.path.replace(this.#getFullMountpath(req), '') + (req.endsWithSlash && req.path !== '/' && this.get('strict routing') ? '/' : '');
-    //                 req.url = req._opPath + req.urlQuery;
-    //                 if(route.callback.constructor.name === 'Application') {
-    //                     req.app = route.callback;
-    //                 }
-    //                 const routed = await route.callback._routeRequest(req, res, 0);
-    //                 if(routed) return resolve(true);
-                    
-    //                 req._stack.pop();
-    //                 req._paramStack.pop();
-    //                 req._opPath = (req._stack.length > 0 ? req.path.replace(this.#getFullMountpath(req), '') : req.path) + (req.endsWithSlash && req.path !== '/' && this.get('strict routing') ? '/' : '');
-    //                 req.url = req._opPath + req.urlQuery;
-    //                 if(req.app.parent && route.callback.constructor.name === 'Application') {
-    //                     req.app = req.app.parent;
-    //                 }
-    //             }
-    //             return resolve(this._routeRequest(req, res, routeIndex + 1));
-    //         } else {
-    //             try {
-    //                 const next = (thingamabob) => {
-    //                     routeIndex++;
-    //                     if(thingamabob) {
-    //                         if(thingamabob === 'route') {
-    //                             let routeSkipKey = route.routeSkipKey;
-    //                             while(this.#routes[routeIndex - 1].routeKey !== routeSkipKey && routeIndex < this.#routes.length) {
-    //                                 routeIndex++;
-    //                             }
-    //                         } else {
-    //                             throw thingamabob;
-    //                         }
-    //                     }
-    //                     this.#postprocessRequest(req, res, routeIndex);
-    //                     return resolve(this._routeRequest(req, res, routeIndex));
-    //                 }
-
-    //                 req.next = next;
-    //                 const continueRoute = await this.#preprocessRequest(req, res, route);
-    //                 if(continueRoute === 'route') {
-    //                     next('route');
-    //                 } else if(continueRoute) {
-    //                     await route.callback(req, res, next);
-    //                 } else {
-    //                     resolve(true);
-    //                 }
-    //             } catch(err) {
-    //                 if(this.errorRoute) {
-    //                     const next = () => {
-    //                         resolve(res.headersSent);
-    //                     };
-    //                     await this.errorRoute(err, req, res, next);
-    //                 } else {
-    //                     this.#handleError(err, req, res);
-    //                 }
-    //                 return resolve(true);
-    //             }
-    //         }
-    //     });
-    // }
     use(path, ...callbacks) {
         if(typeof path === 'function' || path instanceof Router || (Array.isArray(path) && path.every(p => typeof p === 'function' || p instanceof Router))) {
             if(callbacks.length === 0 && typeof path === 'function' && path.length === 4) {
