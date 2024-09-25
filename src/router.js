@@ -81,6 +81,9 @@ module.exports = class Router extends EventEmitter {
         let pattern = route.pattern;
 
         if (typeof pattern === 'string') {
+            if(pattern === '/*') {
+                return true;
+            }
             if(path === '') {
                 path = '/';
             }
@@ -88,7 +91,7 @@ module.exports = class Router extends EventEmitter {
                 path = path.toLowerCase();
                 pattern = pattern.toLowerCase();
             }
-            return pattern === path || pattern === '/*';
+            return pattern === path;
         }
         
         return pattern.test(path);
@@ -149,7 +152,7 @@ module.exports = class Router extends EventEmitter {
                                     return; // can only optimize router whos parent is listening
                                 }
                                 for(let cbroute of callback._routes) {
-                                    if(!needsConversionToRegex(cbroute.path)) {
+                                    if(!needsConversionToRegex(cbroute.path) && cbroute.path !== '/*') {
                                         let optimizedRouterPath = this.#optimizeRoute(cbroute, callback._routes);
                                         if(optimizedRouterPath) {
                                             optimizedRouterPath = optimizedRouterPath.slice(0, -1);
@@ -238,7 +241,7 @@ module.exports = class Router extends EventEmitter {
                 response.socket.emit('error', err);
             });
 
-            const routed = await this._routeRequest(request, response, 0, optimizedPath, true);
+            const routed = await this._routeRequest(request, response, 0, optimizedPath, true, route);
             if(routed) {
                 return;
             }
@@ -348,11 +351,18 @@ module.exports = class Router extends EventEmitter {
         }
     }
 
-    async _routeRequest(req, res, startIndex = 0, routes = this._routes, skipCheck = false) {
+    async _routeRequest(req, res, startIndex = 0, routes = this._routes, skipCheck = false, skipUntil) {
         return new Promise(async (resolve) => {
             let routeIndex = skipCheck ? startIndex : findIndexStartingFrom(routes, r => (r.all || r.method === req.method || (r.gettable && req.method === 'HEAD')) && this.#pathMatches(r, req), startIndex);
             const route = routes[routeIndex];
-            if(!route) return resolve(false);
+            if(!route) {
+                if(!skipCheck) {
+                    // on normal unoptimized routes, if theres no match then there is no route
+                    return resolve(false);
+                }
+                // on optimized routes, there can be more routes, so we have to use unoptimized routing and skip until we find route we stopped at
+                return resolve(this._routeRequest(req, res, 0, this._routes, false, skipUntil));
+            }
             let callbackindex = 0;
             const continueRoute = await this.#preprocessRequest(req, res, route);
             if(route.use) {
@@ -377,7 +387,7 @@ module.exports = class Router extends EventEmitter {
                                 req.app = req.app.parent;
                             }
                         }
-                        return resolve(this._routeRequest(req, res, routeIndex + 1, routes, skipCheck));
+                        return resolve(this._routeRequest(req, res, routeIndex + 1, routes, skipCheck, skipUntil));
                     } else {
                         this.#handleError(thingamabob, req, res);
                         return resolve(true);
@@ -399,6 +409,10 @@ module.exports = class Router extends EventEmitter {
                     next();
                 } else {
                     try {
+                        // skipping routes we already went through via optimized path
+                        if(!skipCheck && skipUntil && skipUntil.routeKey >= route.routeKey) {
+                            return next();
+                        }
                         await callback(req, res, next);
                     } catch(err) {
                         this.#handleError(err, req, res);
