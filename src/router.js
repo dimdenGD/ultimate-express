@@ -250,6 +250,12 @@ module.exports = class Router extends EventEmitter {
         };
         route.optimizedPath = optimizedPath;
         this.uwsApp[method](route.path, fn);
+        if(!this.get('strict routing') && route.path[route.path.length - 1] !== '/') {
+            this.uwsApp[method](route.path + '/', fn);
+            if(method === 'get') {
+                this.uwsApp.head(route.path + '/', fn);
+            }
+        }
         if(method === 'get') {
             this.uwsApp.head(route.path, fn);
         }

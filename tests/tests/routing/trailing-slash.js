@@ -30,5 +30,8 @@ app.listen(13333, async () => {
     res = await fetch('http://localhost:13333/baba/');
     console.log(await res.text());
 
+    res = await fetch('http://localhost:13333/test/?test=1');
+    console.log(await res.text());
+
     process.exit(0);
 })
