@@ -229,7 +229,7 @@ In general, basically all features and options are supported. Use [Express 4.x d
 - - ✅ Range header
 - - ✅ Setting ETag header
 - - ✅ If-Match header
-- - ✅ If-Modified-Since header
+- - ✅ If-Modified-Since header (with `options.ifModifiedSince` option)
 - - ✅ If-Unmodified-Since header
 - - ✅ If-Range header
 - ✅ res.sendStatus()

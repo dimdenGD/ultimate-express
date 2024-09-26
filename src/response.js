@@ -333,16 +333,18 @@ module.exports = class Response extends Writable {
         }
 
         // if-modified-since
-        let modifiedSince = this.req.headers['if-modified-since'];
-        let lastModified = this.headers['last-modified'];
-        if(options.lastModified && lastModified && modifiedSince) {
-            modifiedSince = parseHttpDate(modifiedSince);
-            lastModified = parseHttpDate(lastModified);
+        if(options.ifModifiedSince) {
+            let modifiedSince = this.req.headers['if-modified-since'];
+            let lastModified = this.headers['last-modified'];
+            if(options.lastModified && lastModified && modifiedSince) {
+                modifiedSince = parseHttpDate(modifiedSince);
+                lastModified = parseHttpDate(lastModified);
 
-            if(!isNaN(lastModified) && !isNaN(modifiedSince) && lastModified <= modifiedSince) {
-                this.status(304);
-                return this.end();
-            };
+                if(!isNaN(lastModified) && !isNaN(modifiedSince) && lastModified <= modifiedSince) {
+                    this.status(304);
+                    return this.end();
+                };
+            }
         }
 
         // range requests
