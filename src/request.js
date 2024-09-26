@@ -124,6 +124,18 @@ module.exports = class Request extends Readable {
         return index !== -1 ? host.slice(0, index) : host;
     }
 
+    get httpVersion() {
+        return '1.1';
+    }
+
+    get httpVersionMajor() {
+        return 1;
+    }
+
+    get httpVersionMinor() {
+        return 1;
+    }
+
     get ip() {
         const trust = this.app.get('trust proxy fn');
         if(!trust) {
