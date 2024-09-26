@@ -19,6 +19,21 @@ Similar projects based on uWebSockets:
 - `hyper-express` - while having a similar API to Express, it's very far from being a drop-in replacement, and implements most of the functionality differently. This creates a lot of random quirks and issues, making the switch quite difficult. Built in middlewares are also very different.
 - `uwebsockets-express` - this library is closer to being a drop-in replacement, but misses a lot of APIs, depends on Express by calling it's methods under the hood and doesn't try to optimize routing by using native uWS router.
 
+## Performance
+
+Tested using [wrk](https://github.com/wg/wrk) (`-d 60 -t 1 -c 200`). Etag was disabled in both Express and µExpress. Tested on Ubuntu 22.04, Node.js 20.17.0, AMD Ryzen 5 3600, 64GB RAM.
+
+| Test                        | Path             | Express req/sec | µExpress req/sec | Express throughput | µExpress throughput | µExpress speedup |
+| --------------------------- | ---------------- | --------------- | ---------------- | ------------------ | ------------------- | ---------------- |
+| routing/simple-routes.js    | /                | 10.90k          | 70.10k           | 2.04 MB/sec        | 11.57 MB/sec        | **6.43X**        |
+| routing/lot-of-routes.js    | /999             | 4.66k           | 51.58k           | 0.85 MB/sec        | 8.07 MB/sec         | **11.07X**       |
+| routing/some-middlewares.js | /90              | 10.18k          | 66.97k           | 1.81 MB/sec        | 10.42 MB/sec        | **6.58X**        |
+| middlewares/express-static  | /static/index.js | 7.52k           | 31.08k           | 6.92 MB/sec        | 26.48 MB/sec        | **4.13X**        |
+| engines/ejs.js              | /test            | 5.92k           | 14.43k           | 2.40 MB/sec        | 5.53 MB/sec         | **2.44X**        |
+| middlewares/body-urlencoded | /abc (POST)      | 7.90k           | 29.90k           | 1.64 MB/sec        | 5.36 MB/sec         | **3.78X**        |
+
+Also tested on a real-world application with templates, static files and dynamic pages with data from database ([nekoweb.org](https://nekoweb.org)), and showed about 2X speedup on average.
+
 ## Differences from Express
 
 In a lot of cases, you can just replace `require("express")` with `require("ultimate-express")` and everything works the same. But there are some differences:
