@@ -6,6 +6,7 @@ function static(root, options) {
     if(typeof options.index === 'undefined') options.index = 'index.html';
     if(typeof options.redirect === 'undefined') options.redirect = true;
     if(typeof options.fallthrough === 'undefined') options.fallthrough = true;
+    if(typeof options.dotfiles === 'undefined') options.dotfiles = 'ignore_files';
     if(options.extensions) {
         if(typeof options.extensions !== 'string' && !Array.isArray(options.extensions)) {
             throw new Error('extensions must be a string or an array');

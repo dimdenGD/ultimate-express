@@ -271,6 +271,12 @@ module.exports = class Response extends Writable {
                 case 'deny':
                     this.status(403);
                     return done(new Error('Forbidden'));
+                case 'ignore_files':
+                    if(parts.length > 1 && parts[parts.length - 1].startsWith('.')) {
+                        this.status(404);
+                        return done(new Error('Not found'));
+                    }
+                    break;
                 case 'ignore':
                 default:
                     this.status(404);
