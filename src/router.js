@@ -419,7 +419,12 @@ module.exports = class Router extends EventEmitter {
                         if(!skipCheck && skipUntil && skipUntil.routeKey >= route.routeKey) {
                             return next();
                         }
-                        await callback(req, res, next);
+                        const out = callback(req, res, next);
+                        if(out instanceof Promise) {
+                            out.catch(err => {
+                                throw err;
+                            });
+                        }
                     } catch(err) {
                         this.#handleError(err, req, res);
                         return resolve(true);
