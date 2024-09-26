@@ -23,15 +23,15 @@ Similar projects based on uWebSockets:
 
 Tested using [wrk](https://github.com/wg/wrk) (`-d 60 -t 1 -c 200`). Etag was disabled in both Express and µExpress. Tested on Ubuntu 22.04, Node.js 20.17.0, AMD Ryzen 5 3600, 64GB RAM.
 
-| Test                        | Path              | Express req/sec | µExpress req/sec | Express throughput | µExpress throughput | µExpress speedup |
-| --------------------------- | ----------------- | --------------- | ---------------- | ------------------ | ------------------- | ---------------- |
-| routing/simple-routes       | /                 | 10.90k          | 70.10k           | 2.04 MB/sec        | 11.57 MB/sec        | **6.43X**        |
-| routing/lot-of-routes       | /999              | 4.66k           | 51.58k           | 0.85 MB/sec        | 8.07 MB/sec         | **11.07X**       |
-| routing/some-middlewares    | /90               | 10.18k          | 66.97k           | 1.81 MB/sec        | 10.42 MB/sec        | **6.58X**        |
-| routers/nested-routers      | /abccc/nested/ddd | 10.25k          | 50.98k           | 1.83 MB/sec        | 7.98 MB/sec         | **4.97X**        |
-| middlewares/express-static  | /static/index.js  | 7.52k           | 31.08k           | 6.92 MB/sec        | 26.48 MB/sec        | **4.13X**        |
-| engines/ejs                 | /test             | 5.92k           | 14.43k           | 2.40 MB/sec        | 5.53 MB/sec         | **2.44X**        |
-| middlewares/body-urlencoded | /abc (POST)       | 7.90k           | 29.90k           | 1.64 MB/sec        | 5.36 MB/sec         | **3.78X**        |
+| Test                        | Express req/sec | µExpress req/sec | Express throughput | µExpress throughput | µExpress speedup | Path              |
+| --------------------------- | --------------- | ---------------- | ------------------ | ------------------- | ---------------- | ----------------- |
+| routing/simple-routes       | 10.90k          | 70.10k           | 2.04 MB/sec        | 11.57 MB/sec        | **6.43X**        | /                 |
+| routing/lot-of-routes       | 4.66k           | 51.58k           | 0.85 MB/sec        | 8.07 MB/sec         | **11.07X**       | /999              |
+| routing/some-middlewares    | 10.18k          | 66.97k           | 1.81 MB/sec        | 10.42 MB/sec        | **6.58X**        | /90               |
+| routers/nested-routers      | 10.25k          | 50.98k           | 1.83 MB/sec        | 7.98 MB/sec         | **4.97X**        | /abccc/nested/ddd |
+| middlewares/express-static  | 7.52k           | 31.08k           | 6.92 MB/sec        | 26.48 MB/sec        | **4.13X**        | /static/index.js  |
+| engines/ejs                 | 5.92k           | 14.43k           | 2.40 MB/sec        | 5.53 MB/sec         | **2.44X**        | /test             |
+| middlewares/body-urlencoded | 7.90k           | 29.90k           | 1.64 MB/sec        | 5.36 MB/sec         | **3.78X**        | /abc (POST)       |
 
 Also tested on a real-world application with templates, static files and dynamic pages with data from database ([nekoweb.org](https://nekoweb.org)), and showed about 1.5-4X speedup in requests per second.
 
