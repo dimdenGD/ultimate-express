@@ -1,6 +1,6 @@
 {
   "name": "ultimate-express",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The Ultimate Express. Fastest http server with full Express compatibility, based on uWebSockets.",
   "main": "src/index.js",
   "scripts": {
@@ -25,7 +25,7 @@
     "uws"
   ],
   "author": "dimden.dev",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/dimdenGD/u-express/issues"
   },
