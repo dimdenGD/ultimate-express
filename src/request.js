@@ -46,7 +46,7 @@ module.exports = class Request extends Readable {
         this._gotParams = new Set();
         this._stack = [];
         this._paramStack = [];
-        this.bufferedData = Buffer.alloc(0);
+        this.bufferedData = Buffer.allocUnsafe(0);
         this.receivedData = false;
 
         const additionalMethods = this.app.get('body methods');

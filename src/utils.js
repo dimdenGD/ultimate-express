@@ -13,7 +13,7 @@ function patternToRegex(pattern, isPrefix = false) {
     if(pattern instanceof RegExp) {
         return pattern;
     }
-    if(isPrefix && pattern === '/') {
+    if(isPrefix && pattern === '') {
         return new RegExp(``);
     }
 
