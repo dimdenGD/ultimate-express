@@ -6,6 +6,8 @@ This library is a very fast re-implementation of Express.js 4.
 It is designed to be a drop-in replacement for Express.js, with the same API and functionality, while being much faster. It is not a fork of Express.js.  
 To make sure µExpress matches behavior of Express in all cases, we run all tests with Express first, and then with µExpress and compare results to make sure they match.  
 
+`npm install u-express`
+
 ![Node.js >= 16.0.0](https://img.shields.io/badge/Node.js-%3E=16.0.0-green)
 
 ## Difference from similar projects
@@ -68,7 +70,7 @@ app.listen(3000, () => {
 - only string paths without regex characters like *, +, (), {}, :param, etc. can be optimized.
 - only 1-level deep routers can be optimized.  
   
-Optimized routes can be up to 10 times faster than normal routes, as they're using native uWS router.
+Optimized routes can be up to 10 times faster than normal routes, as they're using native uWS router and have pre-calculated path.
 
 2. Do not use external `serve-static` module. Instead use built-in `express.static()` middleware, which is optimized for uExpress.
 
