@@ -52,10 +52,11 @@ module.exports = class Router extends EventEmitter {
     get(path, ...callbacks) {
         if(typeof path === 'string' && callbacks.length === 0) {
             const key = path;
-            if(typeof this.settings[key] === 'undefined' && this.parent) {
+            const res = this.settings[key];
+            if(typeof res === 'undefined' && this.parent) {
                 return this.parent.get(key);
             } else {
-                return this.settings[key];
+                return res;
             }
         }
         return this.#createRoute('GET', path, this, ...callbacks);

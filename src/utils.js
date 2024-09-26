@@ -241,7 +241,10 @@ function isPreconditionFailure(req, res) {
 
 function createETagGenerator(options) {
     return function generateETag (body, encoding) {
-        const buf = !(body instanceof Stats) && !Buffer.isBuffer(body) ? Buffer.from(body, encoding) : body;
+        if(body instanceof Stats) {
+            return etag(body, options);
+        }
+        const buf = !Buffer.isBuffer(body) ? Buffer.from(body, encoding) : body;
         return etag(buf, options);
     }
 }

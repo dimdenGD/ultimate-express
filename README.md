@@ -81,6 +81,8 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 
 ## Compatibility
 
+In general, basically all features and options are supported. Use [Express 4.x documentation](https://expressjs.com/en/4x/api.html) for API reference.
+
 ✅ - Full support (all features and options are supported)  
 🚧 - Partial support (some options are not supported)  
 ❌ - Not supported  
