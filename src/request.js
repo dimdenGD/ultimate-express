@@ -42,6 +42,7 @@ module.exports = class Request extends Readable {
         }
         this.method = req.getMethod().toUpperCase();
         this.params = {};
+        this.rawIp = Buffer.from(this._res.getRemoteAddressAsText()).toString();
 
         this._gotParams = new Set();
         this._stack = [];
@@ -139,7 +140,7 @@ module.exports = class Request extends Readable {
     get ip() {
         const trust = this.app.get('trust proxy fn');
         if(!trust) {
-            return Buffer.from(this._res.getRemoteAddressAsText()).toString();
+            return this.rawIp;
         }
         return proxyaddr(this, trust);
     }
