@@ -185,6 +185,9 @@ module.exports = class Response extends Writable {
             body = '';
         } else if(typeof body === 'object') {
             if(!(body instanceof ArrayBuffer)) {
+                if(!this.get('Content-Type')) {
+                    this.set('Content-Type', 'application/json');
+                }
                 body = stringify(body);
             }
         } else if(typeof body === 'number') {
