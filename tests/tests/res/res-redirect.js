@@ -24,6 +24,10 @@ app.get('/test5', (req, res) => {
     res.redirect(304, 'back');
 });
 
+app.get('/test6', (req, res) => {
+    res.redirect(304, 'https://example.com/?test=%20 test %3F');
+});
+
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
@@ -41,6 +45,9 @@ app.listen(13333, async () => {
 
     const response5 = await fetch('http://localhost:13333/test5', { redirect: 'manual' });
     console.log(response5.status, response5.headers.get('Location'));
+
+    const response6 = await fetch('http://localhost:13333/test6', { redirect: 'manual' });
+    console.log(response6.status, response6.headers.get('Location'));
 
     process.exit(0);
 });

@@ -1,6 +1,7 @@
 const cookie = require("cookie");
 const mime = require("mime-types");
 const vary = require("vary");
+const encodeUrl = require("encodeurl");
 const { 
     normalizeType, stringify, deprecated, UP_PATH_REGEXP, decode,
     containsDotFile, isPreconditionFailure, isRangeFresh, parseHttpDate
@@ -596,7 +597,7 @@ module.exports = class Response extends Writable {
             if(!path) path = this.req.get('Referer');
             if(!path) path = '/';
         }
-        return this.set('Location', encodeURI(path));
+        return this.set('Location', encodeUrl(path));
     }
     redirect(status, url) {
         if(typeof status !== 'number' && !url) {
