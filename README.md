@@ -6,7 +6,7 @@ This library is a very fast re-implementation of Express.js 4.
 It is designed to be a drop-in replacement for Express.js, with the same API and functionality, while being much faster. It is not a fork of Express.js.  
 To make sure µExpress matches behavior of Express in all cases, we run all tests with Express first, and then with µExpress and compare results to make sure they match.  
 
-`npm install u-express`
+`npm install ultimate-express`
 
 ![Node.js >= 16.0.0](https://img.shields.io/badge/Node.js-%3E=16.0.0-green)
 
@@ -20,7 +20,7 @@ Similar projects based on uWebSockets:
 
 ## Differences from Express
 
-In a lot of cases, you can just replace `require("express")` with `require("u-express")` and everything works the same. But there are some differences:
+In a lot of cases, you can just replace `require("express")` with `require("ultimate-express")` and everything works the same. But there are some differences:
 
 - `case sensitive routing` is enabled by default.
 - Depending on how you send response, `Content-Length` header may be overwritten or not sent at all:
