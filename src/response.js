@@ -421,7 +421,7 @@ module.exports = class Response extends Writable {
         if(!name) {
             name = Path.basename(path);
         }
-        if(!opts.root) {
+        if(!opts.root && !isAbsolute(path)) {
             opts.root = process.cwd();
         }
 
