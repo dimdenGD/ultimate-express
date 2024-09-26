@@ -1,4 +1,4 @@
-# µExpress
+# µExpress / Ultimate Express
 
 The *Ultimate* Express. Fastest http server with **full** Express compatibility, based on µWebSockets.
 
