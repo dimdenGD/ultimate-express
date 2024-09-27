@@ -34,6 +34,10 @@ app.listen(13333, async () => {
         fetch('http://localhost:13333/static2/.test/index.html'),
         fetch('http://localhost:13333/static3/.test/index.html'),
         fetch('http://localhost:13333/static4/.test/index.html'),
+        fetch('http://localhost:13333/static/.gitignore'),
+        fetch('http://localhost:13333/static2/.gitignore'),
+        fetch('http://localhost:13333/static3/.gitignore'),
+        fetch('http://localhost:13333/static4/.gitignore'),
     ]);
 
     console.log(responses.map(r => r.status), await Promise.all(responses.map(r => r.text())));
