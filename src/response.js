@@ -238,6 +238,9 @@ module.exports = class Response extends Writable {
                 return etag(stat, { weak: true });
             }
         }
+        if(!options.skipEncodePath) {
+            path = encodeURI(path);
+        }
 
         // path checks
         if(!options.root && !isAbsolute(path)) {
