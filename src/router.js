@@ -263,9 +263,10 @@ module.exports = class Router extends EventEmitter {
     }
 
     #handleError(err, request, response) {
-        let errorRoute = this.errorRoute;
-        while(!errorRoute && this.parent) {
-            errorRoute = this.parent.errorRoute;
+        let errorRoute = this.errorRoute, parent = this.parent;
+        while(!errorRoute && parent) {
+            errorRoute = parent.errorRoute;
+            parent = parent.parent;
         }
         if(errorRoute) {
             return errorRoute(err, request, response, () => {
