@@ -6,7 +6,7 @@ This library is a very fast re-implementation of Express.js 4.
 It is designed to be a drop-in replacement for Express.js, with the same API and functionality, while being much faster. It is not a fork of Express.js.  
 To make sure µExpress matches behavior of Express in all cases, we run all tests with Express first, and then with µExpress and compare results to make sure they match.  
 
-`npm install ultimate-express` -> replace `express` with `ultimate-express` -> done[?](https://github.com/dimdenGD/ultimate-express?tab=readme-ov-file#differences-from-express)  
+`npm install ultimate-express` -> replace `express` with `ultimate-express` -> done[*](https://github.com/dimdenGD/ultimate-express?tab=readme-ov-file#differences-from-express)  
 
 [![Node.js >= 16.0.0](https://img.shields.io/badge/Node.js-%3E=16.0.0-green)](https://nodejs.org)
 [![npm](https://img.shields.io/npm/v/ultimate-express)](https://npmjs.com/package/ultimate-express)
