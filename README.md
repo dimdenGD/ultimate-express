@@ -9,7 +9,7 @@ To make sure µExpress matches behavior of Express in all cases, we run all test
 `npm install ultimate-express` -> replace `express` with `ultimate-express` -> done[*](https://github.com/dimdenGD/ultimate-express?tab=readme-ov-file#differences-from-express)  
 
 [![Node.js >= 16.0.0](https://img.shields.io/badge/Node.js-%3E=16.0.0-green)](https://nodejs.org)
-[![npm](https://img.shields.io/npm/v/ultimate-express?color=red&label=last+version)](https://npmjs.com/package/ultimate-express)
+[![npm](https://img.shields.io/npm/v/ultimate-express?label=last+version)](https://npmjs.com/package/ultimate-express)
 [![Patreon](https://img.shields.io/badge/donate-Patreon-orange)](https://patreon.com/dimdendev)
 
 ## Difference from similar projects
