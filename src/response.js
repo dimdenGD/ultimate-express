@@ -451,10 +451,15 @@ module.exports = class Response extends Writable {
                 this.set(header, field[header]);
             }
         } else {
+            field = field.toLowerCase();
             if(field === 'set-cookie' && Array.isArray(value)) {
                 value = value.join('; ');
+            } else if(field === 'content-type') {
+                if(value.startsWith('text/') || value === 'application/json' || value === 'application/javascript') {
+                    value += '; charset=utf-8';
+                }
             }
-            this.headers[field.toLowerCase()] = String(value);
+            this.headers[field] = String(value);
         }
         return this;
     }
@@ -562,7 +567,7 @@ module.exports = class Response extends Writable {
     }
     json(body) {
         if(!this.get('Content-Type')) {
-            this.set('Content-Type', 'application/json');
+            this.set('Content-Type', 'application/json; charset=utf-8');
         }
         const escape = this.app.get('json escape');
         const replacer = this.app.get('json replacer');
@@ -574,7 +579,7 @@ module.exports = class Response extends Writable {
         let body = stringify(object, this.app.get('json replacer'), this.app.get('json spaces'), this.app.get('json escape'));
 
         if(!this.get('Content-Type')) {
-            this.set('Content-Type', 'application/javascript');
+            this.set('Content-Type', 'application/javascript; charset=utf-8');
             this.set('X-Content-Type-Options', 'nosniff');
         }
 
@@ -583,7 +588,7 @@ module.exports = class Response extends Writable {
         }
 
         if(typeof callback === 'string' && callback.length !== 0) {
-            this.set('Content-Type', 'application/javascript');
+            this.set('Content-Type', 'application/javascript; charset=utf-8');
             this.set('X-Content-Type-Options', 'nosniff');
             callback = callback.replace(/[^\[\]\w$.]/g, '');
 
@@ -619,7 +624,7 @@ module.exports = class Response extends Writable {
         }
         this.location(url);
         this.status(status);
-        this.set('Content-Type', 'text/plain');
+        this.set('Content-Type', 'text/plain; charset=utf-8');
         return this.send(`${statuses.message[status] ?? status}. Redirecting to ${url}`);
     }
 
