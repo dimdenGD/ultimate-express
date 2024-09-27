@@ -139,6 +139,10 @@ module.exports = class Response extends Writable {
         if(data && !this.headers['etag'] && etagFn && !this.req.noEtag) {
             this.set('etag', etagFn(data, this.req));
         }
+
+        if(Buffer.isBuffer(data)) {
+            data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+        }
         
         this._res.cork(() => {
             if(!this.headersSent) {
@@ -181,11 +185,9 @@ module.exports = class Response extends Writable {
         if(this.headersSent) {
             throw new Error('Can\'t write body: Response was already sent');
         }
-        if(Buffer.isBuffer(body)) {
-            body = body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength);
-        } else if(body === null || body === undefined) {
+        if(body === null || body === undefined) {
             body = '';
-        } else if(typeof body === 'object') {
+        } else if(typeof body === 'object' && !Buffer.isBuffer(body)) {
             return this.json(body);
         } else if(typeof body === 'number') {
             if(arguments[1]) {
@@ -389,7 +391,7 @@ module.exports = class Response extends Writable {
                 if(this._res.aborted) {
                     return;
                 }
-                this.send(data);
+                this.end(data);
                 if(callback) callback();
             }).catch((err) => {
                 if(callback) callback(err);
