@@ -2,9 +2,9 @@
 
 const express = require("express");
 
-const app = express({ fsThreads: 0 });
-const app2 = express({ fsThreads: 2 });
-const app3 = express({ fsThreads: 4 });
+const app = express({ threads: 0 });
+const app2 = express({ threads: 2 });
+const app3 = express({ threads: 4 });
 
 app.get('/test', (req, res) => {
     res.sendFile('tests/parts/big.jpg', {

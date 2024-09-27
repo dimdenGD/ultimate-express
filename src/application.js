@@ -10,25 +10,25 @@ const { Worker } = require("worker_threads");
 
 const cpuCount = os.cpus().length;
 
-let fsWorkers = [];
-let fsKey = 0;
-const fsCache = {};
+let workers = [];
+let taskKey = 0;
+const workerTasks = {};
 
-function createFsWorker() {
-    const fsWorker = new Worker(path.join(__dirname, 'workers/fs.js'));
-    fsWorkers.push(fsWorker);
+function createWorker() {
+    const worker = new Worker(path.join(__dirname, 'worker.js'));
+    workers.push(worker);
 
-    fsWorker.on('message', (message) => {
+    worker.on('message', (message) => {
         if(message.err) {
-            fsCache[message.key].reject(new Error(message.err));
+            workerTasks[message.key].reject(new Error(message.err));
         } else {
-            fsCache[message.key].resolve(message.data);
+            workerTasks[message.key].resolve(message.data);
         }
-        delete fsCache[message.key];
+        delete workerTasks[message.key];
     });
-    fsWorker.unref();
+    worker.unref();
 
-    return fsWorker;
+    return worker;
 }
 
 class Application extends Router {
@@ -37,8 +37,8 @@ class Application extends Router {
         if(!settings?.uwsOptions) {
             settings.uwsOptions = {};
         }
-        if(typeof settings.fsThreads !== 'number') {
-            settings.fsThreads = cpuCount > 1 ? 1 : 0;
+        if(typeof settings.threads !== 'number') {
+            settings.threads = cpuCount > 1 ? 1 : 0;
         }
         if(settings.uwsOptions.key_file_name && settings.uwsOptions.cert_file_name) {
             this.uwsApp = uWS.SSLApp(settings.uwsOptions);
@@ -53,12 +53,12 @@ class Application extends Router {
             settings: this.settings
         };
         this.listenCalled = false;
-        this.fsWorkers = [];
-        for(let i = 0; i < settings.fsThreads; i++) {
-            if(fsWorkers[i]) {
-                this.fsWorkers[i] = fsWorkers[i];
+        this.workers = [];
+        for(let i = 0; i < settings.threads; i++) {
+            if(workers[i]) {
+                this.workers[i] = workers[i];
             } else {
-                this.fsWorkers[i] = createFsWorker();
+                this.workers[i] = createWorker();
             }
         }
         this.port = undefined;
@@ -77,12 +77,12 @@ class Application extends Router {
 
     readFileWithWorker(path) {
         return new Promise((resolve, reject) => {
-            const fsWorker = this.fsWorkers[Math.floor(Math.random() * this.fsWorkers.length)];
-            const key = fsKey++;
-            fsWorker.postMessage({ key, type: 'readFile', path });
-            fsCache[key] = { resolve, reject };
+            const worker = this.workers[Math.floor(Math.random() * this.workers.length)];
+            const key = taskKey++;
+            worker.postMessage({ key, type: 'readFile', path });
+            workerTasks[key] = { resolve, reject };
             if(key > 1000000) {
-                fsKey = 0;
+                taskKey = 0;
             }
         });
     }
