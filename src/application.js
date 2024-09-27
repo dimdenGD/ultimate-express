@@ -65,7 +65,7 @@ class Application extends Router {
         for(const key in defaultSettings) {
             if(typeof this.settings[key] === 'undefined') {
                 if(typeof defaultSettings[key] === 'function') {
-                    this.settings[key] = defaultSettings[key]();
+                    this.settings[key] = defaultSettings[key](this);
                 } else {
                     this.settings[key] = defaultSettings[key];
                 }
@@ -75,15 +75,20 @@ class Application extends Router {
         this.set('views', path.resolve('views'));
     }
 
+    createWorkerTask(resolve, reject) {
+        const key = taskKey++;
+        workerTasks[key] = { resolve, reject };
+        if(key > 1000000) {
+            taskKey = 0;
+        }
+        return key;
+    }
+
     readFileWithWorker(path) {
         return new Promise((resolve, reject) => {
             const worker = this.workers[Math.floor(Math.random() * this.workers.length)];
-            const key = taskKey++;
+            const key = this.createWorkerTask(resolve, reject);
             worker.postMessage({ key, type: 'readFile', path });
-            workerTasks[key] = { resolve, reject };
-            if(key > 1000000) {
-                taskKey = 0;
-            }
         });
     }
 

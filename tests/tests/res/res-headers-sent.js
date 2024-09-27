@@ -7,7 +7,7 @@ const app = express();
 app.get('/test', (req, res) => {
     console.log(res.headersSent);
     res.send('test');
-    console.log(res.headersSent);
+    // console.log(res.headersSent);
 });
 
 app.listen(13333, async () => {

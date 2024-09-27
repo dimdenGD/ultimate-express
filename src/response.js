@@ -135,13 +135,19 @@ module.exports = class Response extends Writable {
             return;
         }
 
-        const etagFn = this.app.get('etag fn');
-        if(data && !this.headers['etag'] && etagFn && !this.req.noEtag) {
-            this.set('etag', etagFn(data, this.req));
+        if(data instanceof Buffer) {
+            data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
         }
 
-        if(Buffer.isBuffer(data)) {
-            data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+        const etagFn = this.app.get('etag fn');
+        if(data && !this.headers['etag'] && etagFn && !this.req.noEtag) {
+            const e = await etagFn(data, this.req);
+            if(typeof e === 'string') {
+                this.set('etag', e);
+            } else {
+                data = e[1];
+                this.set('etag', e[0]);
+            }
         }
         
         this._res.cork(() => {
