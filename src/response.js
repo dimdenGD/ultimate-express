@@ -671,7 +671,7 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
                     res._res.writeHeader(header, res.headers[header]);
                 }
                 if(!res.headers['content-type']) {
-                    res._res.writeHeader('content-type', 'text/html');
+                    res._res.writeHeader('content-type', 'text/html; charset=utf-8');
                 }
                 res.headersSent = true;
             }
