@@ -238,14 +238,14 @@ module.exports = class Response extends Writable {
                 return etag(stat, { weak: true });
             }
         }
-        if(!options.skipEncodePath) {
-            path = encodeURI(path);
-        }
 
         // path checks
         if(!options.root && !isAbsolute(path)) {
             this.status(500);
             return done(new Error('path must be absolute or specify root to res.sendFile'));
+        }
+        if(!options.skipEncodePath) {
+            path = encodeURI(path);
         }
         path = decode(path);
         if(path === -1) {
@@ -352,27 +352,30 @@ module.exports = class Response extends Writable {
 
         // range requests
         let offset = 0, len = stat.size, ranged = false;
-        if(options.acceptRanges && this.req.headers.range) {
-            let ranges = this.req.range(stat.size, {
-                combine: true
-            });
-
-            // if-range
-            if(!isRangeFresh(this.req, this)) {
-                ranges = -2;
-            }
-
-            if(ranges === -1) {
-                this.status(416);
-                this.set('Content-Range', `bytes */${stat.size}`);
-                return done(new Error('Range Not Satisfiable'));
-            }
-            if(ranges !== -2 && ranges.length === 1) {
-                this.status(206);
-                this.set('Content-Range', `bytes ${ranges[0].start}-${ranges[0].end}/${stat.size}`);
-                offset = ranges[0].start;
-                len = ranges[0].end - ranges[0].start + 1;
-                ranged = true;
+        if(options.acceptRanges) {
+            this.set('accept-ranges', 'bytes');
+            if(this.req.headers.range) {
+                let ranges = this.req.range(stat.size, {
+                    combine: true
+                });
+    
+                // if-range
+                if(!isRangeFresh(this.req, this)) {
+                    ranges = -2;
+                }
+    
+                if(ranges === -1) {
+                    this.status(416);
+                    this.set('Content-Range', `bytes */${stat.size}`);
+                    return done(new Error('Range Not Satisfiable'));
+                }
+                if(ranges !== -2 && ranges.length === 1) {
+                    this.status(206);
+                    this.set('Content-Range', `bytes ${ranges[0].start}-${ranges[0].end}/${stat.size}`);
+                    offset = ranges[0].start;
+                    len = ranges[0].end - ranges[0].start + 1;
+                    ranged = true;
+                }
             }
         }
 
