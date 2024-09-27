@@ -97,7 +97,7 @@ const defaultSettings = {
     'jsonp callback name': 'callback',
     'env': () => process.env.NODE_ENV ?? 'development',
     'etag': 'weak',
-    'etag fn': app => createETagGenerator(app, { weak: true }),
+    'etag fn': () => createETagGenerator({ weak: true }),
     'query parser': 'extended',
     'query parser fn': () => qs.parse,
     'subdomain offset': 2,
@@ -239,24 +239,10 @@ function isPreconditionFailure(req, res) {
     return false;
 }
 
-function createETagGenerator(app, options) {
+function createETagGenerator(options) {
     return function generateETag (body, encoding) {
         if(body instanceof Stats) {
             return etag(body, options);
-        }
-        if(body.length === 0) {
-            return '"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk"';
-        }
-        if(app.workers.length > 0 && (typeof body === 'string' || body instanceof ArrayBuffer)) {
-            return new Promise((resolve, reject) => {
-                const worker = app.workers[Math.floor(Math.random() * app.workers.length)];
-                const key = app.createWorkerTask(resolve, reject);
-                const transferable = [];
-                if(body instanceof ArrayBuffer) {
-                    transferable.push(body);
-                }
-                worker.postMessage({ key, type: 'generateETag', body, options }, transferable);
-            });
         }
         const buf = !Buffer.isBuffer(body) ? Buffer.from(body, encoding) : body;
         return etag(buf, options);

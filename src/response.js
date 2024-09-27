@@ -130,24 +130,18 @@ module.exports = class Response extends Writable {
     sendStatus(code) {
         return this.status(code).send(statuses.message[+code] ?? code.toString());
     }
-    async end(data) {
+    end(data) {
         if(this.finished) {
             return;
         }
 
-        if(data instanceof Buffer) {
-            data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
-        }
-
         const etagFn = this.app.get('etag fn');
         if(data && !this.headers['etag'] && etagFn && !this.req.noEtag) {
-            const e = await etagFn(data, this.req);
-            if(typeof e === 'string') {
-                this.set('etag', e);
-            } else {
-                data = e[1];
-                this.set('etag', e[0]);
-            }
+            this.set('etag', etagFn(data));
+        }
+
+        if(data instanceof Buffer) {
+            data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
         }
         
         this._res.cork(() => {
