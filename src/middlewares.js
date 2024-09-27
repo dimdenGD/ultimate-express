@@ -20,7 +20,7 @@ function static(root, options) {
 
     return (req, res, next) => {
         const iq = req.url.indexOf('?');
-        let url = iq !== -1 ? req.url.substring(0, iq) : req.url;
+        let url = decodeURIComponent(iq !== -1 ? req.url.substring(0, iq) : req.url);
         let _path = url;
         let fullpath = path.resolve(path.join(options.root, url));
         if(options.root && !fullpath.startsWith(path.resolve(options.root))) {
