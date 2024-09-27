@@ -96,7 +96,7 @@ module.exports = class Response extends Writable {
                     this._res.writeHeader(header, this.headers[header]);
                 }
                 if(!this.headers['content-type']) {
-                    this._res.writeHeader('content-type', 'text/html');
+                    this._res.writeHeader('content-type', 'text/html' + (typeof chunk === 'string' ? `; charset=utf-8` : ''));
                 }
                 this.headersSent = true;
             }
@@ -157,7 +157,7 @@ module.exports = class Response extends Writable {
                     this._res.writeHeader(header, this.headers[header]);
                 }
                 if(!this.headers['content-type']) {
-                    this._res.writeHeader('content-type', 'text/html');
+                    this._res.writeHeader('content-type', 'text/html' + (typeof data === 'string' ? `; charset=utf-8` : ''));
                 }
                 this.headersSent = true;
             }
@@ -197,6 +197,12 @@ module.exports = class Response extends Writable {
             }
         } else {
             body = String(body);
+        }
+        if(typeof body === 'string') {
+            const contentType = this.headers['content-type'];
+            if(contentType && !contentType.includes(';')) {
+                this.headers['content-type'] += '; charset=utf-8';
+            }
         }
         this.writeHead(this.statusCode);
         return this.end(body);

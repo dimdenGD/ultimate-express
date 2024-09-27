@@ -14,6 +14,6 @@ app.listen(13333, async () => {
 
     const response = await fetch('http://localhost:13333/test');
     console.log(response.headers.get('Content-Disposition'));
-    console.log(response.headers.get('Content-Type').split(';')[0]);
+    console.log(response.headers.get('Content-Type'));
     process.exit(0);
 });

@@ -6,7 +6,7 @@ const app = express();
 
 app.get('/test', (req, res) => {
     res.set('Content-Type', 'text/plain');
-    res.send(res.get('Content-Type').split(';')[0]);
+    res.send(res.get('Content-Type'));
 });
 
 app.listen(13333, async () => {
