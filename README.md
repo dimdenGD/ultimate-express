@@ -30,7 +30,7 @@ Tested using [wrk](https://github.com/wg/wrk) (`-d 60 -t 1 -c 200`). Etag was di
 | routing/some-middlewares (/90)                | 10.18k          | 66.97k           | 1.81 MB/sec        | 10.42 MB/sec        | **6.58X**        |
 | routers/nested-routers (/abccc/nested/ddd)    | 10.25k          | 50.98k           | 1.83 MB/sec        | 7.98 MB/sec         | **4.97X**        |
 | middlewares/express-static (/static/index.js) | 7.52k           | 31.08k           | 6.92 MB/sec        | 26.48 MB/sec        | **4.13X**        |
-| engines/ejs (/test)                           | 5.92k           | 14.43k           | 2.40 MB/sec        | 5.53 MB/sec         | **2.44X**        |
+| engines/ejs (/test)                           | 5.92k           | 41.64k           | 2.40 MB/sec        | 16.55 MB/sec        | **7.03X**        |
 | middlewares/body-urlencoded (/abc)            | 7.90k           | 29.90k           | 1.64 MB/sec        | 5.36 MB/sec         | **3.78X**        |
 
 Also tested on a [real-world application](https://nekoweb.org) with templates, static files and dynamic pages with data from database, and showed 1.5-4X speedup in requests per second depending on the page.
