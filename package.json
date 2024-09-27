@@ -6,6 +6,9 @@
   "scripts": {
     "test": "node tests/index.js"
   },
+  "engines": {
+    "node": ">=16"
+  },
   "files": [
     "src",
     "EXPRESS_LICENSE"

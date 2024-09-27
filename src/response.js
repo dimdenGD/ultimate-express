@@ -624,9 +624,12 @@ module.exports = class Response extends Writable {
     }
 
     type(type) {
-        const ct = type.indexOf('/') === -1
+        let ct = type.indexOf('/') === -1
             ? (mime.contentType(type) || 'application/octet-stream')
             : type;
+        if(ct.startsWith('text/') || ct === 'application/json' || ct === 'application/javascript') {
+            ct += '; charset=UTF-8';
+        }
         return this.set('Content-Type', ct);
     }
     contentType(type) {
