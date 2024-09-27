@@ -1,6 +1,5 @@
 const fs = require("fs");
 const { parentPort } = require("worker_threads");
-const etag = require('etag');
 
 parentPort.on('message', (message) => {
     if(message.type === 'readFile') {

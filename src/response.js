@@ -134,18 +134,13 @@ module.exports = class Response extends Writable {
         if(this.finished) {
             return;
         }
-
-        const etagFn = this.app.get('etag fn');
-        if(data && !this.headers['etag'] && etagFn && !this.req.noEtag) {
-            this.set('etag', etagFn(data));
-        }
-
-        if(data instanceof Buffer) {
-            data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
-        }
         
         this._res.cork(() => {
             if(!this.headersSent) {
+                const etagFn = this.app.get('etag fn');
+                if(data && !this.headers['etag'] && etagFn && !this.req.noEtag) {
+                    this.set('etag', etagFn(data));
+                }
                 if(this.req.fresh) {
                     if(!this.headersSent) {
                         this._res.writeStatus('304');
@@ -169,6 +164,9 @@ module.exports = class Response extends Writable {
             if(!data && this.headers['content-length']) {
                 this._res.endWithoutBody(this.headers['content-length'].toString());
             } else {
+                if(data instanceof Buffer) {
+                    data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+                }
                 if(this.req.method === 'HEAD') {
                     const length = Buffer.byteLength(data ?? '');
                     this._res.endWithoutBody(length.toString());
