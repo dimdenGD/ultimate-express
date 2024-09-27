@@ -12,6 +12,7 @@ const methods = [
     'search', 'subscribe', 'unsubscribe', 'report', 'mkactivity', 'mkcalendar',
     'checkout', 'merge', 'm-search', 'notify', 'subscribe', 'unsubscribe', 'search'
 ];
+const supportedUwsMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE'];
 
 module.exports = class Router extends EventEmitter {
     #paramCallbacks = new Map();
@@ -122,8 +123,7 @@ module.exports = class Router extends EventEmitter {
             routes.push(route);
             // normal routes optimization
             if(typeof route.pattern === 'string' && route.pattern !== '/*' && !this.parent && this.get('case sensitive routing') && this.uwsApp) {
-                // the only methods that uWS supports natively
-                if(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE'].includes(method)) {
+                if(supportedUwsMethods.includes(method)) {
                     const optimizedPath = this.#optimizeRoute(route, this._routes);
                     if(optimizedPath) {
                         this.#registerUwsRoute(route, optimizedPath);
@@ -153,7 +153,7 @@ module.exports = class Router extends EventEmitter {
                                     return; // can only optimize router whos parent is listening
                                 }
                                 for(let cbroute of callback._routes) {
-                                    if(!needsConversionToRegex(cbroute.path) && cbroute.path !== '/*') {
+                                    if(!needsConversionToRegex(cbroute.path) && cbroute.path !== '/*' && supportedUwsMethods.includes(cbroute.method)) {
                                         let optimizedRouterPath = this.#optimizeRoute(cbroute, callback._routes);
                                         if(optimizedRouterPath) {
                                             optimizedRouterPath = optimizedRouterPath.slice(0, -1);
