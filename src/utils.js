@@ -239,7 +239,7 @@ function isPreconditionFailure(req, res) {
     return false;
 }
 
-function createETagGenerator(options) {
+function createETagGenerator(app, options) {
     return function generateETag (body, encoding) {
         if(body instanceof Stats) {
             return etag(body, options);

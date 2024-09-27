@@ -130,17 +130,18 @@ module.exports = class Response extends Writable {
     sendStatus(code) {
         return this.status(code).send(statuses.message[+code] ?? code.toString());
     }
-    end(data) {
+    async end(data) {
         if(this.finished) {
             return;
+        }
+
+        const etagFn = this.app.get('etag fn');
+        if(data && !this.headers['etag'] && etagFn && !this.req.noEtag) {
+            this.set('etag', etagFn(data, this.req));
         }
         
         this._res.cork(() => {
             if(!this.headersSent) {
-                const etagFn = this.app.get('etag fn');
-                if(data && !this.headers['etag'] && etagFn && !this.req.noEtag) {
-                    this.set('etag', etagFn(data, this.req));
-                }
                 if(this.req.fresh) {
                     if(!this.headersSent) {
                         this._res.writeStatus('304');
@@ -185,9 +186,7 @@ module.exports = class Response extends Writable {
         } else if(body === null || body === undefined) {
             body = '';
         } else if(typeof body === 'object') {
-            if(!(body instanceof ArrayBuffer)) {
-                return this.json(body);
-            }
+            return this.json(body);
         } else if(typeof body === 'number') {
             if(arguments[1]) {
                 deprecated('res.send(status, body)', 'res.status(status).send(body)');

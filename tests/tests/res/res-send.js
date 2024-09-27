@@ -38,6 +38,13 @@ app.get('/boolean', (req, res) => {
     res.send(true);
 });
 
+app.get('/arraybuffer', (req, res) => {
+    const ab = new ArrayBuffer(10);
+    const view = new Uint8Array(ab);
+    view[0] = 10;
+    res.send(ab);
+});
+
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
@@ -50,6 +57,7 @@ app.listen(13333, async () => {
         fetch('http://localhost:13333/number').then(res => res.text()),
         fetch('http://localhost:13333/number2').then(res => res.text()),
         fetch('http://localhost:13333/boolean').then(res => res.text()),
+        fetch('http://localhost:13333/arraybuffer').then(res => res.text()),
     ]);
 
     const codes = await Promise.all([
@@ -61,6 +69,7 @@ app.listen(13333, async () => {
         fetch('http://localhost:13333/number').then(res => res.status),
         fetch('http://localhost:13333/number2').then(res => res.status),
         fetch('http://localhost:13333/boolean').then(res => res.status),
+        fetch('http://localhost:13333/arraybuffer').then(res => res.status),
     ]);
 
     console.log(responses);

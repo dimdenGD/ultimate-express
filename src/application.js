@@ -121,10 +121,10 @@ class Application extends Router {
                 switch(value) {
                     case true:
                     case 'weak':
-                        this.settings['etag fn'] = createETagGenerator({ weak: true });
+                        this.settings['etag fn'] = createETagGenerator(this, { weak: true });
                         break;
                     case 'strong':
-                        this.settings['etag fn'] = createETagGenerator({ weak: false });
+                        this.settings['etag fn'] = createETagGenerator(this, { weak: false });
                         break;
                     case false:
                         delete this.settings['etag fn'];
