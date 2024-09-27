@@ -6,10 +6,10 @@ const artTemplate = require("express-art-template");
 const app = express();
 
 app.engine('art', artTemplate);
+app.set('env', 'production');
 app.set('views', 'tests/parts');
 app.set('view engine', 'art');
 app.set('view options', {
-    debug: process.env.NODE_ENV !== 'production',
     ignore: ['Math', 'Date', 'JSON', 'encodeURIComponent'],
     minimize: false
 });

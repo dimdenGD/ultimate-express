@@ -8,7 +8,7 @@ const app = express();
 app.engine('swig', swig.renderFile);
 app.set('view engine', 'swig');
 app.set('views', 'tests/parts');
-
+app.set('env', 'production');
 app.get('/test', (req, res) => {
     res.locals.asdf = 'locals test';
     res.render('index', { title: 'Hey', message: 'Hello there!' });

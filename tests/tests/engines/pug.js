@@ -5,6 +5,7 @@ const express = require("express");
 const app = express();
 app.set('view engine', 'pug');
 app.set('views', 'tests/parts');
+app.set('env', 'production');
 
 app.get('/test', (req, res) => {
     res.locals.asdf = 'locals test';

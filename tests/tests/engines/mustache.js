@@ -8,6 +8,7 @@ const app = express();
 app.engine('mustache', mustacheExpress());
 app.set('view engine', 'mustache');
 app.set('views', 'tests/parts');
+app.set('env', 'production');
 
 app.get('/test', (req, res) => {
     res.locals.asdf = 'locals test';
