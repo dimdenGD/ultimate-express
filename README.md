@@ -33,7 +33,7 @@ Tested using [wrk](https://github.com/wg/wrk) (`-d 60 -t 1 -c 200`). Etag was di
 | engines/ejs (/test)                           | 5.92k           | 14.43k           | 2.40 MB/sec        | 5.53 MB/sec         | **2.44X**        |
 | middlewares/body-urlencoded (/abc)            | 7.90k           | 29.90k           | 1.64 MB/sec        | 5.36 MB/sec         | **3.78X**        |
 
-Also tested on a real-world application with templates, static files and dynamic pages with data from database ([nekoweb.org](https://nekoweb.org)), and showed about 1.5-4X speedup in requests per second.
+Also tested on a [real-world application](https://nekoweb.org) with templates, static files and dynamic pages with data from database, and showed about 1.5-4X speedup in requests per second.
 
 ## Differences from Express
 
