@@ -158,8 +158,8 @@ module.exports = class Router extends EventEmitter {
                                         if(optimizedRouterPath) {
                                             optimizedRouterPath = optimizedRouterPath.slice(0, -1);
                                             const optimizedPath = [...optimizedPathToRouter, {
-                                                ...route,
                                                 // fake route to update req._opPath and req.url
+                                                ...route,
                                                 callbacks: [
                                                     (req, res, next) => {
                                                         next('skipPop');
@@ -263,8 +263,12 @@ module.exports = class Router extends EventEmitter {
     }
 
     #handleError(err, request, response) {
-        if(this.errorRoute) {
-            return this.errorRoute(err, request, response, () => {
+        let errorRoute = this.errorRoute;
+        while(!errorRoute && this.parent) {
+            errorRoute = this.parent.errorRoute;
+        }
+        if(errorRoute) {
+            return errorRoute(err, request, response, () => {
                 if(!response.headersSent) {
                     if(response.statusCode === 200) {
                         response.statusCode = 500;
