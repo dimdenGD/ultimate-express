@@ -403,7 +403,7 @@ module.exports = class Response extends Writable {
         } else {
             // larger files or range requests are piped over response
             let opts = {
-                highWaterMark: 128 * 1024
+                highWaterMark: 256 * 1024
             };
             if(ranged) {
                 opts.start = offset;
