@@ -390,7 +390,7 @@ module.exports = class Response extends Writable {
         }
 
         // serve smaller files using workers
-        if(this.app.workers.length && stat.size < 1024 * 1024 && !ranged) {
+        if(this.app.workers.length && stat.size < 768 * 1024 && !ranged) {
             this.app.readFileWithWorker(fullpath).then((data) => {
                 if(this._res.aborted) {
                     return;
@@ -402,7 +402,9 @@ module.exports = class Response extends Writable {
             });
         } else {
             // larger files or range requests are piped over response
-            let opts = {};
+            let opts = {
+                highWaterMark: 128 * 1024
+            };
             if(ranged) {
                 opts.start = offset;
                 opts.end = Math.max(offset, offset + len - 1);
