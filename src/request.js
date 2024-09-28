@@ -219,7 +219,7 @@ module.exports = class Request extends Readable {
 
     get connection() {
         return {
-            remoteAddress: Buffer.from(this.res._res.getRemoteAddressAsText()).toString(),
+            remoteAddress: this.rawIp,
             localPort: this.app.port,
             remotePort: this.app.port,
             encrypted: this.app.ssl,
