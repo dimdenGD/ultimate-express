@@ -139,6 +139,9 @@ module.exports = class Response extends Writable {
                     if(!ok) {
                         // wait until uWS is ready to accept more data
                         this._res.onWritable((offset) => {
+                            if(this.aborted) {
+                                return true;
+                            }
                             const [ok, done] = this._res.tryEnd(chunk.slice(offset - lastOffset), this.totalSize);
                             if(done) {
                                 this.destroy();
@@ -147,6 +150,8 @@ module.exports = class Response extends Writable {
                             } else if(ok) {
                                 callback();
                             }
+                            
+                            return ok;
                         });
                     } else {
                         callback();
@@ -742,7 +747,10 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
                 res._res.ab = ab;
                 res._res.abOffset = lastOffset;
         
-                res._res.onWritable((offset) => {  
+                res._res.onWritable((offset) => {
+                    if(res.aborted) {
+                        return true;
+                    }
                     const [ok, done] = res._res.tryEnd(res._res.ab.slice(offset - res._res.abOffset), totalSize);
                     if (done) {
                         readStream.destroy();
