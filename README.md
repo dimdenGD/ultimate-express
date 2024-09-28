@@ -96,6 +96,13 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 
 4. By default, µExpress creates 1 (or 0 if your CPU has only 1 core) child thread to improve performance of reading files. You can change this number by setting `threads` to a different number in `express()`, or set to 0 to disable thread pool (`express({ threads: 0 })`). Threads are shared between all express() instances, with largest `threads` number being used. Using more threads will not necessarily improve performance. Sometimes not using threads at all is faster, please [test](https://github.com/wg/wrk/) both options.
 
+## WebSockets
+
+Since you don't create http server manually, you can't properly use http.on("upgrade") to handle WebSockets. To solve this, there's currently 2 options:
+
+- There's currently another library in works: [Ultimate WS](https://github.com/dimdenGD/ultimate-ws) that implements `ws` module. It's same concept as this library, but for WebSockets: fast drop-in replacement for `ws` module with support for uExpress upgrades.
+- You can simply use `app.uwsApp` to access uWebSockets.js `App` instance and call its `ws()` method directly.
+
 ## Compatibility
 
 In general, basically all features and options are supported. Use [Express 4.x documentation](https://expressjs.com/en/4x/api.html) for API reference.
