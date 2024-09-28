@@ -179,11 +179,11 @@ class Application extends Router {
 
     #createRequestHandler() {
         this.uwsApp.any('/*', async (res, req) => {
-
             const request = new this._request(req, res, this);
             const response = new this._response(res, request, this);
             request.res = response;
             response.req = request;
+            
             res.onAborted(() => {
                 const err = new Error('Request aborted');
                 err.code = 'ECONNABORTED';

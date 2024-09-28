@@ -22,7 +22,6 @@ const Request = require("./request.js");
 const Response = require("./response.js");
 
 Application.Router = function(options) {
-
     return new Router(options);
 }
 

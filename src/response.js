@@ -98,9 +98,7 @@ module.exports = class Response extends Writable {
             err.code = 'ECONNABORTED';
             return this.destroy(err);
         }
-        if(!Buffer.isBuffer(chunk)) {
-            chunk = Buffer.from(chunk);
-        }
+        const isString = typeof chunk === 'string';
         this._res.cork(() => {
             if(!this.headersSent) {
                 this.writeHead(this.statusCode);
@@ -112,12 +110,18 @@ module.exports = class Response extends Writable {
                     this._res.writeHeader(header, this.headers[header]);
                 }
                 if(!this.headers['content-type']) {
-                    this._res.writeHeader('content-type', 'text/html' + (typeof chunk === 'string' ? `; charset=utf-8` : ''));
+                    if(!encoding || encoding === 'utf8') {
+                        encoding = 'utf-8';
+                    }
+                    this._res.writeHeader('content-type', 'text/html' + (isString ? `; charset=${encoding}` : ''));
                 }
                 this.headersSent = true;
             }
-            const ab = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
-            this._res.write(ab);
+            if(!isString && !Buffer.isBuffer(chunk) && !(chunk instanceof ArrayBuffer)) {
+                chunk = Buffer.from(chunk);
+                chunk = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
+            }
+            this._res.write(chunk);
             callback();
         });
     }
