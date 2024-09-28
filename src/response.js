@@ -64,6 +64,8 @@ module.exports = class Response extends Writable {
         this.locals = {};
         this.aborted = false;
         this.statusCode = 200;
+        this.chunkedTransfer = true;
+        this.totalSize = 0;
         this.headers = {
             'keep-alive': 'timeout=10'
         };
@@ -98,8 +100,6 @@ module.exports = class Response extends Writable {
             err.code = 'ECONNABORTED';
             return this.destroy(err);
         }
-        const isString = typeof chunk === 'string';
-        let isChunkedTransfer = true, totalSize;
         this._res.cork(() => {
             if(!this.headersSent) {
                 this.writeHead(this.statusCode);
@@ -107,14 +107,14 @@ module.exports = class Response extends Writable {
                 for(const header in this.headers) {
                     if(header === 'content-length') {
                         // if content-length is set, disable chunked transfer encoding, since size is known
-                        isChunkedTransfer = false;
-                        totalSize = parseInt(this.headers[header]);
+                        this.chunkedTransfer = false;
+                        this.totalSize = parseInt(this.headers[header]);
                         continue;
                     }
                     this._res.writeHeader(header, this.headers[header]);
                 }
                 if(!this.headers['content-type']) {
-                    this._res.writeHeader('content-type', 'text/html' + (isString ? `; charset=utf-8` : ''));
+                    this._res.writeHeader('content-type', 'text/html' + (typeof chunk === 'string' ? `; charset=utf-8` : ''));
                 }
                 this.headersSent = true;
             }
@@ -122,14 +122,14 @@ module.exports = class Response extends Writable {
                 chunk = Buffer.from(chunk);
                 chunk = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
             }
-            if(isChunkedTransfer) {
+            if(this.chunkedTransfer) {
                 // chunked transfer encoding
                 this._res.write(chunk);
                 callback();
             } else {
                 // fixed size transfer encoding
                 const lastOffset = this._res.getWriteOffset();
-                const [ok, done] = this._res.tryEnd(chunk, totalSize);
+                const [ok, done] = this._res.tryEnd(chunk, this.totalSize);
                 if(done) {
                     this.destroy();
                     this.socket.emit('close');
@@ -139,7 +139,7 @@ module.exports = class Response extends Writable {
                     if(!ok) {
                         // wait until uWS is ready to accept more data
                         this._res.onWritable((offset) => {
-                            const [ok, done] = this._res.tryEnd(chunk.slice(offset - lastOffset), totalSize);
+                            const [ok, done] = this._res.tryEnd(chunk.slice(offset - lastOffset), this.totalSize);
                             if(done) {
                                 this.destroy();
                                 this.socket.emit('close');

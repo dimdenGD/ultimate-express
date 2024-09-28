@@ -6,12 +6,12 @@ const fs = require("fs");
 const app = express();
 
 app.get('/test', (req, res) => {
-    if(!fs.existsSync('./src/router.js')) {
+    if(!fs.existsSync('./tests/parts/huge.jpg')) {
         throw new Error('File not found');
     }
 
-    const stat = fs.statSync('./src/router.js');
-    const file = fs.createReadStream('./src/router.js');
+    const stat = fs.statSync('./tests/parts/huge.jpg');
+    const file = fs.createReadStream('./tests/parts/huge.jpg');
     res.setHeader('Content-Length', stat.size);
     file.pipe(res);
 });
