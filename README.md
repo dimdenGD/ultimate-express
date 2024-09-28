@@ -41,13 +41,8 @@ Also tested on a [real-world application](https://nekoweb.org) with templates, s
 In a lot of cases, you can just replace `require("express")` with `require("ultimate-express")` and everything works the same. But there are some differences:
 
 - `case sensitive routing` is enabled by default.
-- Depending on how you send response, `Content-Length` header may be overwritten or not sent at all:
-- - on simple responses with res.send(), res.json(), etc. it's set automatically (any value you set with res.set() is overwritten)
-- - on streaming responses (piping, res.sendFile()) it's not sent because uWS uses chunked transfer encoding instead
-- - on responses without body, it *is* sent (useful for HEAD requests)
 - request body is only read for POST, PUT and PATCH requests by default. You can add additional methods by setting `body methods` to array with uppercased methods.
-- For HTTPS, instead of doing this:
-
+- For HTTPS, instead of doing this:  
 ```js
 const https = require("https");
 const express = require("express");

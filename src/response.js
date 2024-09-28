@@ -99,30 +99,60 @@ module.exports = class Response extends Writable {
             return this.destroy(err);
         }
         const isString = typeof chunk === 'string';
+        let isChunkedTransfer = true, totalSize;
         this._res.cork(() => {
             if(!this.headersSent) {
                 this.writeHead(this.statusCode);
                 this._res.writeStatus(this.statusCode.toString());
                 for(const header in this.headers) {
                     if(header === 'content-length') {
+                        // if content-length is set, disable chunked transfer encoding, since size is known
+                        isChunkedTransfer = false;
+                        totalSize = parseInt(this.headers[header]);
                         continue;
                     }
                     this._res.writeHeader(header, this.headers[header]);
                 }
                 if(!this.headers['content-type']) {
-                    if(!encoding || encoding === 'utf8') {
-                        encoding = 'utf-8';
-                    }
-                    this._res.writeHeader('content-type', 'text/html' + (isString ? `; charset=${encoding}` : ''));
+                    this._res.writeHeader('content-type', 'text/html' + (isString ? `; charset=utf-8` : ''));
                 }
                 this.headersSent = true;
             }
-            if(!isString && !Buffer.isBuffer(chunk) && !(chunk instanceof ArrayBuffer)) {
+            if(!Buffer.isBuffer(chunk) && !(chunk instanceof ArrayBuffer)) {
                 chunk = Buffer.from(chunk);
                 chunk = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
             }
-            this._res.write(chunk);
-            callback();
+            if(isChunkedTransfer) {
+                // chunked transfer encoding
+                this._res.write(chunk);
+                callback();
+            } else {
+                // fixed size transfer encoding
+                const lastOffset = this._res.getWriteOffset();
+                const [ok, done] = this._res.tryEnd(chunk, totalSize);
+                if(done) {
+                    this.destroy();
+                    this.socket.emit('close');
+                    callback();
+                } else {
+                    // still writing
+                    if(!ok) {
+                        // wait until uWS is ready to accept more data
+                        this._res.onWritable((offset) => {
+                            const [ok, done] = this._res.tryEnd(chunk.slice(offset - lastOffset), totalSize);
+                            if(done) {
+                                this.destroy();
+                                this.socket.emit('close');
+                                callback();
+                            } else if(ok) {
+                                callback();
+                            }
+                        });
+                    } else {
+                        callback();
+                    }
+                }
+            }
         });
     }
     writeHead(statusCode, statusMessage, headers) {
