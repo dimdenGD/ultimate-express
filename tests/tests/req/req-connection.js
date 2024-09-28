@@ -7,6 +7,8 @@ const app = express();
 app.get('/test', (req, res) => {
     console.log(req.connection.remoteAddress.replace("0000:0000:0000:0000:0000:0000:0000:000", "::"));
     console.log(req.connection.localPort);
+    console.log(req.socket.remoteAddress.replace("0000:0000:0000:0000:0000:0000:0000:000", "::"));
+    console.log(req.socket.localPort);
     res.send('test');
 });
 

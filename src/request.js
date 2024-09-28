@@ -226,6 +226,10 @@ module.exports = class Request extends Readable {
         };
     }
 
+    get socket() {
+        return this.connection;
+    }
+
     get fresh() {
         if(this.method !== 'HEAD' && this.method !== 'GET') {
             return false;
