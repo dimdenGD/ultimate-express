@@ -197,26 +197,22 @@ module.exports = class Response extends Writable {
                     this.set('etag', etagFn(data));
                 }
                 const fresh = this.req.fresh;
-                if(fresh) {
-                    this._res.writeStatus('304');
-                } else {
-                    this._res.writeStatus(this.statusCode.toString());
-                }
+                this._res.writeStatus(fresh ? '304' : this.statusCode.toString());
                 for(const header in this.headers) {
                     if(header === 'content-length') {
                         continue;
                     }
                     this._res.writeHeader(header, this.headers[header]);
                 }
-                if(fresh) {
-                    this.headersSent = true;
-                    this.socket.emit('close');
-                    return this._res.end();
-                }
                 if(!this.headers['content-type']) {
                     this._res.writeHeader('content-type', 'text/html' + (typeof data === 'string' ? `; charset=utf-8` : ''));
                 }
                 this.headersSent = true;
+                if(fresh) {
+                    this._res.end();
+                    this.socket.emit('close');
+                    return;
+                }
             }
             if(!data && this.headers['content-length']) {
                 this._res.endWithoutBody(this.headers['content-length'].toString());
