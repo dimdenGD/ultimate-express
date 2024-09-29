@@ -35,6 +35,7 @@ Tested using [wrk](https://github.com/wg/wrk) (`-d 60 -t 1 -c 200`). Etag was di
 | middlewares/express-static (/static/index.js) | 7.52k           | 31.08k           | 6.92 MB/sec        | 26.48 MB/sec        | **4.13X**        |
 | engines/ejs (/test)                           | 5.92k           | 41.64k           | 2.40 MB/sec        | 16.55 MB/sec        | **7.03X**        |
 | middlewares/body-urlencoded (/abc)            | 8.01k           | 35.10k           | 1.66 MB/sec        | 7.02 MB/sec         | **4.38X**        |
+|                                               |                 |                  |                    |                     | Avg: **6.37X**   |
 
 ### Performance against other frameworks
 
