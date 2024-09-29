@@ -143,6 +143,9 @@ function createBodyParser(defaultType, beforeReturn) {
         }
         if(typeof options.inflate === 'undefined') options.inflate = true;
         if(typeof options.type === 'string') {
+            if(!options.type.includes("*")) {
+                options.simpleType = options.type;
+            }
             options.type = [options.type];
         } else if(typeof options.type !== 'function' && !Array.isArray(options.type)) {
             throw new Error('type must be a string, function or an array');
@@ -173,13 +176,21 @@ function createBodyParser(defaultType, beforeReturn) {
                 return next(new Error('Request entity too large'));
             }
 
-            if(typeof options.type === 'function') {
-                if(!options.type(req)) {
+            if(options.simpleType) {
+                const semicolonIndex = type.indexOf(';');
+                const clearType = semicolonIndex !== -1 ? type.substring(0, semicolonIndex) : type;
+                if(clearType !== options.simpleType) {
                     return next();
                 }
             } else {
-                if(!typeis(req, options.type)) {
-                    return next();
+                if(typeof options.type === 'function') {
+                    if(!options.type(req)) {
+                        return next();
+                    }
+                } else {
+                    if(!typeis(req, options.type)) {
+                        return next();
+                    }
                 }
             }
 
