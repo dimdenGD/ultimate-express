@@ -1,12 +1,11 @@
 // must support gzipped raw body parser
 
 const express = require("express");
-const bodyParser = require("body-parser");
 const { gzip } = require("pako");
 
 const app = express();
 
-app.use(bodyParser.raw());
+app.use(express.raw());
 
 app.post('/abc', (req, res) => {
     res.send(req.body);

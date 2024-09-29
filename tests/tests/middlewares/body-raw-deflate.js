@@ -1,12 +1,11 @@
 // must support deflate raw body parser
 
 const express = require("express");
-const bodyParser = require("body-parser");
 const { deflate } = require("pako");
 
 const app = express();
 
-app.use(bodyParser.raw());
+app.use(express.raw());
 
 app.post('/abc', (req, res) => {
     res.send(req.body);
