@@ -107,9 +107,11 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 
 2. Do not use external `serve-static` module. Instead use built-in `express.static()` middleware, which is optimized for uExpress.
 
-3. Do not set `body methods` to read body of requests with GET method or other methods that don't need a body. Reading body makes server about 10k req/sec slower.
+3. Do not use `body-parser` module. Instead use built-in `express.text()`, `express.json()` etc.
 
-4. By default, µExpress creates 1 (or 0 if your CPU has only 1 core) child thread to improve performance of reading files. You can change this number by setting `threads` to a different number in `express()`, or set to 0 to disable thread pool (`express({ threads: 0 })`). Threads are shared between all express() instances, with largest `threads` number being used. Using more threads will not necessarily improve performance. Sometimes not using threads at all is faster, please [test](https://github.com/wg/wrk/) both options.
+4. Do not set `body methods` to read body of requests with GET method or other methods that don't need a body. Reading body makes server about 10k req/sec slower.
+
+5. By default, µExpress creates 1 (or 0 if your CPU has only 1 core) child thread to improve performance of reading files. You can change this number by setting `threads` to a different number in `express()`, or set to 0 to disable thread pool (`express({ threads: 0 })`). Threads are shared between all express() instances, with largest `threads` number being used. Using more threads will not necessarily improve performance. Sometimes not using threads at all is faster, please [test](https://github.com/wg/wrk/) both options.
 
 ## WebSockets
 
@@ -281,7 +283,7 @@ In general, basically all features and options are supported. Use [Express 4.x d
 
 Most of the middlewares that are compatible with Express are compatible with µExpress. Here's list of middlewares that we test for compatibility:
 
-- ✅ [body-parser](https://npmjs.com/package/body-parser)
+- ✅ [body-parser](https://npmjs.com/package/body-parser) (use `express.text()` etc instead for better performance)
 - ✅ [cookie-parser](https://npmjs.com/package/cookie-parser)
 - ✅ [cookie-session](https://npmjs.com/package/cookie-session)
 - ✅ [serve-static](https://npmjs.com/package/serve-static) (use `express.static()` instead for better performance)
