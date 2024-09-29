@@ -16,6 +16,7 @@ limitations under the License.
 
 const fs = require('fs');
 const path = require('path');
+const bytes = require('bytes');
 
 function static(root, options) {
     if(!options) options = {};
@@ -106,6 +107,68 @@ function static(root, options) {
             }
         });
     }
+}
+
+function json(options = {}) {
+    if(typeof options !== 'object') {
+        options = {};
+    }
+    if(typeof options.limit === 'undefined') options.limit = bytes('100kb');
+    else options.limit = bytes(options.limit);
+
+    if(typeof options.type === 'undefined') options.type = 'application/json';
+    else if(typeof options.type !== 'string') {
+        throw new Error('type must be a string');
+    }
+
+    return (req, res, next) => {
+        const type = req.headers['content-type'];
+        const semiColonIndex = type.indexOf(';');
+        const contentType = semiColonIndex !== -1 ? type.substring(0, semiColonIndex) : type;
+        if(!type || contentType !== options.type) {
+            return next();
+        }
+
+        // skip reading body for non-POST requests
+        // this makes it +10k req/sec faster
+        const additionalMethods = req.app.get('body methods');
+        if(
+            req.method !== 'POST' &&
+            req.method !== 'PUT' &&
+            req.method !== 'PATCH' && 
+            (!additionalMethods || !additionalMethods.includes(req.method))
+        ) {
+            return next();
+        }
+
+        const abs = [], totalSize = 0;
+        req._res.onData((ab, isLast) => {
+            abs.push(ab);
+            totalSize += ab.length;
+            if(totalSize > options.limit) {
+                return next(new Error('Request entity too large'));
+            }
+            if(isLast) {
+                const buf = Buffer.concat(abs);
+                if(options.verify) {
+                    try {
+                        options.verify(req, res, buf);
+                    } catch(e) {
+                        return next(e);
+                    }
+                }
+                req.body = JSON.parse(buf, options.reviver);
+                if(options.strict) {
+                    if(req.body && typeof req.body !== 'object') {
+                        return next(new Error('Invalid body'));
+                    }
+                }
+                next();
+            }
+        });
+
+    }
+
 }
 
 module.exports = {

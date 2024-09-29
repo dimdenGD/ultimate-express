@@ -136,7 +136,8 @@ In general, basically all features and options are supported. Use [Express 4.x d
 
 - ✅ express()
 - ✅ express.Router()
-- ✅ express.json()
+- 🚧 express.json()
+- - ❌ options.inflate
 - ✅ express.urlencoded()
 - ✅ express.static()
 - - Additionally you can pass `options.ifModifiedSince` to support If-Modified-Since header (this header is not supported in normal Express, but is supported in µExpress)
