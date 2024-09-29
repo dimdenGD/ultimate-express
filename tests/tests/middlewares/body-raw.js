@@ -32,7 +32,7 @@ app.listen(13333, async () => {
         }
     });
 
-    const text = await response.text();
+    const text = await response.arrayBuffer();
     console.log(text);
 
     process.exit(0);

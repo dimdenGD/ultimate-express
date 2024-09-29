@@ -127,254 +127,139 @@ function createInflate(contentEncoding) {
     }
 }
 
-function json(options = {}) {
-    if(typeof options !== 'object') {
-        options = {};
-    }
-    if(typeof options.limit === 'undefined') options.limit = bytes('100kb');
-    else options.limit = bytes(options.limit);
-
-    if(typeof options.type === 'undefined') options.type = 'application/json';
-    else if(typeof options.type !== 'string') {
-        throw new Error('type must be a string');
-    }
-    if(typeof options.inflate === 'undefined') options.inflate = true;
-    if(typeof options.type === 'string') {
-        options.type = [options.type];
-    } else if(typeof options.type !== 'function' && !Array.isArray(options.type)) {
-        throw new Error('type must be a string, function or an array');
-    }
-
-    return (req, res, next) => {
-        const type = req.headers['content-type'];
-
-        // skip reading body for non-json content type
-        if(!type) {
-            return next();
+function createBodyParser(defaultType, beforeReturn) {
+    return function(options) {
+        if(typeof options !== 'object') {
+            options = {};
         }
-        if(typeof options.type === 'function') {
-            if(!options.type(req)) {
+        if(typeof options.limit === 'undefined') options.limit = bytes('100kb');
+        else options.limit = bytes(options.limit);
+    
+        if(typeof options.type === 'undefined') options.type = defaultType;
+        else if(typeof options.type !== 'string') {
+            throw new Error('type must be a string');
+        }
+        if(typeof options.inflate === 'undefined') options.inflate = true;
+        if(typeof options.type === 'string') {
+            options.type = [options.type];
+        } else if(typeof options.type !== 'function' && !Array.isArray(options.type)) {
+            throw new Error('type must be a string, function or an array');
+        }
+
+        return (req, res, next) => {
+            const type = req.headers['content-type'];
+
+            // skip reading body for non-json content type
+            if(!type) {
                 return next();
             }
-        } else {
-            if(!typeis(req, options.type)) {
+
+            // skip reading body twice
+            if(req.body) {
                 return next();
             }
-        }
 
-        // skip reading body twice
-        if(req.body) {
-            return next();
-        }
-
-        const length = req.headers['content-length'];
-        // skip reading empty body
-        if(length == '0') {
-            return next();
-        }
-
-        // skip reading too large body
-        if(length && +length > options.limit) {
-            return next(new Error('Request entity too large'));
-        }
-
-        if(!typeis(req, options.type)) {
-            return next();
-        }
-
-        // skip reading body for non-POST requests
-        // this makes it +10k req/sec faster
-        const additionalMethods = req.app.get('body methods');
-        if(
-            req.method !== 'POST' &&
-            req.method !== 'PUT' &&
-            req.method !== 'PATCH' && 
-            (!additionalMethods || !additionalMethods.includes(req.method))
-        ) {
-            return next();
-        }
-
-        const abs = [];
-        let inflate;
-        let totalSize = 0;
-        if(options.inflate) {
-            inflate = createInflate(req.headers['content-encoding']);
-            if(inflate === false) {
-                return next(new Error('Unsupported content encoding'));
+            const length = req.headers['content-length'];
+            // skip reading empty body
+            if(length == '0') {
+                return next();
             }
-        }
 
-        function onData(buf) {
-            if(!Buffer.isBuffer(buf)) {
-                buf = Buffer.from(buf);
-            }
-            if(inflate) {
-                buf = inflate.process(buf);
-            }
-            abs.push(buf);
-            totalSize += buf.length;
-            if(totalSize > options.limit) {
+            // skip reading too large body
+            if(length && +length > options.limit) {
                 return next(new Error('Request entity too large'));
             }
-        }
 
-        function onEnd() {
-            const buf = Buffer.concat(abs);
-            if(options.verify) {
-                try {
-                    options.verify(req, res, buf);
-                } catch(e) {
-                    return next(e);
+            if(typeof options.type === 'function') {
+                if(!options.type(req)) {
+                    return next();
+                }
+            } else {
+                if(!typeis(req, options.type)) {
+                    return next();
                 }
             }
-            req.body = JSON.parse(buf, options.reviver);
-            if(options.strict) {
-                if(req.body && typeof req.body !== 'object') {
-                    return next(new Error('Invalid body'));
+
+            // skip reading body for non-POST requests
+            // this makes it +10k req/sec faster
+            const additionalMethods = req.app.get('body methods');
+            if(
+                req.method !== 'POST' &&
+                req.method !== 'PUT' &&
+                req.method !== 'PATCH' && 
+                (!additionalMethods || !additionalMethods.includes(req.method))
+            ) {
+                return next();
+            }
+
+            const abs = [];
+            let inflate;
+            let totalSize = 0;
+            if(options.inflate) {
+                inflate = createInflate(req.headers['content-encoding']);
+                if(inflate === false) {
+                    return next(new Error('Unsupported content encoding'));
                 }
             }
-            next();
-        }
 
-        // reading data directly from uWS is faster than from a stream
-        // if we are fast enough (not async), we can do it
-        // otherwise we need to use a stream since it already started streaming it
-        if(!req.receivedData) {
-            req._res.onData((ab, isLast) => {
-                onData(ab);
-                if(isLast) {
-                    onEnd();
+            function onData(buf) {
+                if(!Buffer.isBuffer(buf)) {
+                    buf = Buffer.from(buf);
                 }
-            });
-        } else {
-            req.on('data', onData);
-            req.on('end', onEnd);
+                if(inflate) {
+                    buf = inflate.process(buf);
+                }
+                abs.push(buf);
+                totalSize += buf.length;
+                if(totalSize > options.limit) {
+                    return next(new Error('Request entity too large'));
+                }
+            }
+    
+            function onEnd() {
+                const buf = Buffer.concat(abs);
+                if(options.verify) {
+                    try {
+                        options.verify(req, res, buf);
+                    } catch(e) {
+                        return next(e);
+                    }
+                }
+                beforeReturn(req, res, next, options, buf);
+            }
+    
+            // reading data directly from uWS is faster than from a stream
+            // if we are fast enough (not async), we can do it
+            // otherwise we need to use a stream since it already started streaming it
+            if(!req.receivedData) {
+                req._res.onData((ab, isLast) => {
+                    onData(ab);
+                    if(isLast) {
+                        onEnd();
+                    }
+                });
+            } else {
+                req.on('data', onData);
+                req.on('end', onEnd);
+            }
         }
-
     }
 }
 
-function raw(options = {}) {
-    if(typeof options !== 'object') {
-        options = {};
+const json = createBodyParser('application/json', function(req, res, next, options, buf) {
+    if(options.strict) {
+        if(req.body && typeof req.body !== 'object') {
+            return next(new Error('Invalid body'));
+        }
     }
-    if(typeof options.limit === 'undefined') options.limit = bytes('100kb');
-    else options.limit = bytes(options.limit);
+    req.body = JSON.parse(buf.toString(), options.reviver);
+    next();
+});
 
-    if(typeof options.type === 'undefined') options.type = 'application/octet-stream';
-    else if(typeof options.type !== 'string') {
-        throw new Error('type must be a string');
-    }
-    if(typeof options.inflate === 'undefined') options.inflate = true;
-    if(typeof options.type === 'string') {
-        options.type = [options.type];
-    } else if(typeof options.type !== 'function' && !Array.isArray(options.type)) {
-        throw new Error('type must be a string, function or an array');
-    }
-
-    return (req, res, next) => {
-        const type = req.headers['content-type'];
-
-        // skip reading body for non-matching content type
-        if(!type) {
-            return next();
-        }
-        if(typeof options.type === 'function') {
-            if(!options.type(req)) {
-                return next();
-            }
-        } else {
-            if(!typeis(req, options.type)) {
-                return next();
-            }
-        }
-
-        // skip reading body twice
-        if(req.body) {
-            return next();
-        }
-
-        const length = req.headers['content-length'];
-        // skip reading empty body
-        if(length == '0') {
-            return next();
-        }
-
-        // skip reading too large body
-        if(length && +length > options.limit) {
-            return next(new Error('Request entity too large'));
-        }
-
-        if(!typeis(req, options.type)) {
-            return next();
-        }
-
-        // skip reading body for non-POST requests
-        // this makes it +10k req/sec faster
-        const additionalMethods = req.app.get('body methods');
-        if(
-            req.method !== 'POST' &&
-            req.method !== 'PUT' &&
-            req.method !== 'PATCH' && 
-            (!additionalMethods || !additionalMethods.includes(req.method))
-        ) {
-            return next();
-        }
-
-        const abs = [];
-        let inflate;
-        let totalSize = 0;
-        if(options.inflate) {
-            inflate = createInflate(req.headers['content-encoding']);
-            if(inflate === false) {
-                return next(new Error('Unsupported content encoding'));
-            }
-        }
-
-        function onData(buf) {
-            if(!Buffer.isBuffer(buf)) {
-                buf = Buffer.from(buf);
-            }
-            if(inflate) {
-                buf = inflate.process(buf);
-            }
-            abs.push(buf);
-            totalSize += buf.length;
-            if(totalSize > options.limit) {
-                return next(new Error('Request entity too large'));
-            }
-        }
-
-        function onEnd() {
-            const buf = Buffer.concat(abs);
-            if(options.verify) {
-                try {
-                    options.verify(req, res, buf);
-                } catch(e) {
-                    return next(e);
-                }
-            }
-            req.body = buf;
-            next();
-        }
-
-        // reading data directly from uWS is faster than from a stream
-        // if we are fast enough (not async), we can do it
-        // otherwise we need to use a stream since it already started streaming it
-        if(!req.receivedData) {
-            req._res.onData((ab, isLast) => {
-                onData(ab);
-                if(isLast) {
-                    onEnd();
-                }
-            });
-        } else {
-            req.on('data', onData);
-            req.on('end', onEnd);
-        }
-
-    }
-}
+const raw = createBodyParser('application/octet-stream', function(req, res, next, options, buf) {
+    req.body = buf;
+    next();
+});
 
 module.exports = {
     static,
