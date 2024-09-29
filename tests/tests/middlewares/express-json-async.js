@@ -1,9 +1,15 @@
-// must support express.json()
+// must support async express.json()
 
 const express = require("express");
 
 const app = express();
 const bodyParser = require("body-parser");
+
+app.use((req, res, next) => {
+    setTimeout(() => {
+        next();
+    }, 200);
+});
 
 app.post('/abc', bodyParser.json(), (req, res) => {
     res.send(req.body);
