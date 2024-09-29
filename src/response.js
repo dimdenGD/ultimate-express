@@ -196,20 +196,22 @@ module.exports = class Response extends Writable {
                 if(data && !this.headers['etag'] && etagFn && !this.req.noEtag) {
                     this.set('etag', etagFn(data));
                 }
-                if(this.req.fresh) {
-                    if(!this.headersSent) {
-                        this._res.writeStatus('304');
-                    }
-                    this.headersSent = true;
-                    this.socket.emit('close');
-                    return this._res.end();
+                const fresh = this.req.fresh;
+                if(fresh) {
+                    this._res.writeStatus('304');
+                } else {
+                    this._res.writeStatus(this.statusCode.toString());
                 }
-                this._res.writeStatus(this.statusCode.toString());
                 for(const header in this.headers) {
                     if(header === 'content-length') {
                         continue;
                     }
                     this._res.writeHeader(header, this.headers[header]);
+                }
+                if(fresh) {
+                    this.headersSent = true;
+                    this.socket.emit('close');
+                    return this._res.end();
                 }
                 if(!this.headers['content-type']) {
                     this._res.writeHeader('content-type', 'text/html' + (typeof data === 'string' ? `; charset=utf-8` : ''));
@@ -396,21 +398,6 @@ module.exports = class Response extends Writable {
             return done(new Error('Precondition Failed'));
         }
 
-        // if-modified-since
-        if(options.ifModifiedSince) {
-            let modifiedSince = this.req.headers['if-modified-since'];
-            let lastModified = this.headers['last-modified'];
-            if(options.lastModified && lastModified && modifiedSince) {
-                modifiedSince = parseHttpDate(modifiedSince);
-                lastModified = parseHttpDate(lastModified);
-
-                if(!isNaN(lastModified) && !isNaN(modifiedSince) && lastModified <= modifiedSince) {
-                    this.status(304);
-                    return this.end();
-                };
-            }
-        }
-
         // range requests
         let offset = 0, len = stat.size, ranged = false;
         if(options.acceptRanges) {
@@ -438,6 +425,11 @@ module.exports = class Response extends Writable {
                     ranged = true;
                 }
             }
+        }
+
+        // if-modified-since, if-none-match
+        if(this.req.fresh) {
+            return this.end();
         }
 
         if(this.req.method === 'HEAD') {
@@ -576,7 +568,6 @@ module.exports = class Response extends Writable {
         if(!options) {
             options = {};
         }
-        // TODO: signed cookies
         let val = typeof value === 'object' ? "j:"+JSON.stringify(value) : String(value);
         if(options.maxAge != null) {
             const maxAge = options.maxAge - 0;
