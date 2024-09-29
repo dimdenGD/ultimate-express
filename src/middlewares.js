@@ -145,9 +145,10 @@ function json(options = {}) {
             return next();
         }
 
-        const abs = [], totalSize = 0;
+        const abs = []
+        let totalSize = 0;
         req._res.onData((ab, isLast) => {
-            abs.push(ab);
+            abs.push(Buffer.from(ab));
             totalSize += ab.length;
             if(totalSize > options.limit) {
                 return next(new Error('Request entity too large'));
@@ -176,5 +177,6 @@ function json(options = {}) {
 }
 
 module.exports = {
-    static
+    static,
+    json
 };
