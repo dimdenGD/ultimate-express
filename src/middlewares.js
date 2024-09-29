@@ -18,6 +18,7 @@ const fs = require('fs');
 const path = require('path');
 const bytes = require('bytes');
 const zlib = require('fast-zlib');
+const typeis = require('type-is');
 
 function static(root, options) {
     if(!options) options = {};
@@ -138,16 +139,46 @@ function json(options = {}) {
         throw new Error('type must be a string');
     }
     if(typeof options.inflate === 'undefined') options.inflate = true;
+    if(typeof options.type === 'string') {
+        options.type = [options.type];
+    } else if(typeof options.type !== 'function' && !Array.isArray(options.type)) {
+        throw new Error('type must be a string, function or an array');
+    }
 
     return (req, res, next) => {
         const type = req.headers['content-type'];
-        const semiColonIndex = type.indexOf(';');
-        const contentType = semiColonIndex !== -1 ? type.substring(0, semiColonIndex) : type;
-        if(!type || contentType !== options.type) {
+
+        // skip reading body for non-json content type
+        if(!type) {
             return next();
         }
+        if(typeof options.type === 'function') {
+            if(!options.type(req)) {
+                return next();
+            }
+        } else {
+            if(!typeis(req, options.type)) {
+                return next();
+            }
+        }
+
         // skip reading body twice
         if(req.body) {
+            return next();
+        }
+
+        const length = req.headers['content-length'];
+        // skip reading empty body
+        if(length == '0') {
+            return next();
+        }
+
+        // skip reading too large body
+        if(length && +length > options.limit) {
+            return next(new Error('Request entity too large'));
+        }
+
+        if(!typeis(req, options.type)) {
             return next();
         }
 
@@ -221,7 +252,6 @@ function json(options = {}) {
         }
 
     }
-
 }
 
 module.exports = {
