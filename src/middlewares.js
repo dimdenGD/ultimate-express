@@ -17,6 +17,7 @@ limitations under the License.
 const fs = require('fs');
 const path = require('path');
 const bytes = require('bytes');
+const zlib = require('fast-zlib');
 
 function static(root, options) {
     if(!options) options = {};
@@ -120,8 +121,10 @@ function json(options = {}) {
     else if(typeof options.type !== 'string') {
         throw new Error('type must be a string');
     }
+    if(typeof options.inflate === 'undefined') options.inflate = true;
 
     return (req, res, next) => {
+        const encoding = (req.headers['content-encoding'] || 'identity').toLowerCase();
         const type = req.headers['content-type'];
         const semiColonIndex = type.indexOf(';');
         const contentType = semiColonIndex !== -1 ? type.substring(0, semiColonIndex) : type;
@@ -145,12 +148,39 @@ function json(options = {}) {
             return next();
         }
 
-        const abs = []
+        const abs = [];
+        let inflate;
         let totalSize = 0;
 
-        function onData(ab) {
-            abs.push(Buffer.from(ab));
-            totalSize += ab.length;
+        switch(encoding) {
+            case 'identity':
+                break;
+            case 'deflate':
+                inflate = new zlib.Inflate();
+                break;
+            case 'gzip':
+                inflate = new zlib.Gunzip();
+                break;
+            case 'br':
+                inflate = new zlib.BrotliDecompress();
+                break;
+            default:
+                return next(new Error('Unsupported content encoding'));
+        }
+
+        if(!options.inflate && encoding !== 'identity') {
+            return next(new Error('Unsupported content encoding'));
+        }
+
+        function onData(buf) {
+            if(!Buffer.isBuffer(buf)) {
+                buf = Buffer.from(buf);
+            }
+            if(inflate) {
+                buf = inflate.process(buf);
+            }
+            abs.push(buf);
+            totalSize += buf.length;
             if(totalSize > options.limit) {
                 return next(new Error('Request entity too large'));
             }

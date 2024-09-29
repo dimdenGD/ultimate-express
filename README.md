@@ -100,7 +100,7 @@ app.listen(3000, () => {
 
 1. µExpress tries to optimize routing as much as possible, but it's only possible if:
 - `case sensitive routing` is enabled (it is by default, unlike in normal Express).
-- only string paths without regex characters like *, +, (), {}, :param, etc. can be optimized.
+- only string paths without regex characters like *, +, (), {}, etc. can be optimized.
 - only 1-level deep routers can be optimized.  
   
 Optimized routes can be up to 10 times faster than normal routes, as they're using native uWS router and have pre-calculated path.
@@ -130,8 +130,7 @@ In general, basically all features and options are supported. Use [Express 4.x d
 
 - ✅ express()
 - ✅ express.Router()
-- 🚧 express.json()
-- - ❌ options.inflate
+- ✅ express.json()
 - ✅ express.urlencoded()
 - ✅ express.static()
 - - Additionally you can pass `options.ifModifiedSince` to support If-Modified-Since header (this header is not supported in normal Express, but is supported in µExpress)
