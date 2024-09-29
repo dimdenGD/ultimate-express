@@ -174,10 +174,10 @@ function json(options = {}) {
             next();
         }
 
+        // reading data directly from uWS is faster than from a stream
+        // if we are fast enough (not async), we can do it
+        // otherwise we need to use a stream since it already started streaming it
         if(!req.receivedData) {
-            // reading data directly from uWS is faster than from a stream
-            // if we are fast enough (not async), we can do it
-            // otherwise we need to use a stream since it already started streaming it
             req._res.onData((ab, isLast) => {
                 onData(ab);
                 if(isLast) {
