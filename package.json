@@ -39,7 +39,6 @@
   "homepage": "https://github.com/dimdenGD/ultimate-express#readme",
   "dependencies": {
     "accepts": "^1.3.8",
-    "body-parser": "^1.20.3",
     "cookie": "^0.6.0",
     "cookie-signature": "^1.2.1",
     "encodeurl": "^2.0.0",
@@ -59,6 +58,7 @@
     "vary": "^1.1.2"
   },
   "devDependencies": {
+    "body-parser": "^1.20.3",
     "cookie-parser": "^1.4.6",
     "cookie-session": "^2.1.0",
     "cors": "^2.8.5",

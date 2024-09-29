@@ -19,6 +19,8 @@ const path = require('path');
 const bytes = require('bytes');
 const zlib = require('fast-zlib');
 const typeis = require('type-is');
+const querystring = require('fast-querystring');
+const { fastQueryParse } = require('./utils.js');
 
 function static(root, options) {
     if(!options) options = {};
@@ -281,9 +283,23 @@ const text = createBodyParser('text/plain', function(req, res, next, options, bu
     next();
 });
 
+const urlencoded = createBodyParser('application/x-www-form-urlencoded', function(req, res, next, options, buf) {
+    try {
+        if(options.extended) {
+            req.body = fastQueryParse(buf.toString(), options);
+        } else {
+            req.body = querystring.parse(buf.toString());
+        }
+    } catch(e) {
+        return next(e);
+    }
+    next();
+});
+
 module.exports = {
     static,
     json,
     raw,
     text,
+    urlencoded,
 };

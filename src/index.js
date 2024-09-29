@@ -16,7 +16,6 @@ limitations under the License.
 
 const Application = require("./application.js");
 const Router = require("./router.js");
-const bodyParser = require("body-parser");
 const middlewares = require("./middlewares.js");
 const Request = require("./request.js");
 const Response = require("./response.js");
@@ -31,7 +30,7 @@ Application.response = Response.prototype;
 Application.static = middlewares.static;
 
 Application.json = middlewares.json;
-Application.urlencoded = bodyParser.urlencoded;
+Application.urlencoded = middlewares.urlencoded;
 Application.text = middlewares.text;
 Application.raw = middlewares.raw;
 
