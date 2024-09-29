@@ -239,6 +239,21 @@ module.exports = class Router extends EventEmitter {
         return optimizedPath;
     }
 
+    handleRequest(res, req) {
+        const request = new this._request(req, res, this);
+        const response = new this._response(res, request, this);
+        request.res = response;
+        response.req = request;
+        res.onAborted(() => {
+            const err = new Error('Connection closed');
+            err.code = 'ECONNRESET';
+            response.aborted = true;
+            response.socket.emit('error', err);
+        });
+
+        return { request, response };
+    }
+
     #registerUwsRoute(route, optimizedPath) {
         let method = route.method.toLowerCase();
         if(method === 'all') {
@@ -247,23 +262,12 @@ module.exports = class Router extends EventEmitter {
             method = 'del';
         }
         const fn = async (res, req) => {
-            const request = new this._request(req, res, this);
-            const response = new this._response(res, request, this);
-            request.res = response;
-            response.req = request;
-            res.onAborted(() => {
-                const err = new Error('Connection closed');
-                err.code = 'ECONNRESET';
-                response.aborted = true;
-                response.socket.emit('error', err);
-            });
-
-            const routed = await this._routeRequest(request, response, 0, optimizedPath, true, route);
-            if(routed) {
-                return;
+            const { request, response } = this.handleRequest(res, req);
+            const matchedRoute = await this._routeRequest(request, response, 0, optimizedPath, true, route);
+            if(!matchedRoute && !response.headersSent && !response.aborted) {
+                response.status(404);
+                response.send(this._generateErrorPage(`Cannot ${request.method} ${request.path}`, false));
             }
-            response.status(404);
-            response.send(this._generateErrorPage(`Cannot ${request.method} ${request.path}`, false));
         };
         route.optimizedPath = optimizedPath;
         this.uwsApp[method](route.path, fn);

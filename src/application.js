@@ -178,23 +178,12 @@ class Application extends Router {
 
     #createRequestHandler() {
         this.uwsApp.any('/*', async (res, req) => {
-            const request = new this._request(req, res, this);
-            const response = new this._response(res, request, this);
-            request.res = response;
-            response.req = request;
-            
-            res.onAborted(() => {
-                const err = new Error('Request aborted');
-                err.code = 'ECONNABORTED';
-                response.aborted = true;
-                response.socket.emit('error', err);
-            });
+            const { request, response } = this.handleRequest(res, req);
 
-            let matchedRoute = await this._routeRequest(request, response);
-
-            if(!matchedRoute && !res.aborted && !response.headersSent) {
+            const matchedRoute = await this._routeRequest(request, response);
+            if(!matchedRoute && !response.headersSent && !response.aborted) {
                 response.status(404);
-                response.send(this._generateErrorPage(`Cannot ${request.method} ${request.path}`));
+                response.send(this._generateErrorPage(`Cannot ${request.method} ${request.path}`, false));
             }
         });
     }
