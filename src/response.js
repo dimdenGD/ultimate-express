@@ -238,9 +238,10 @@ module.exports = class Response extends Writable {
         if(this.headersSent) {
             throw new Error('Can\'t write body: Response was already sent');
         }
+        const isBuffer = Buffer.isBuffer(body);
         if(body === null || body === undefined) {
             body = '';
-        } else if(typeof body === 'object' && !Buffer.isBuffer(body)) {
+        } else if(typeof body === 'object' && !isBuffer) {
             return this.json(body);
         } else if(typeof body === 'number') {
             if(arguments[1]) {
@@ -250,7 +251,7 @@ module.exports = class Response extends Writable {
                 deprecated('res.send(status)', 'res.sendStatus(status)');
                 return this.sendStatus(body);
             }
-        } else {
+        } else if(!isBuffer) {
             body = String(body);
         }
         if(typeof body === 'string') {
