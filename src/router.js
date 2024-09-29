@@ -280,15 +280,16 @@ module.exports = class Router extends EventEmitter {
             }
         };
         route.optimizedPath = optimizedPath;
-        this.uwsApp[method](route.path, fn);
+        let replacedPath = route.path.replace(/:(\w+)/g, ':x');
+        this.uwsApp[method](replacedPath, fn);
         if(!this.get('strict routing') && route.path[route.path.length - 1] !== '/') {
-            this.uwsApp[method](route.path + '/', fn);
+            this.uwsApp[method](replacedPath + '/', fn);
             if(method === 'get') {
-                this.uwsApp.head(route.path + '/', fn);
+                this.uwsApp.head(replacedPath + '/', fn);
             }
         }
         if(method === 'get') {
-            this.uwsApp.head(route.path, fn);
+            this.uwsApp.head(replacedPath, fn);
         }
     }
 
