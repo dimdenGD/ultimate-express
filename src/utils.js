@@ -23,7 +23,7 @@ const etag = require("etag");
 const { Stats } = require("fs");
 
 function fastQueryParse(query) {
-    if(query.length < 64) {
+    if(query.length <= 128) {
         if(!query.includes('[') && !query.includes('%5B') && !query.includes('.') && !query.includes('%2E')) {
             return querystring.parse(query);
         }
@@ -310,5 +310,6 @@ module.exports = {
     isPreconditionFailure,
     createETagGenerator,
     isRangeFresh,
-    findIndexStartingFrom
+    findIndexStartingFrom,
+    fastQueryParse
 };
