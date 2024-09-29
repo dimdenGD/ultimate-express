@@ -303,13 +303,17 @@ module.exports = class Router extends EventEmitter {
 
     #extractParams(pattern, path) {
         let match = pattern.exec(path);
-        return match?.groups ?? {};
+        const obj = match?.groups ?? {};
+        for(let i = 1; i < match.length; i++) {
+            obj[i - 1] = match[i];
+        }
+        return obj;
     }
 
     #preprocessRequest(req, res, route) {
         return new Promise(async resolve => {
             req.route = route;
-            if(typeof route.path === 'string' && route.path.includes(':') && route.pattern instanceof RegExp) {
+            if(typeof route.path === 'string' && (route.path.includes(':') || route.path.includes('*')) && route.pattern instanceof RegExp) {
                 let path = req.path;
                 if(req._stack.length > 0) {
                     path = path.replace(this.getFullMountpath(req), '');
