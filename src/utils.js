@@ -18,8 +18,18 @@ const mime = require("mime-types");
 const path = require("path");
 const proxyaddr = require("proxy-addr");
 const qs = require("qs");
+const querystring = require("fast-querystring");
 const etag = require("etag");
 const { Stats } = require("fs");
+
+function fastQueryParse(query) {
+    if(query.length < 64) {
+        if(!query.includes('[') && !query.includes('%5B') && !query.includes('.') && !query.includes('%2E')) {
+            return querystring.parse(query);
+        }
+    }
+    return qs.parse(query);
+}
 
 function removeDuplicateSlashes(path) {
     return path.replace(/\/{2,}/g, '/');
@@ -115,7 +125,7 @@ const defaultSettings = {
     'etag': 'weak',
     'etag fn': () => createETagGenerator({ weak: true }),
     'query parser': 'extended',
-    'query parser fn': () => qs.parse,
+    'query parser fn': () => fastQueryParse,
     'subdomain offset': 2,
     'trust proxy': false,
     'views': () => path.join(process.cwd(), 'views'),

@@ -16,9 +16,8 @@ limitations under the License.
 
 const uWS = require("uWebSockets.js");
 const Router = require("./router.js");
-const { removeDuplicateSlashes, defaultSettings, compileTrust, createETagGenerator } = require("./utils.js");
+const { removeDuplicateSlashes, defaultSettings, compileTrust, createETagGenerator, fastQueryParse } = require("./utils.js");
 const querystring = require("fast-querystring");
-const qs = require("qs");
 const ViewClass = require("./view.js");
 const path = require("path");
 const os = require("os");
@@ -117,7 +116,7 @@ class Application extends Router {
             }
         } else if(key === 'query parser') {
             if(value === 'extended') {
-                this.settings['query parser fn'] = qs.parse;
+                this.settings['query parser fn'] = fastQueryParse;
             } else if(value === 'simple') {
                 this.settings['query parser fn'] = querystring.parse;
             } else if(typeof value === 'function') {
