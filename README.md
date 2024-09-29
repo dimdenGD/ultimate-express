@@ -24,6 +24,8 @@ Similar projects based on uWebSockets:
 
 Tested using [wrk](https://github.com/wg/wrk) (`-d 60 -t 1 -c 200`). Etag was disabled in both Express and µExpress. Tested on Ubuntu 22.04, Node.js 20.17.0, AMD Ryzen 5 3600, 64GB RAM.
 
+### Test results
+
 | Test                                          | Express req/sec | µExpress req/sec | Express throughput | µExpress throughput | µExpress speedup |
 | --------------------------------------------- | --------------- | ---------------- | ------------------ | ------------------- | ---------------- |
 | routing/simple-routes (/)                     | 10.90k          | 70.10k           | 2.04 MB/sec        | 11.57 MB/sec        | **6.43X**        |
@@ -33,6 +35,30 @@ Tested using [wrk](https://github.com/wg/wrk) (`-d 60 -t 1 -c 200`). Etag was di
 | middlewares/express-static (/static/index.js) | 7.52k           | 31.08k           | 6.92 MB/sec        | 26.48 MB/sec        | **4.13X**        |
 | engines/ejs (/test)                           | 5.92k           | 41.64k           | 2.40 MB/sec        | 16.55 MB/sec        | **7.03X**        |
 | middlewares/body-urlencoded (/abc)            | 7.90k           | 29.90k           | 1.64 MB/sec        | 5.36 MB/sec         | **3.78X**        |
+
+### Performance against other frameworks
+
+Tested using [bun-http-framework-benchmark](https://github.com/dimdenGD/bun-http-framework-benchmark)  
+
+|  Framework       | Runtime | Average | Ping       | Query      | Body       |
+| ---------------- | ------- | ------- | ---------- | ---------- | ---------- |
+| uws | node | 94,296.49 | 108,551.92 | 104,756.22 | 69,581.33 |
+| bun | bun | 74,824.52 | 85,839.42 | 74,668.88 | 63,965.26 |
+| elysia | bun | 72,112.447 | 82,589.71 | 69,356.08 | 64,391.55 |
+| hyper-express | node | 66,356.707 | 80,002.53 | 69,953.76 | 49,113.83 |
+| hono | bun | 63,944.627 | 74,550.47 | 62,810.28 | 54,473.13 |
+| **ultimate-express** | **node** | **44,081.737** | **51,753.24** | **48,389.84** | **32,102.13** |
+| oak | deno | 40,878.467 | 68,429.24 | 28,541.99 | 25,664.17 |
+| express | bun | 35,937.977 | 41,329.97 | 34,339.79 | 32,144.17 |
+| h3 | node | 35,423.263 | 41,243.68 | 34,429.26 | 30,596.85 |
+| fastify | node | 33,094.62 | 40,147.67 | 40,076.35 | 19,059.84 |
+| oak | bun | 32,705.36 | 35,856.59 | 32,116.4 | 30,143.09 |
+| hono | node | 26,576.02 | 36,215.35 | 34,656.12 | 8,856.59 |
+| acorn | deno | 24,476.67 | 29,690.42 | 22,254.82 | 21,484.77 |
+| koa | node | 24,045.08 | 28,202.12 | 24,590.84 | 19,342.28 |
+| express | node | 10,411.313 | 11,245.57 | 10,598.74 | 9,389.63 |
+
+### Performance on real-world application
 
 Also tested on a [real-world application](https://nekoweb.org) with templates, static files and dynamic pages with data from database, and showed 1.5-4X speedup in requests per second depending on the page.
 
