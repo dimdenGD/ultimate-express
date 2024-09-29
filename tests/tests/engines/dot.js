@@ -1,6 +1,6 @@
 // must support doT engine
 
-const express = require("../../../src/index.js");
+const express = require("express");
 const dot = require("express-dot-engine");
 
 const app = express();

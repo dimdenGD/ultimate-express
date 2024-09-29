@@ -74,6 +74,29 @@ function needsConversionToRegex(pattern) {
         pattern.includes(']');
 }
 
+function canBeOptimized(pattern) {
+    if(pattern === '/*') {
+        return false;
+    }
+    if(pattern instanceof RegExp) {
+        return false;
+    }
+    if(
+        pattern.includes('*') ||
+        pattern.includes('?') ||
+        pattern.includes('+') ||
+        pattern.includes('(') ||
+        pattern.includes(')') ||
+        pattern.includes('{') ||
+        pattern.includes('}') ||
+        pattern.includes('[') ||
+        pattern.includes(']')
+    ) {
+        return false;
+    }
+    return true;
+}
+
 function acceptParams(str) {
     const parts = str.split(/ *; */);
     const ret = { value: parts[0], quality: 1, params: {} }
@@ -311,5 +334,6 @@ module.exports = {
     createETagGenerator,
     isRangeFresh,
     findIndexStartingFrom,
-    fastQueryParse
+    fastQueryParse,
+    canBeOptimized
 };

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const { patternToRegex, needsConversionToRegex, deprecated, findIndexStartingFrom } = require("./utils.js");
+const { patternToRegex, needsConversionToRegex, deprecated, findIndexStartingFrom, canBeOptimized } = require("./utils.js");
 const Response = require("./response.js");
 const Request = require("./request.js");
 const { EventEmitter } = require("tseep");
@@ -138,7 +138,7 @@ module.exports = class Router extends EventEmitter {
             };
             routes.push(route);
             // normal routes optimization
-            if(typeof route.pattern === 'string' && route.pattern !== '/*' && !this.parent && this.get('case sensitive routing') && this.uwsApp) {
+            if(canBeOptimized(route.path) && route.pattern !== '/*' && !this.parent && this.get('case sensitive routing') && this.uwsApp) {
                 if(supportedUwsMethods.includes(method)) {
                     const optimizedPath = this.#optimizeRoute(route, this._routes);
                     if(optimizedPath) {
@@ -185,7 +185,8 @@ module.exports = class Router extends EventEmitter {
                                             this.#registerUwsRoute({
                                                 ...cbroute,
                                                 path: route.path + cbroute.path,
-                                                pattern: route.path + cbroute.path
+                                                pattern: route.path + cbroute.path,
+                                                optimizedRouter: true
                                             }, optimizedPath);
                                         }
                                     }
@@ -261,8 +262,17 @@ module.exports = class Router extends EventEmitter {
         } else if(method === 'delete') {
             method = 'del';
         }
+        if(!route.optimizedRouter && route.path.includes(":")) {
+            route.optimizedParams = route.path.match(/:(\w+)/g).map(p => p.slice(1));
+        }
         const fn = async (res, req) => {
             const { request, response } = this.handleRequest(res, req);
+            if(route.optimizedParams) {
+                request.optimizedParams = {};
+                for(let i = 0; i < route.optimizedParams.length; i++) {
+                    request.optimizedParams[route.optimizedParams[i]] = req.getParameter(i);
+                }
+            }
             const matchedRoute = await this._routeRequest(request, response, 0, optimizedPath, true, route);
             if(!matchedRoute && !response.headersSent && !response.aborted) {
                 response.status(404);
@@ -317,7 +327,9 @@ module.exports = class Router extends EventEmitter {
     #preprocessRequest(req, res, route) {
         return new Promise(async resolve => {
             req.route = route;
-            if(typeof route.path === 'string' && (route.path.includes(':') || route.path.includes('*')) && route.pattern instanceof RegExp) {
+            if(route.optimizedParams) {
+                req.params = req.optimizedParams;
+            } else if(typeof route.path === 'string' && (route.path.includes(':') || route.path.includes('*')) && route.pattern instanceof RegExp) {
                 let path = req.path;
                 if(req._stack.length > 0) {
                     path = path.replace(this.getFullMountpath(req), '');
@@ -328,36 +340,36 @@ module.exports = class Router extends EventEmitter {
                         req.params = {...params, ...req.params};
                     }
                 }
-
-                for(let param in req.params) {
-                    if(this.#paramCallbacks.has(param) && !req._gotParams.has(param)) {
-                        req._gotParams.add(param);
-                        const pcs = this.#paramCallbacks.get(param);
-                        for(let i = 0; i < pcs.length; i++) {
-                            const fn = pcs[i];
-                            await new Promise(resolveRoute => {
-                                const next = (thingamabob) => {
-                                    if(thingamabob) {
-                                        if(thingamabob === 'route') {
-                                            return resolve('route');
-                                        } else {
-                                            this.#handleError(thingamabob, req, res);
-                                            return resolve(false);
-                                        }
-                                    }
-                                    return resolveRoute();
-                                };
-                                req.next = next;
-                                fn(req, res, next, req.params[param], param);
-                            });
-                        }
-                    }
-                }
             } else {
                 req.params = {};
                 if(req._paramStack.length > 0) {
                     for(let params of req._paramStack) {
                         req.params = {...params, ...req.params};
+                    }
+                }
+            }
+
+            for(let param in req.params) {
+                if(this.#paramCallbacks.has(param) && !req._gotParams.has(param)) {
+                    req._gotParams.add(param);
+                    const pcs = this.#paramCallbacks.get(param);
+                    for(let i = 0; i < pcs.length; i++) {
+                        const fn = pcs[i];
+                        await new Promise(resolveRoute => {
+                            const next = (thingamabob) => {
+                                if(thingamabob) {
+                                    if(thingamabob === 'route') {
+                                        return resolve('route');
+                                    } else {
+                                        this.#handleError(thingamabob, req, res);
+                                        return resolve(false);
+                                    }
+                                }
+                                return resolveRoute();
+                            };
+                            req.next = next;
+                            fn(req, res, next, req.params[param], param);
+                        });
                     }
                 }
             }
