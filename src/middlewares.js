@@ -110,6 +110,22 @@ function static(root, options) {
     }
 }
 
+function createInflate(contentEncoding) {
+    const encoding = (contentEncoding || 'identity').toLowerCase();
+    switch(encoding) {
+        case 'identity':
+            return;
+        case 'deflate':
+            return new zlib.Inflate();
+        case 'gzip':
+            return new zlib.Gunzip();
+        case 'br':
+            return new zlib.BrotliDecompress();
+        default:
+            return false;
+    }
+}
+
 function json(options = {}) {
     if(typeof options !== 'object') {
         options = {};
@@ -124,7 +140,6 @@ function json(options = {}) {
     if(typeof options.inflate === 'undefined') options.inflate = true;
 
     return (req, res, next) => {
-        const encoding = (req.headers['content-encoding'] || 'identity').toLowerCase();
         const type = req.headers['content-type'];
         const semiColonIndex = type.indexOf(';');
         const contentType = semiColonIndex !== -1 ? type.substring(0, semiColonIndex) : type;
@@ -151,25 +166,11 @@ function json(options = {}) {
         const abs = [];
         let inflate;
         let totalSize = 0;
-
-        switch(encoding) {
-            case 'identity':
-                break;
-            case 'deflate':
-                inflate = new zlib.Inflate();
-                break;
-            case 'gzip':
-                inflate = new zlib.Gunzip();
-                break;
-            case 'br':
-                inflate = new zlib.BrotliDecompress();
-                break;
-            default:
+        if(options.inflate) {
+            inflate = createInflate(req.headers['content-encoding']);
+            if(inflate === false) {
                 return next(new Error('Unsupported content encoding'));
-        }
-
-        if(!options.inflate && encoding !== 'identity') {
-            return next(new Error('Unsupported content encoding'));
+            }
         }
 
         function onData(buf) {
