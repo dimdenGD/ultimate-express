@@ -16,7 +16,7 @@ app.listen(13333, async () => {
 
     const response = await fetch('http://localhost:13333/abc', {
         method: 'POST',
-        body: 'abc=123',
+        body: 'abc=123&a[b]=456&c.c=789&c.d=101112',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
         }
