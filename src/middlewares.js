@@ -128,6 +128,10 @@ function json(options = {}) {
         if(!type || contentType !== options.type) {
             return next();
         }
+        // skip reading body twice
+        if(req.body) {
+            return next();
+        }
 
         // skip reading body for non-POST requests
         // this makes it +10k req/sec faster
