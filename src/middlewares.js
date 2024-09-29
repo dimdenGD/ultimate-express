@@ -145,6 +145,7 @@ function createBodyParser(defaultType, beforeReturn) {
         } else if(typeof options.type !== 'function' && !Array.isArray(options.type)) {
             throw new Error('type must be a string, function or an array');
         }
+        if(typeof options.defaultCharset === 'undefined') options.defaultCharset = 'utf-8';
 
         return (req, res, next) => {
             const type = req.headers['content-type'];
@@ -261,8 +262,28 @@ const raw = createBodyParser('application/octet-stream', function(req, res, next
     next();
 });
 
+const text = createBodyParser('text/plain', function(req, res, next, options, buf) {
+    let contentType = req.headers['content-type'];
+    let charsetIndex = contentType.indexOf('charset=');
+    let encoding = options.defaultCharset;
+    if(charsetIndex !== -1) {
+        encoding = contentType.substring(charsetIndex + 8);
+        const semicolonIndex = encoding.indexOf(';');
+        if(semicolonIndex !== -1) {
+            encoding = encoding.substring(0, semicolonIndex);
+        }
+        encoding = encoding.trim().toLowerCase();
+    }
+    if(encoding !== 'utf-8' && encoding !== 'utf-16le' && encoding !== 'latin1') {
+        return next(new Error('Unsupported charset'));
+    }
+    req.body = buf.toString(encoding);
+    next();
+});
+
 module.exports = {
     static,
     json,
     raw,
+    text,
 };

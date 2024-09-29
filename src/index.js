@@ -32,7 +32,7 @@ Application.static = middlewares.static;
 
 Application.json = middlewares.json;
 Application.urlencoded = bodyParser.urlencoded;
-Application.text = bodyParser.text;
+Application.text = middlewares.text;
 Application.raw = middlewares.raw;
 
 module.exports = Application;

@@ -1,10 +1,9 @@
-// must support urlencoded body parser
+// must support text body parser with utf-16 encoding
 
 const express = require("express");
-
 const app = express();
 
-app.use(express.urlencoded({ extended: false }));
+app.use(express.text());
 
 app.post('/abc', (req, res) => {
     res.send(req.body);
@@ -13,11 +12,13 @@ app.post('/abc', (req, res) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
+    const uint16 = new Uint16Array([0, 104, 0, 101, 0, 108, 0, 108, 0, 111]);
+
     const response = await fetch('http://localhost:13333/abc', {
         method: 'POST',
-        body: 'abc=123&a[b]=456&c.c=789&c.d=101112',
+        body: uint16,
         headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
+            'Content-Type': 'text/plain; charset=utf-16le'
         }
     });
 
