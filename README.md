@@ -34,23 +34,23 @@ Tested using [wrk](https://github.com/wg/wrk) (`-d 60 -t 1 -c 200`). Etag was di
 | routers/nested-routers (/abccc/nested/ddd)    | 10.25k          | 50.98k           | 1.83 MB/sec        | 7.98 MB/sec         | **4.97X**        |
 | middlewares/express-static (/static/index.js) | 7.52k           | 31.08k           | 6.92 MB/sec        | 26.48 MB/sec        | **4.13X**        |
 | engines/ejs (/test)                           | 5.92k           | 41.64k           | 2.40 MB/sec        | 16.55 MB/sec        | **7.03X**        |
-| middlewares/body-urlencoded (/abc)            | 7.90k           | 29.90k           | 1.64 MB/sec        | 5.36 MB/sec         | **3.78X**        |
+| middlewares/body-urlencoded (/abc)            | 8.01k           | 35.10k           | 1.66 MB/sec        | 7.02 MB/sec         | **4.38X**        |
 
 ### Performance against other frameworks
 
 Tested using [bun-http-framework-benchmark](https://github.com/dimdenGD/bun-http-framework-benchmark). This table only includes Node.js results.
 For full table with other runtimes, check [here](https://github.com/dimdenGD/bun-http-framework-benchmark?tab=readme-ov-file#results).
 
-|  Framework       | Average | Ping       | Query      | Body       |
-| ---------------- | ------- | ---------- | ---------- | ---------- |
-| uws | 94,296.49 | 108,551.92 | 104,756.22 | 69,581.33 |
-| hyper-express | 66,356.707 | 80,002.53 | 69,953.76 | 49,113.83 |
+|  Framework           | Average       | Ping          | Query         | Body          |
+| -------------------- | ------------- | ------------- | ------------- | ------------- |
+| uws                  | 94,296.49     | 108,551.92    | 104,756.22    | 69,581.33     |
+| hyper-express        | 66,356.707    | 80,002.53     | 69,953.76     | 49,113.83     |
 | **ultimate-express** | **46,826.31** | **50,764.93** | **49,117.76** | **40,596.24** |
-| h3 | 35,423.263 | 41,243.68 | 34,429.26 | 30,596.85 |
-| fastify | 33,094.62 | 40,147.67 | 40,076.35 | 19,059.84 |
-| hono | 26,576.02 | 36,215.35 | 34,656.12 | 8,856.59 |
-| koa | 24,045.08 | 28,202.12 | 24,590.84 | 19,342.28 |
-| express | 10,411.313 | 11,245.57 | 10,598.74 | 9,389.63 |
+| h3                   | 35,423.263    | 41,243.68     | 34,429.26     | 30,596.85     |
+| fastify              | 33,094.62     | 40,147.67     | 40,076.35     | 19,059.84     |
+| hono                 | 26,576.02     | 36,215.35     | 34,656.12     | 8,856.59      |
+| koa                  | 24,045.08     | 28,202.12     | 24,590.84     | 19,342.28     |
+| express              | 10,411.313    | 11,245.57     | 10,598.74     | 9,389.63      |
 
 ### Performance on real-world application
 
