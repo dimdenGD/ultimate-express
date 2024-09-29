@@ -17,7 +17,7 @@ limitations under the License.
 const uWS = require("uWebSockets.js");
 const Router = require("./router.js");
 const { removeDuplicateSlashes, defaultSettings, compileTrust, createETagGenerator } = require("./utils.js");
-const querystring = require("querystring");
+const querystring = require("fast-querystring");
 const qs = require("qs");
 const ViewClass = require("./view.js");
 const path = require("path");

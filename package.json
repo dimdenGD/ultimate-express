@@ -44,6 +44,7 @@
     "cookie-signature": "^1.2.1",
     "encodeurl": "^2.0.0",
     "etag": "^1.8.1",
+    "fast-querystring": "^1.1.2",
     "fresh": "^0.5.2",
     "mime-types": "^2.1.35",
     "ms": "^2.1.3",
