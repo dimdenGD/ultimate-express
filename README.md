@@ -39,7 +39,7 @@ Tested using [wrk](https://github.com/wg/wrk) (`-d 60 -t 1 -c 200`). Etag was di
 ### Performance against other frameworks
 
 Tested using [bun-http-framework-benchmark](https://github.com/dimdenGD/bun-http-framework-benchmark). This table only includes Node.js results.
-For full table with other runtimes, check [here](https://github.com/dimdenGD/bun-http-framework-benchmark/blob/main/results/nodejs/results.md).
+For full table with other runtimes, check [here](https://github.com/dimdenGD/bun-http-framework-benchmark?tab=readme-ov-file#results).
 
 |  Framework       | Average | Ping       | Query      | Body       |
 | ---------------- | ------- | ---------- | ---------- | ---------- |
