@@ -147,30 +147,47 @@ function json(options = {}) {
 
         const abs = []
         let totalSize = 0;
-        req._res.onData((ab, isLast) => {
+
+        function onData(ab) {
             abs.push(Buffer.from(ab));
             totalSize += ab.length;
             if(totalSize > options.limit) {
                 return next(new Error('Request entity too large'));
             }
-            if(isLast) {
-                const buf = Buffer.concat(abs);
-                if(options.verify) {
-                    try {
-                        options.verify(req, res, buf);
-                    } catch(e) {
-                        return next(e);
-                    }
+        }
+
+        function onEnd() {
+            const buf = Buffer.concat(abs);
+            if(options.verify) {
+                try {
+                    options.verify(req, res, buf);
+                } catch(e) {
+                    return next(e);
                 }
-                req.body = JSON.parse(buf, options.reviver);
-                if(options.strict) {
-                    if(req.body && typeof req.body !== 'object') {
-                        return next(new Error('Invalid body'));
-                    }
-                }
-                next();
             }
-        });
+            req.body = JSON.parse(buf, options.reviver);
+            if(options.strict) {
+                if(req.body && typeof req.body !== 'object') {
+                    return next(new Error('Invalid body'));
+                }
+            }
+            next();
+        }
+
+        if(!req.receivedData) {
+            // reading data directly from uWS is faster than from a stream
+            // if we are fast enough (not async), we can do it
+            // otherwise we need to use a stream since it already started streaming it
+            req._res.onData((ab, isLast) => {
+                onData(ab);
+                if(isLast) {
+                    onEnd();
+                }
+            });
+        } else {
+            req.on('data', onData);
+            req.on('end', onEnd);
+        }
 
     }
 

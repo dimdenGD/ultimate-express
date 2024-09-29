@@ -3,10 +3,15 @@
 const express = require("express");
 
 const app = express();
+const bodyParser = require("body-parser");
 
-app.use(express.json());
+app.use((req, res, next) => {
+    setTimeout(() => {
+        next();
+    }, 200);
+});
 
-app.post('/abc', (req, res) => {
+app.post('/abc', bodyParser.json(), (req, res) => {
     res.send(req.body);
 });
 
