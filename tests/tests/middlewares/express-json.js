@@ -3,9 +3,8 @@
 const express = require("express");
 
 const app = express();
-const bodyParser = require("body-parser");
 
-app.post('/abc', bodyParser.json(), (req, res) => {
+app.post('/abc', express.json(), (req, res) => {
     res.send(req.body);
 });
 
