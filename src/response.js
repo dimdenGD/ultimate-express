@@ -250,7 +250,7 @@ module.exports = class Response extends Writable {
                 deprecated('res.send(status)', 'res.sendStatus(status)');
                 return this.sendStatus(body);
             }
-        } else {
+        } else if(!Buffer.isBuffer(body)) {
             body = String(body);
         }
         if(typeof body === 'string') {
