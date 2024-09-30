@@ -69,7 +69,8 @@ module.exports = class Response extends Writable {
         this.chunkedTransfer = true;
         this.totalSize = 0;
         this.headers = {
-            'keep-alive': 'timeout=10'
+            'connection': 'keep-alive',
+            'keep-alive': 'timeout=5'
         };
         // support for node internal
         this[kOutHeaders] = new Proxy(this.headers, {
@@ -196,7 +197,7 @@ module.exports = class Response extends Writable {
             if(!this.headersSent) {
                 const etagFn = this.app.get('etag fn');
                 if(data && !this.headers['etag'] && etagFn && !this.req.noEtag) {
-                    this.set('etag', etagFn(data));
+                    this.headers['etag'] = etagFn(data);
                 }
                 const fresh = this.req.fresh;
                 this._res.writeStatus(fresh ? '304' : this.statusCode.toString());
@@ -651,7 +652,7 @@ module.exports = class Response extends Writable {
         return this.send(body);
     }
     links(links) {
-        this.set('Link', Object.entries(links).map(([rel, url]) => `<${url}>; rel="${rel}"`).join(', '));
+        this.headers['link'] = Object.entries(links).map(([rel, url]) => `<${url}>; rel="${rel}"`).join(', ');
         return this;
     }
     location(path) {
