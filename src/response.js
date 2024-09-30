@@ -70,7 +70,7 @@ module.exports = class Response extends Writable {
         this.totalSize = 0;
         this.headers = {
             'connection': 'keep-alive',
-            'keep-alive': 'timeout=5'
+            'keep-alive': 'timeout=10'
         };
         // support for node internal
         this[kOutHeaders] = new Proxy(this.headers, {
