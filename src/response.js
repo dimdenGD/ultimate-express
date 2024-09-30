@@ -361,7 +361,7 @@ module.exports = class Response extends Writable {
         }
 
         // headers
-        if(!this.get('Content-Type')) {
+        if(!this.headers['content-type']) {
             const m = mime.lookup(fullpath);
             if(m) this.type(m);
         }
