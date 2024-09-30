@@ -28,7 +28,9 @@ const fs = require("fs");
 const Path = require("path");
 const statuses = require("statuses");
 const { sign } = require("cookie-signature");
-const { EventEmitter } = require("tseep");
+// events is faster at init, tseep is faster at sending events
+// since we create a ton of objects and dont send a ton of events, its better to use events here
+const { EventEmitter } = require("events");
 const http = require("http");
 const ms = require('ms');   
 const etag = require("etag");
