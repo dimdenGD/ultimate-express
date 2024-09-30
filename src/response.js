@@ -366,10 +366,10 @@ module.exports = class Response extends Writable {
             if(m) this.type(m);
         }
         if(options.cacheControl) {
-            this.set('Cache-Control', `public, max-age=${options.maxAge / 1000}` + (options.immutable ? ', immutable' : ''));
+            this.headers['cache-control'] = `public, max-age=${options.maxAge / 1000}` + (options.immutable ? ', immutable' : '');
         }
         if(options.lastModified) {
-            this.set('Last-Modified', stat.mtime.toUTCString());
+            this.headers['last-modified'] = stat.mtime.toUTCString();
         }
         if(options.headers) {
             for(const header in options.headers) {
@@ -382,7 +382,7 @@ module.exports = class Response extends Writable {
 
         // etag
         if(options.etag && !this.headers['etag'] && etagFn) {
-            this.set('etag', etagFn(stat));
+            this.headers['etag'] = etagFn(stat);
         }
         if(!options.etag) {
             this.req.noEtag = true;
@@ -397,7 +397,7 @@ module.exports = class Response extends Writable {
         // range requests
         let offset = 0, len = stat.size, ranged = false;
         if(options.acceptRanges) {
-            this.set('accept-ranges', 'bytes');
+            this.headers['accept-ranges'] = 'bytes';
             if(this.req.headers.range) {
                 let ranges = this.req.range(stat.size, {
                     combine: true
@@ -410,12 +410,12 @@ module.exports = class Response extends Writable {
     
                 if(ranges === -1) {
                     this.status(416);
-                    this.set('Content-Range', `bytes */${stat.size}`);
+                    this.headers['content-range'] = `bytes */${stat.size}`;
                     return done(new Error('Range Not Satisfiable'));
                 }
                 if(ranges !== -2 && ranges.length === 1) {
                     this.status(206);
-                    this.set('Content-Range', `bytes ${ranges[0].start}-${ranges[0].end}/${stat.size}`);
+                    this.headers['content-range'] = `bytes ${ranges[0].start}-${ranges[0].end}/${stat.size}`;
                     offset = ranges[0].start;
                     len = ranges[0].end - ranges[0].start + 1;
                     ranged = true;
@@ -501,7 +501,7 @@ module.exports = class Response extends Writable {
             if(field === 'set-cookie' && Array.isArray(value)) {
                 value = value.join('; ');
             } else if(field === 'content-type') {
-                if(value.startsWith('text/') || value === 'application/json' || value === 'application/javascript') {
+                if(!value.includes('charset=') && (value.startsWith('text/') || value === 'application/json' || value === 'application/javascript')) {
                     value += '; charset=utf-8';
                 }
             }
@@ -589,7 +589,7 @@ module.exports = class Response extends Writable {
         return this.cookie(name, '', opts);
     }
     attachment(filename) {
-        this.set('Content-Disposition', `attachment; filename="${filename}"`);
+        this.headers['Content-Disposition'] = `attachment; filename="${filename}"`;
         this.type(filename.split('.').pop());
         return this;
     }
@@ -611,8 +611,8 @@ module.exports = class Response extends Writable {
         return this;
     }
     json(body) {
-        if(!this.get('Content-Type')) {
-            this.set('Content-Type', 'application/json; charset=utf-8');
+        if(!this.headers['content-type']) {
+            this.headers['content-type'] = 'application/json; charset=utf-8';
         }
         const escape = this.app.get('json escape');
         const replacer = this.app.get('json replacer');
@@ -623,9 +623,9 @@ module.exports = class Response extends Writable {
         let callback = this.req.query[this.app.get('jsonp callback name')];
         let body = stringify(object, this.app.get('json replacer'), this.app.get('json spaces'), this.app.get('json escape'));
 
-        if(!this.get('Content-Type')) {
-            this.set('Content-Type', 'application/javascript; charset=utf-8');
-            this.set('X-Content-Type-Options', 'nosniff');
+        if(!this.headers['content-type']) {
+            this.headers['content-type'] = 'application/javascript; charset=utf-8';
+            this.headers['X-Content-Type-Options'] = 'nosniff';
         }
 
         if(Array.isArray(callback)) {
@@ -633,8 +633,6 @@ module.exports = class Response extends Writable {
         }
 
         if(typeof callback === 'string' && callback.length !== 0) {
-            this.set('Content-Type', 'application/javascript; charset=utf-8');
-            this.set('X-Content-Type-Options', 'nosniff');
             callback = callback.replace(/[^\[\]\w$.]/g, '');
 
             if(body === undefined) {
@@ -660,7 +658,7 @@ module.exports = class Response extends Writable {
             if(!path) path = this.req.get('Referer');
             if(!path) path = '/';
         }
-        return this.set('Location', encodeUrl(path));
+        return this.headers['location'] = encodeUrl(path);
     }
     redirect(status, url) {
         if(typeof status !== 'number' && !url) {
@@ -669,7 +667,7 @@ module.exports = class Response extends Writable {
         }
         this.location(url);
         this.status(status);
-        this.set('Content-Type', 'text/plain; charset=utf-8');
+        this.headers['content-type'] = 'text/plain; charset=utf-8';
         return this.send(`${statuses.message[status] ?? status}. Redirecting to ${url}`);
     }
 
@@ -680,7 +678,7 @@ module.exports = class Response extends Writable {
         if(ct.startsWith('text/') || ct === 'application/json' || ct === 'application/javascript') {
             ct += '; charset=UTF-8';
         }
-        return this.set('Content-Type', ct);
+        return this.set('content-type', ct);
     }
     contentType(type) {
         return this.type(type);
