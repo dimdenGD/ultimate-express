@@ -72,6 +72,9 @@ module.exports = class Response extends Writable {
             'connection': 'keep-alive',
             'keep-alive': 'timeout=10'
         };
+        if(this.app.get('x-powered-by')) {
+            this.headers['x-powered-by'] = 'UltimateExpress';
+        }
         // support for node internal
         this[kOutHeaders] = new Proxy(this.headers, {
             set: (obj, prop, value) => {
@@ -83,9 +86,6 @@ module.exports = class Response extends Writable {
             }
         });
         this.body = undefined;
-        if(this.app.get('x-powered-by')) {
-            this.set('x-powered-by', 'uExpress');
-        }
         this.on('error', (err) => {
             if(this.aborted) {
                 return;
