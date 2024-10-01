@@ -65,6 +65,7 @@ module.exports = class Request extends Readable {
         this._paramStack = [];
         this.bufferedData = Buffer.allocUnsafe(0);
         this.receivedData = false;
+        this.rawIp = this._res.getRemoteAddress();
 
         const additionalMethods = this.app.get('body methods');
         // skip reading body for non-POST requests
@@ -220,9 +221,6 @@ module.exports = class Request extends Readable {
     get parsedIp() {
         if(this.#cachedParsedIp) {
             return this.#cachedParsedIp;
-        }
-        if(!this.rawIp) {
-            this.rawIp = this._res.getRemoteAddress();
         }
         let ip = '';
         if(this.rawIp.byteLength === 4) {
