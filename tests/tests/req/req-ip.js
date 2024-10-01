@@ -4,13 +4,13 @@ const express = require("express");
 
 const app = express();
 
+app.get("/test2", (req, res) => {
+    res.send(req.ip);
+});
+
 app.use(async (req, res, next) => {
     await new Promise(resolve => setTimeout(resolve, 100));
     next();
-});
-
-app.get("/test2", (req, res) => {
-    res.send(req.ip);
 });
 
 app.get("/test", (req, res) => {
