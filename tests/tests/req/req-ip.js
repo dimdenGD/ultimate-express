@@ -1,6 +1,6 @@
 // must support req.ip
 
-const express = require("express");
+const express = require("../../../src/index.js");
 
 const app = express();
 

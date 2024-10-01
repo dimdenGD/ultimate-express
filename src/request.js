@@ -226,10 +226,10 @@ module.exports = class Request extends Readable {
         if(this.rawIp.byteLength === 4) {
             ip = this.rawIp.join('.');
         } else {
-            let u8 = new Uint8Array(this.rawIp);
-            for(let i = 0; i < u8.length; i++) {
-                ip += u8[i].toString(16).padStart(2, '0');
-                if(i < u8.length - 1) {
+            const dv = new DataView(this.rawIp);
+            for(let i = 0; i < 8; i++) {
+                ip += dv.getUint16(i * 2).toString(16).padStart(4, '0');
+                if(i < 7) {
                     ip += ':';
                 }
             }
@@ -239,7 +239,6 @@ module.exports = class Request extends Readable {
     }
 
     get connection() {
-        
         return {
             remoteAddress: this.parsedIp,
             localPort: this.app.port,
