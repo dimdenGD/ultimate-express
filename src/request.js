@@ -63,13 +63,12 @@ module.exports = class Request extends Readable {
         if(this.endsWithSlash && this.path !== '/' && !this.app.get('strict routing')) {
             this._opPath = this._opPath.slice(0, -1);
         }
-        this.method = req.getMethod().toUpperCase();
+        this.method = req.getCaseSensitiveMethod().toUpperCase();
         this.params = {};
 
         this._gotParams = new Set();
         this._stack = [];
         this._paramStack = [];
-        this.bufferedData = Buffer.allocUnsafe(0);
         this.receivedData = false;
         // reading ip is very slow in UWS, so its better to not do it unless truly needed
         if(this.app.needsIpAfterResponse || this.key < 100) {
@@ -87,6 +86,7 @@ module.exports = class Request extends Readable {
             this.method === 'PATCH' || 
             (additionalMethods && additionalMethods.includes(this.method))
         ) {
+            this.bufferedData = Buffer.allocUnsafe(0);
             this._res.onData((ab, isLast) => {
                 // make stream actually readable
                 this.receivedData = true;
@@ -105,7 +105,7 @@ module.exports = class Request extends Readable {
     }
 
     async _read() {
-        if(!this.receivedData) {
+        if(!this.receivedData || !this.bufferedData) {
             return;
         }
         if(this.bufferedData.length > 0) {
