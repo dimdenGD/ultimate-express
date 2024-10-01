@@ -28,13 +28,13 @@ Tested using [wrk](https://github.com/wg/wrk) (`-d 60 -t 1 -c 200`). Etag was di
 
 | Test                                          | Express req/sec | µExpress req/sec | Express throughput | µExpress throughput | µExpress speedup |
 | --------------------------------------------- | --------------- | ---------------- | ------------------ | ------------------- | ---------------- |
-| routing/simple-routes (/)                     | 10.90k          | 70.10k           | 2.04 MB/sec        | 11.57 MB/sec        | **6.43X**        |
-| routing/lot-of-routes (/999)                  | 4.66k           | 51.58k           | 0.85 MB/sec        | 8.07 MB/sec         | **11.07X**       |
-| routing/some-middlewares (/90)                | 10.18k          | 66.97k           | 1.81 MB/sec        | 10.42 MB/sec        | **6.58X**        |
-| routers/nested-routers (/abccc/nested/ddd)    | 10.25k          | 50.98k           | 1.83 MB/sec        | 7.98 MB/sec         | **4.97X**        |
-| middlewares/express-static (/static/index.js) | 7.52k           | 31.08k           | 6.92 MB/sec        | 26.48 MB/sec        | **4.13X**        |
-| engines/ejs (/test)                           | 5.92k           | 41.64k           | 2.40 MB/sec        | 16.55 MB/sec        | **7.03X**        |
-| middlewares/body-urlencoded (/abc)            | 8.01k           | 35.10k           | 1.66 MB/sec        | 7.02 MB/sec         | **4.38X**        |
+| routing/simple-routes (/)                     | 11.16k          | 70.75k           | 2.08 MB/sec        | 13.62 MB/sec        | **6.34X**        |
+| routing/lot-of-routes (/999)                  | 4.63k           | 51.37k           | 0.84 MB/sec        | 9.45 MB/sec         | **11.10X**       |
+| routing/some-middlewares (/90)                | 10.12k          | 61.92k           | 1.79 MB/sec        | 11.32 MB/sec        | **6.12X**        |
+| routers/nested-routers (/abccc/nested/ddd)    | 10.18k          | 51.15k           | 1.82 MB/sec        | 9.40 MB/sec         | **5.02X**        |
+| middlewares/express-static (/static/index.js) | 6.58k           | 32.45k           | 10.15 MB/sec       | 49.43 MB/sec        | **4.87X**        |
+| engines/ejs (/test)                           | 5.50k           | 40.82k           | 2.45 MB/sec        | 18.38 MB/sec        | **7.42X**        |
+| middlewares/body-urlencoded (/abc)            | 8.07k           | 50.52k           | 1.68 MB/sec        | 10.78 MB/sec        | **6.26X**        |
 
 ### Performance against other frameworks
 
