@@ -1,6 +1,6 @@
 {
   "name": "ultimate-express",
-  "version": "1.2.15",
+  "version": "1.2.16",
   "description": "The Ultimate Express. Fastest http server with full Express compatibility, based on uWebSockets.",
   "main": "src/index.js",
   "scripts": {
