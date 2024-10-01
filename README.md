@@ -41,16 +41,16 @@ Tested using [wrk](https://github.com/wg/wrk) (`-d 60 -t 1 -c 200`). Etag was di
 Tested using [bun-http-framework-benchmark](https://github.com/dimdenGD/bun-http-framework-benchmark). This table only includes Node.js results.
 For full table with other runtimes, check [here](https://github.com/dimdenGD/bun-http-framework-benchmark?tab=readme-ov-file#results).
 
-|  Framework           | Average       | Ping          | Query         | Body          |
-| -------------------- | ------------- | ------------- | ------------- | ------------- |
-| uws                  | 94,296.49     | 108,551.92    | 104,756.22    | 69,581.33     |
-| hyper-express        | 66,356.707    | 80,002.53     | 69,953.76     | 49,113.83     |
+|  Framework           | Average        | Ping          | Query         | Body          |
+| -------------------- | -------------- | ------------- | ------------- | ------------- |
+| uws                  | 94,296.49      | 108,551.92    | 104,756.22    | 69,581.33     |
+| hyper-express        | 66,356.707     | 80,002.53     | 69,953.76     | 49,113.83     |
 | **ultimate-express** | **57,343.813** | **64,608.03** | **60,234.78** | **47,188.63** |
-| h3                   | 35,423.263    | 41,243.68     | 34,429.26     | 30,596.85     |
-| fastify              | 33,094.62     | 40,147.67     | 40,076.35     | 19,059.84     |
-| hono                 | 26,576.02     | 36,215.35     | 34,656.12     | 8,856.59      |
-| koa                  | 24,045.08     | 28,202.12     | 24,590.84     | 19,342.28     |
-| express              | 10,411.313    | 11,245.57     | 10,598.74     | 9,389.63      |
+| h3                   | 35,423.263     | 41,243.68     | 34,429.26     | 30,596.85     |
+| fastify              | 33,094.62      | 40,147.67     | 40,076.35     | 19,059.84     |
+| hono                 | 26,576.02      | 36,215.35     | 34,656.12     | 8,856.59      |
+| koa                  | 24,045.08      | 28,202.12     | 24,590.84     | 19,342.28     |
+| express              | 10,411.313     | 11,245.57     | 10,598.74     | 9,389.63      |
 
 ### Performance on real-world application
 
