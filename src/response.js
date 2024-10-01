@@ -43,30 +43,30 @@ class Socket extends EventEmitter {
     constructor(response) {
         super();
         this.response = response;
-        this.writable = true;
 
         this.on('error', (err) => {
             this.emit('close');
         });
-        this.on('close', () => {
-            this.writable = false;
-        });
+    }
+    get writable() {
+        return !this.response.finished;
     }
 }
 
 module.exports = class Response extends Writable {
+    #socket = null;
     constructor(res, req, app) {
         super();
         this._req = req;
         this._res = res;
         this.headersSent = false;
         this.aborted = false;
-        this.socket = new Socket(this);
         this.app = app;
         this.locals = {};
         this.aborted = false;
         this.statusCode = 200;
         this.chunkedTransfer = true;
+        this.finished = false;
         this.totalSize = 0;
         this.headers = {
             'connection': 'keep-alive',
@@ -92,11 +92,20 @@ module.exports = class Response extends Writable {
             }
             this._res.cork(() => {
                 this._res.close();
-                this.socket.emit('close');
+                this.finished = true;
+                if(this.socketExists) this.socket.emit('close');
             });
         });
-        this.emit('socket', this.socket);
     }
+
+    get socket() {
+        this.socketExists = true;
+        if(!this.#socket) {
+            this.#socket = new Socket(this);
+        }
+        return this.#socket;
+    }
+
     _write(chunk, encoding, callback) {
         if(this.aborted) {
             const err = new Error('Request aborted');
@@ -135,7 +144,8 @@ module.exports = class Response extends Writable {
                 const [ok, done] = this._res.tryEnd(chunk, this.totalSize);
                 if(done) {
                     this.destroy();
-                    this.socket.emit('close');
+                    this.finished = true;
+                    if(this.socketExists) this.socket.emit('close');
                     callback();
                 } else {
                     // still writing
@@ -148,7 +158,8 @@ module.exports = class Response extends Writable {
                             const [ok, done] = this._res.tryEnd(chunk.slice(offset - lastOffset), this.totalSize);
                             if(done) {
                                 this.destroy();
-                                this.socket.emit('close');
+                                this.finished = true;
+                                if(this.socketExists) this.socket.emit('close');
                                 callback();
                             } else if(ok) {
                                 callback();
@@ -213,7 +224,8 @@ module.exports = class Response extends Writable {
                 this.headersSent = true;
                 if(fresh) {
                     this._res.end();
-                    this.socket.emit('close');
+                    this.finished = true;
+                    if(this.socketExists) this.socket.emit('close');
                     return;
                 }
             }
@@ -230,7 +242,8 @@ module.exports = class Response extends Writable {
                     this._res.end(data);
                 }
             }
-            this.socket.emit('close');
+            this.finished = true;
+            if(this.socketExists) this.socket.emit('close');
         });
 
         return this;
@@ -692,12 +705,8 @@ module.exports = class Response extends Writable {
         return this;
     }
 
-    get finished() {
-        return !this.socket.writable;
-    }
-
     get writableFinished() {
-        return !this.socket.writable;
+        return this.finished;
     }
 }
 
@@ -728,7 +737,8 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
       
             if (done) {
                 readStream.destroy();
-                res.socket.emit('close');
+                res.finished = true;
+                if(res.socketExists) res.socket.emit('close');
                 if(callback) callback();
             } else if (!ok) {
                 readStream.pause();
@@ -743,7 +753,8 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
                     const [ok, done] = res._res.tryEnd(res._res.ab.slice(offset - res._res.abOffset), totalSize);
                     if (done) {
                         readStream.destroy();
-                        res.socket.emit('close');
+                        res.finished = true;
+                        if(res.socketExists) res.socket.emit('close');
                         if(callback) callback();
                     } else if (ok) {
                         readStream.resume();
@@ -757,7 +768,8 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
         if(callback) callback(e);
         if(!res.finished) {
             res._res.close();
-            res.socket.emit('error', e);
+            res.finished = true;
+            if(res.socketExists) res.socket.emit('error', e);
         }
     });
 }
