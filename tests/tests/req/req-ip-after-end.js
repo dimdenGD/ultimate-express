@@ -1,20 +1,12 @@
-// must support req.ip
+// must support req.ip after response
 
 const express = require("express");
 
 const app = express();
 
-app.get("/test2", (req, res) => {
-    res.send(req.ip);
-});
-
-app.use(async (req, res, next) => {
-    await new Promise(resolve => setTimeout(resolve, 100));
-    next();
-});
-
 app.get("/test", (req, res) => {
-    res.send(req.ip.replace('0000:0000:0000:0000:0000:0000:0000:000', "::"));
+    res.send('ok');
+    console.log(req.ip.replace('0000:0000:0000:0000:0000:0000:0000:000', "::"));
 });
 
 app.listen(13333, async () => {

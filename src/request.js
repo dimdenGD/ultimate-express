@@ -29,6 +29,8 @@ const discardedDuplicates = [
     "server", "user-agent"
 ];
 
+let key = 0;
+
 module.exports = class Request extends Readable {
     #cachedQuery = null;
     #cachedHeaders = null;
@@ -43,6 +45,10 @@ module.exports = class Request extends Readable {
         this._req.forEach((key, value) => {
             this.#rawHeadersEntries.push([key, value]);
         });
+        this.key = key++;
+        if(key > 100000) {
+            key = 0;
+        }
         this.app = app;
         this.urlQuery = req.getQuery() ?? '';
         if(this.urlQuery) {
@@ -65,7 +71,12 @@ module.exports = class Request extends Readable {
         this._paramStack = [];
         this.bufferedData = Buffer.allocUnsafe(0);
         this.receivedData = false;
-        this.rawIp = this._res.getRemoteAddress();
+        // reading ip is very slow in UWS, so its better to not do it unless truly needed
+        if(this.app.needsIpAfterResponse || this.key < 100) {
+            // if app needs ip after response, read it now because after response its not accessible
+            // also read it for first 100 requests to not error
+            this.rawIp = this._res.getRemoteAddress();
+        }
 
         const additionalMethods = this.app.get('body methods');
         // skip reading body for non-POST requests
@@ -221,6 +232,17 @@ module.exports = class Request extends Readable {
     get parsedIp() {
         if(this.#cachedParsedIp) {
             return this.#cachedParsedIp;
+        }
+        const finished = !this.res.socket.writable;
+        if(finished) {
+            // mark app as one that needs ip after response
+            this.app.needsIpAfterResponse = true;
+        }
+        if(!this.rawIp) {
+            if(finished) {
+                return '0.0.0.0';
+            }
+            this.rawIp = this._res.getRemoteAddress();
         }
         let ip = '';
         if(this.rawIp.byteLength === 4) {
