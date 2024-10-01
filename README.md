@@ -282,7 +282,7 @@ In general, basically all features and options are supported. Use [Express 4.x d
 
 ## Tested middlewares
 
-Most of the middlewares that are compatible with Express are compatible with µExpress. Here's list of middlewares that we test for compatibility:
+Almost all middlewares that are compatible with Express are compatible with µExpress. Here's list of middlewares that we test for compatibility:
 
 - ✅ [body-parser](https://npmjs.com/package/body-parser) (use `express.text()` etc instead for better performance)
 - ✅ [cookie-parser](https://npmjs.com/package/cookie-parser)
