@@ -222,6 +222,7 @@ module.exports = class Request extends Readable {
         if(this.#cachedParsedIp) {
             return this.#cachedParsedIp;
         }
+        // TODO: check if its faster to just use this._res.getRemoteAddressAsText();
         let ip = '';
         if(this.rawIp.byteLength === 4) {
             // ipv4

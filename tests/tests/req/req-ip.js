@@ -9,6 +9,10 @@ app.use(async (req, res, next) => {
     next();
 });
 
+app.get("/test2", (req, res) => {
+    res.send(req.ip);
+});
+
 app.get("/test", (req, res) => {
     res.send(req.ip.replace('0000:0000:0000:0000:0000:0000:0000:000', "::"));
 });
