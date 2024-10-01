@@ -34,6 +34,7 @@ module.exports = class Request extends Readable {
     #cachedHeaders = null;
     #cachedDistinctHeaders = null;
     #rawHeadersEntries = [];
+    #cachedParsedIp = null;
     constructor(req, res, app) {
         super();
         this._res = res;
@@ -58,7 +59,7 @@ module.exports = class Request extends Readable {
         }
         this.method = req.getMethod().toUpperCase();
         this.params = {};
-        this.rawIp = Buffer.from(this._res.getRemoteAddressAsText()).toString();
+        this.rawIp = this._res.getRemoteAddress();
 
         this._gotParams = new Set();
         this._stack = [];
@@ -156,7 +157,7 @@ module.exports = class Request extends Readable {
     get ip() {
         const trust = this.app.get('trust proxy fn');
         if(!trust) {
-            return this.rawIp;
+            return this.parsedIp;
         }
         return proxyaddr(this, trust);
     }
@@ -217,9 +218,30 @@ module.exports = class Request extends Readable {
         return this.headers['x-requested-with'] === 'XMLHttpRequest';
     }
 
+    get parsedIp() {
+        if(this.#cachedParsedIp) {
+            return this.#cachedParsedIp;
+        }
+        let ip = '';
+        if(this.rawIp.byteLength === 4) {
+            ip = this.rawIp.join('.');
+        } else {
+            let u8 = new Uint8Array(this.rawIp);
+            for(let i = 0; i < u8.length; i++) {
+                ip += u8[i].toString(16).padStart(2, '0');
+                if(i < u8.length - 1) {
+                    ip += ':';
+                }
+            }
+        }
+        this.#cachedParsedIp = ip;
+        return ip;
+    }
+
     get connection() {
+        
         return {
-            remoteAddress: this.rawIp,
+            remoteAddress: this.parsedIp,
             localPort: this.app.port,
             remotePort: this.app.port,
             encrypted: this.app.ssl,
