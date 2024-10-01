@@ -240,7 +240,8 @@ module.exports = class Request extends Readable {
         }
         if(!this.rawIp) {
             if(finished) {
-                return '0.0.0.0';
+                // fallback once
+                return '127.0.0.1';
             }
             this.rawIp = this._res.getRemoteAddress();
         }
