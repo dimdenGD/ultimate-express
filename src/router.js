@@ -380,21 +380,6 @@ module.exports = class Router extends EventEmitter {
             return true;
     }
 
-    #processAsyncRequest(req) {
-        if(req.processedAsync) {
-            return;
-        }
-        // reading ip is really slow in uws for some reason
-        // but you cant call uws response after async function
-        // so we have to read it here (instead of doing it on every request)
-        if(!req.rawIp) {
-            req.rawIp = req._res.getRemoteAddress();
-        }
-
-        req.processedAsync = true;
-        return;
-    }
-
     param(name, fn) {
         if(typeof name === 'function') {
             deprecated('app.param(callback)', 'app.param(name, callback)', true);
@@ -430,11 +415,7 @@ module.exports = class Router extends EventEmitter {
                 return resolve(this._routeRequest(req, res, 0, this._routes, false, skipUntil));
             }
             let callbackindex = 0;
-            let continueRoute = this.#preprocessRequest(req, res, route);
-            if(continueRoute instanceof Promise) {
-                this.#processAsyncRequest(req);
-                continueRoute = await continueRoute;
-            }
+            let continueRoute = await this.#preprocessRequest(req, res, route);
             if(route.use) {
                 req._stack.push(route.path);
                 req._opPath = 
@@ -485,7 +466,6 @@ module.exports = class Router extends EventEmitter {
                         }
                         const out = callback(req, res, next);
                         if(out instanceof Promise) {
-                            this.#processAsyncRequest(req);
                             out.catch(err => {
                                 throw err;
                             });
