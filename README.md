@@ -109,9 +109,11 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 
 3. Do not use `body-parser` module. Instead use built-in `express.text()`, `express.json()` etc.
 
-4. Do not set `body methods` to read body of requests with GET method or other methods that don't need a body. Reading body makes server about 10k req/sec slower.
+4. Do not set `body methods` to read body of requests with GET method or other methods that don't need a body. Reading body makes endpoint about 15% slower.
 
 5. By default, µExpress creates 1 (or 0 if your CPU has only 1 core) child thread to improve performance of reading files. You can change this number by setting `threads` to a different number in `express()`, or set to 0 to disable thread pool (`express({ threads: 0 })`). Threads are shared between all express() instances, with largest `threads` number being used. Using more threads will not necessarily improve performance. Sometimes not using threads at all is faster, please [test](https://github.com/wg/wrk/) both options.
+
+6. Don't read `req.connection.remoteAddress` (or `req.ip` if `trust proxy` is disabled) after response is finished. In general, reading IP in uWS is quite slow (~15% slower), and you should only read it when you need it while request is still open. If you'll read it after response, it'll make µExpress read IP for every single request after, even when it's not needed.
 
 ## WebSockets
 
