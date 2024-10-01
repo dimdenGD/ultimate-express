@@ -59,7 +59,6 @@ module.exports = class Request extends Readable {
         }
         this.method = req.getMethod().toUpperCase();
         this.params = {};
-        this.rawIp = this._res.getRemoteAddress();
 
         this._gotParams = new Set();
         this._stack = [];
@@ -222,10 +221,15 @@ module.exports = class Request extends Readable {
         if(this.#cachedParsedIp) {
             return this.#cachedParsedIp;
         }
+        if(!this.rawIp) {
+            this.rawIp = this._res.getRemoteAddress();
+        }
         let ip = '';
         if(this.rawIp.byteLength === 4) {
+            // ipv4
             ip = this.rawIp.join('.');
         } else {
+            // ipv6
             const dv = new DataView(this.rawIp);
             for(let i = 0; i < 8; i++) {
                 ip += dv.getUint16(i * 2).toString(16).padStart(4, '0');

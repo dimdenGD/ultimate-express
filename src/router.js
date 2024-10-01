@@ -326,7 +326,6 @@ module.exports = class Router extends EventEmitter {
     }
 
     #preprocessRequest(req, res, route) {
-        return new Promise(async resolve => {
             req.route = route;
             if(route.optimizedParams) {
                 req.params = req.optimizedParams;
@@ -350,34 +349,52 @@ module.exports = class Router extends EventEmitter {
                 }
             }
 
-            for(let param in req.params) {
-                if(this.#paramCallbacks.has(param) && !req._gotParams.has(param)) {
-                    req._gotParams.add(param);
-                    const pcs = this.#paramCallbacks.get(param);
-                    for(let i = 0; i < pcs.length; i++) {
-                        const fn = pcs[i];
-                        await new Promise(resolveRoute => {
-                            const next = (thingamabob) => {
-                                if(thingamabob) {
-                                    if(thingamabob === 'route') {
-                                        return resolve('route');
-                                    } else {
-                                        this.#handleError(thingamabob, req, res);
-                                        return resolve(false);
-                                    }
-                                }
-                                return resolveRoute();
-                            };
-                            req.next = next;
-                            fn(req, res, next, req.params[param], param);
-                        });
+            if(this.#paramCallbacks.size > 0) {
+                return new Promise(async resolve => {
+                    for(let param in req.params) {
+                        if(this.#paramCallbacks.has(param) && !req._gotParams.has(param)) {
+                            req._gotParams.add(param);
+                            const pcs = this.#paramCallbacks.get(param);
+                            for(let i = 0; i < pcs.length; i++) {
+                                const fn = pcs[i];
+                                await new Promise(resolveRoute => {
+                                    const next = (thingamabob) => {
+                                        if(thingamabob) {
+                                            if(thingamabob === 'route') {
+                                                return resolve('route');
+                                            } else {
+                                                this.#handleError(thingamabob, req, res);
+                                                return resolve(false);
+                                            }
+                                        }
+                                        return resolveRoute();
+                                    };
+                                    req.next = next;
+                                    fn(req, res, next, req.params[param], param);
+                                });
+                            }
+                        }
                     }
-                }
+                });
             }
-
-            resolve(true);
-        });
+            return true;
     }
+
+    #processAsyncRequest(req) {
+        if(req.processedAsync) {
+            return;
+        }
+        // reading ip is really slow in uws for some reason
+        // but you cant call uws response after async function
+        // so we have to read it here (instead of doing it on every request)
+        if(!req.rawIp) {
+            req.rawIp = req._res.getRemoteAddress();
+        }
+
+        req.processedAsync = true;
+        return;
+    }
+
     param(name, fn) {
         if(typeof name === 'function') {
             deprecated('app.param(callback)', 'app.param(name, callback)', true);
@@ -413,7 +430,11 @@ module.exports = class Router extends EventEmitter {
                 return resolve(this._routeRequest(req, res, 0, this._routes, false, skipUntil));
             }
             let callbackindex = 0;
-            const continueRoute = await this.#preprocessRequest(req, res, route);
+            let continueRoute = this.#preprocessRequest(req, res, route);
+            if(continueRoute instanceof Promise) {
+                this.#processAsyncRequest(req);
+                continueRoute = await continueRoute;
+            }
             if(route.use) {
                 req._stack.push(route.path);
                 req._opPath = 
@@ -464,6 +485,7 @@ module.exports = class Router extends EventEmitter {
                         }
                         const out = callback(req, res, next);
                         if(out instanceof Promise) {
+                            this.#processAsyncRequest(req);
                             out.catch(err => {
                                 throw err;
                             });
