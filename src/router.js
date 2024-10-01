@@ -375,6 +375,8 @@ module.exports = class Router extends EventEmitter {
                             }
                         }
                     }
+
+                    resolve(true)
                 });
             }
             return true;
