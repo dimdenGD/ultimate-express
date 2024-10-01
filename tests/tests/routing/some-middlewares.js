@@ -3,6 +3,7 @@
 const express = require("express");
 
 const app = express();
+app.set("etag", false);
 let middleware = (req, res, next) => {
     next();
 };

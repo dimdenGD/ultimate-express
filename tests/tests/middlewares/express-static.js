@@ -3,6 +3,7 @@
 const express = require("express");
 
 const app = express();
+app.set("etag", false);
 
 app.post('/abc', (req, res) => {
     res.send('ok');

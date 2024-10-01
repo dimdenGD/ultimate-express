@@ -3,6 +3,7 @@
 const express = require("express");
 
 const app = express();
+app.set("etag", false);
 const router = express.Router();
 const router2 = express.Router();
 
