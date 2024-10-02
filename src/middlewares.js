@@ -155,13 +155,15 @@ function createBodyParser(defaultType, beforeReturn) {
         return (req, res, next) => {
             const type = req.headers['content-type'];
 
-            // skip reading body for non-json content type
-            if(!type) {
+            // skip reading body twice
+            if(req.bodyRead) {
                 return next();
             }
 
-            // skip reading body twice
-            if(req.body) {
+            req.body = {};
+
+            // skip reading body for non-json content type
+            if(!type) {
                 return next();
             }
 
@@ -216,6 +218,8 @@ function createBodyParser(defaultType, beforeReturn) {
                 }
             }
 
+            req.bodyRead = true;
+
             function onData(buf) {
                 if(!Buffer.isBuffer(buf)) {
                     buf = Buffer.from(buf);
@@ -266,7 +270,12 @@ const json = createBodyParser('application/json', function(req, res, next, optio
             return next(new Error('Invalid body'));
         }
     }
-    req.body = JSON.parse(buf.toString(), options.reviver);
+    try {
+        req.body = JSON.parse(buf.toString(), options.reviver);
+    } catch(e) {
+        return next(e);
+    }
+
     next();
 });
 
