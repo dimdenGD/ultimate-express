@@ -28,8 +28,8 @@ Tested using [wrk](https://github.com/wg/wrk) (`-d 60 -t 1 -c 200`). Etag was di
 
 | Test                                          | Express req/sec | µExpress req/sec | Express throughput | µExpress throughput | µExpress speedup |
 | --------------------------------------------- | --------------- | ---------------- | ------------------ | ------------------- | ---------------- |
-| routing/simple-routes (/)                     | 11.16k          | 70.75k           | 2.08 MB/sec        | 13.62 MB/sec        | **6.34X**        |
-| routing/lot-of-routes (/999)                  | 4.63k           | 51.37k           | 0.84 MB/sec        | 9.45 MB/sec         | **11.10X**       |
+| routing/simple-routes (/)                     | 11.16k          | 75.14k           | 2.08 MB/sec        | 14.46 MB/sec        | **6.73X**        |
+| routing/lot-of-routes (/999)                  | 4.63k           | 54.57k           | 0.84 MB/sec        | 10.03 MB/sec        | **11.78X**       |
 | routing/some-middlewares (/90)                | 10.12k          | 61.92k           | 1.79 MB/sec        | 11.32 MB/sec        | **6.12X**        |
 | routers/nested-routers (/abccc/nested/ddd)    | 10.18k          | 51.15k           | 1.82 MB/sec        | 9.40 MB/sec         | **5.02X**        |
 | middlewares/express-static (/static/index.js) | 6.58k           | 32.45k           | 10.15 MB/sec       | 49.43 MB/sec        | **4.87X**        |

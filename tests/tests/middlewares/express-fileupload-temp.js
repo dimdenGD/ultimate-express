@@ -20,7 +20,7 @@ app.listen(13333, async () => {
 
     const formData = new FormData();
     console.log('creating file');
-    const arr = new Uint8Array(1024 * 256); // 256 KB
+    const arr = new Uint8Array(1024 * 128); // 128 KB
     console.log('filling file');
     for (let i = 0; i < arr.length; i++) {
         arr[i] = i % 256;
