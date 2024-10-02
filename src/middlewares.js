@@ -299,7 +299,12 @@ const text = createBodyParser('text/plain', function(req, res, next, options, bu
     if(encoding !== 'utf-8' && encoding !== 'utf-16le' && encoding !== 'latin1') {
         return next(new Error('Unsupported charset'));
     }
-    req.body = buf.toString(encoding);
+    try {
+        req.body = buf.toString(encoding);
+    } catch(e) {
+        return next(e);
+    }
+
     next();
 });
 
