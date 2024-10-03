@@ -79,7 +79,7 @@ https.createServer({
 
 You have to pass `uwsOptions` to the `express()` constructor:
 ```js
-const express = require("u-express");
+const express = require("ultimate-express");
 
 const app = express({
     uwsOptions: {
