@@ -194,23 +194,29 @@ class Application extends Router {
             callback = port;
             port = 0;
         }
-        let fn = 'listen';
-        if(typeof port !== 'number') {
-            if(!isNaN(Number(port))) {
-                port = Number(port);
-            } else {
-                fn = 'listen_unix';
-            }
-        }
-        this.listenCalled = true;
-        this.uwsApp[fn](port, socket => {
+        const onListen = socket => {
             if(!socket) {
                 let err = new Error('Failed to listen on port ' + port + '. No permission or address already in use.');
                 throw err;
             }
             this.port = uWS.us_socket_local_port(socket);
             callback(this.port);
-        });
+        };
+        let fn = 'listen';
+        let args = [port];
+        if(typeof port !== 'number') {
+            if(!isNaN(Number(port))) {
+                port = Number(port);
+                args.push(onListen);
+            } else {
+                fn = 'listen_unix';
+                args.unshift(onListen);
+            }
+        } else {
+            args.push(onListen);
+        }
+        this.listenCalled = true;
+        this.uwsApp[fn](...args);
     }
 
     address() {
