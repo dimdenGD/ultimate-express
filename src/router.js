@@ -276,7 +276,8 @@ module.exports = class Router extends EventEmitter {
             const matchedRoute = await this._routeRequest(request, response, 0, optimizedPath, true, route);
             if(!matchedRoute && !response.headersSent && !response.aborted) {
                 response.status(404);
-                response.send(this._generateErrorPage(`Cannot ${request.method} ${request.path}`, false));
+                request.noEtag = true;
+                this._sendErrorPage(request, response, `Cannot ${request.method} ${request.path}`, false);
             }
         };
         route.optimizedPath = optimizedPath;
@@ -305,7 +306,7 @@ module.exports = class Router extends EventEmitter {
                     if(response.statusCode === 200) {
                         response.statusCode = 500;
                     }
-                    response.send(this._generateErrorPage(err, true));
+                    this._sendErrorPage(request, response, err, true);
                 }
             });
         }
@@ -313,7 +314,7 @@ module.exports = class Router extends EventEmitter {
         if(response.statusCode === 200) {
             response.statusCode = 500;
         }
-        response.send(this._generateErrorPage(err, true));
+        this._sendErrorPage(request, response, err, true);
     }
 
     #extractParams(pattern, path) {
@@ -524,11 +525,15 @@ module.exports = class Router extends EventEmitter {
         return fns;
     }
 
-    _generateErrorPage(err, checkEnv = false) {
+    _sendErrorPage(request, response, err, checkEnv = false) {
         if(checkEnv && this.get('env') === 'production') {
             err = 'Internal Server Error';
         }
-        return `<!DOCTYPE html>\n` +
+        request.noEtag = true;
+        response.setHeader('Content-Type', 'text/html; charset=utf-8');
+        response.setHeader('X-Content-Type-Options', 'nosniff');
+        response.setHeader('Content-Security-Policy', "default-src 'self'");
+        response.send(`<!DOCTYPE html>\n` +
             `<html lang="en">\n` +
             `<head>\n` +
             `<meta charset="utf-8">\n` +
@@ -537,6 +542,6 @@ module.exports = class Router extends EventEmitter {
             `<body>\n` +
             `<pre>${err?.stack ?? err}</pre>\n` +
             `</body>\n` +
-            `</html>\n`;
+            `</html>\n`);
     }
 }

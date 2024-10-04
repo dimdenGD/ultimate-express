@@ -183,7 +183,7 @@ class Application extends Router {
             const matchedRoute = await this._routeRequest(request, response);
             if(!matchedRoute && !response.headersSent && !response.aborted) {
                 response.status(404);
-                response.send(this._generateErrorPage(`Cannot ${request.method} ${request.path}`, false));
+                this._sendErrorPage(request, response, `Cannot ${request.method} ${request.path}`, false);
             }
         });
     }
