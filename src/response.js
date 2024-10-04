@@ -51,6 +51,15 @@ class Socket extends EventEmitter {
     get writable() {
         return !this.response.finished;
     }
+
+    close() {
+        if(this.response.finished) {
+            return;
+        }
+        this.response.finished = true;
+        this.emit('close');
+        this.response._res.close();
+    }
 }
 
 module.exports = class Response extends Writable {
@@ -707,6 +716,10 @@ module.exports = class Response extends Writable {
     vary(field) {
         vary(this, field);
         return this;
+    }
+
+    get connection() {
+        return this.socket;
     }
 
     get writableFinished() {
