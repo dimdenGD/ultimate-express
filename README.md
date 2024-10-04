@@ -298,6 +298,7 @@ Almost all middlewares that are compatible with Express are compatible with µEx
 - ✅ [express-fileupload](https://npmjs.com/package/express-fileupload)
 - ✅ [express-session](https://npmjs.com/package/express-session)
 - ✅ [express-rate-limit](https://npmjs.com/package/express-rate-limit)
+- ✅ [express-subdomain](https://npmjs.com/package/express-subdomain)
 - ✅ [vhost](https://npmjs.com/package/vhost)
 
 Middlewares that are confirmed to not work:
