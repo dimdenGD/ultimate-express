@@ -52,7 +52,11 @@ module.exports = class View {
         }
 
         this.engine = this.options.engines[this.ext];
-        this.path = path.join(this.root, fileName);
+        if(path.isAbsolute(name)) {
+            this.path = name;
+        } else {
+            this.path = path.join(this.root, fileName);
+        }
     }
 
     lookup(name) {
