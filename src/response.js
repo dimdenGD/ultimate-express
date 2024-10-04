@@ -116,19 +116,7 @@ module.exports = class Response extends Writable {
             if(!this.headersSent) {
                 this.writeHead(this.statusCode);
                 this._res.writeStatus(this.statusCode.toString());
-                for(const header in this.headers) {
-                    if(header === 'content-length') {
-                        // if content-length is set, disable chunked transfer encoding, since size is known
-                        this.chunkedTransfer = false;
-                        this.totalSize = parseInt(this.headers[header]);
-                        continue;
-                    }
-                    this._res.writeHeader(header, this.headers[header]);
-                }
-                if(!this.headers['content-type']) {
-                    this._res.writeHeader('content-type', 'text/html' + (typeof chunk === 'string' ? `; charset=utf-8` : ''));
-                }
-                this.headersSent = true;
+                this.writeHeaders(typeof chunk === 'string');
             }
             if(!Buffer.isBuffer(chunk) && !(chunk instanceof ArrayBuffer)) {
                 chunk = Buffer.from(chunk);
@@ -184,6 +172,27 @@ module.exports = class Response extends Writable {
             this.set(header, headers[header]);
         }
     }
+    writeHeaders(utf8) {
+        for(const header in this.headers) {
+            if(header === 'content-length') {
+                // if content-length is set, disable chunked transfer encoding, since size is known
+                this.chunkedTransfer = false;
+                this.totalSize = parseInt(this.headers[header]);
+                continue;
+            }
+            if(Array.isArray(this.headers[header])) {
+                for(let value of this.headers[header]) {
+                    this._res.writeHeader(header, value);
+                }
+            } else {
+                this._res.writeHeader(header, this.headers[header]);
+            }
+        }
+        if(!this.headers['content-type']) {
+            this._res.writeHeader('content-type', 'text/html' + (utf8 ? `; charset=utf-8` : ''));
+        }
+        this.headersSent = true;
+    }
     _implicitHeader() {
         // compatibility function
         // usually should send headers but this is useless for us
@@ -212,16 +221,7 @@ module.exports = class Response extends Writable {
                 }
                 const fresh = this.req.fresh;
                 this._res.writeStatus(fresh ? '304' : this.statusCode.toString());
-                for(const header in this.headers) {
-                    if(header === 'content-length') {
-                        continue;
-                    }
-                    this._res.writeHeader(header, this.headers[header]);
-                }
-                if(!this.headers['content-type']) {
-                    this._res.writeHeader('content-type', 'text/html' + (typeof data === 'string' ? `; charset=utf-8` : ''));
-                }
-                this.headersSent = true;
+                this.writeHeaders(true);
                 if(fresh) {
                     this._res.end();
                     this.finished = true;
@@ -543,18 +543,22 @@ module.exports = class Response extends Writable {
     }
     append(field, value) {
         field = field.toLowerCase();
-        if(this.headers[field]) {
-            if(typeof value === 'string' || typeof value === 'number') {
-                this.headers[field] += ', ' + value;
-            } else if(Array.isArray(value)) {
-                this.headers[field] += ', ' + value.join(', ');
+        const old = this.headers[field];
+        if(old) {
+            const newVal = [];
+            if(Array.isArray(old)) {
+                newVal.push(...old);
+            } else if(old) {
+                newVal.push(old);
             }
+            if(Array.isArray(value)) {
+                newVal.push(...value);
+            } else {
+                newVal.push(value);
+            }
+            this.headers[field] = newVal;
         } else {
-            if(typeof value === 'string' || typeof value === 'number') {
-                this.headers[field] = value.toString();
-            } else if(Array.isArray(value)) {
-                this.headers[field] = value.join(', ');
-            }
+            this.headers[field] = value;
         }
         return this;
     }
@@ -719,16 +723,7 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
             if(!res.headersSent) {
                 res.writeHead(res.statusCode);
                 res._res.writeStatus(res.statusCode.toString());
-                for(const header in res.headers) {
-                    if(header === 'content-length') {
-                        continue;
-                    }
-                    res._res.writeHeader(header, res.headers[header]);
-                }
-                if(!res.headers['content-type']) {
-                    res._res.writeHeader('content-type', 'text/html; charset=utf-8');
-                }
-                res.headersSent = true;
+                res.writeHeaders(true);
             }
             const ab = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
         

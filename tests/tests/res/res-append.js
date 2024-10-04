@@ -48,6 +48,13 @@ app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
     const response = await sendRequest('GET', 'http://localhost:13333/test', []);
-    console.log(response.toString());
+    console.log(
+        response
+        .toString()
+        .split('\r\n')
+        .map(line => line.toLowerCase().trim())
+        .filter(line => !line.startsWith('date: ') && !line.startsWith('x-powered-by: ') && !line.startsWith('http/') && !line.startsWith('keep-alive:'))
+        .sort((a, b) => a.localeCompare(b))
+    );
     process.exit(0);
 });
