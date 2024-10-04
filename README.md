@@ -144,7 +144,6 @@ In general, basically all features and options are supported. Use [Express 4.x d
 
 ### Application
 
-- ✅ app.listen(port)
 - ✅ app.listen(port[, host][, callback])
 - ✅ app.listen(unix_socket[, callback])
 - ✅ app.METHOD() (app.get, app.post, etc.)
