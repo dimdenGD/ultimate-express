@@ -119,7 +119,7 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 
 Since you don't create http server manually, you can't properly use http.on("upgrade") to handle WebSockets. To solve this, there's currently 2 options:
 
-- There's currently another library in works: [Ultimate WS](https://github.com/dimdenGD/ultimate-ws) that implements `ws` module. It's same concept as this library, but for WebSockets: fast drop-in replacement for `ws` module with support for uExpress upgrades.
+- There's a sister library that implements `ws` compatible API: [Ultimate WS](https://github.com/dimdenGD/ultimate-ws). It's same concept as this library, but for WebSockets: fast drop-in replacement for `ws` module with support for Ultimate Express upgrades. There's a guide for how to upgrade http requests in the documentation.  
 - You can simply use `app.uwsApp` to access uWebSockets.js `App` instance and call its `ws()` method directly.
 
 ## Compatibility
