@@ -417,12 +417,18 @@ module.exports = class Router extends EventEmitter {
                 return resolve(this._routeRequest(req, res, 0, this._routes, false, skipUntil));
             }
             let callbackindex = 0;
-            let continueRoute = await this._preprocessRequest(req, res, route);
+            const continueRoute = await this._preprocessRequest(req, res, route);
             if(route.use) {
+                const strictRouting = this.get('strict routing');
                 req._stack.push(route.path);
-                req._opPath = 
-                    req.path.replace(this.getFullMountpath(req), '') + 
-                    (req.endsWithSlash && req.path !== '/' && this.get('strict routing') ? '/' : '');
+                req._opPath = req.path.replace(this.getFullMountpath(req), '');
+                if(strictRouting) {
+                    if(req.endsWithSlash && req.path !== '/') {
+                        req._opPath += '/';
+                    }
+                } else if(req.endsWithSlash && req.path !== '/') {
+                    req._opPath = req._opPath.slice(0, -1);
+                }
                 req.url = req._opPath + req.urlQuery;
                 if(req.url === '') req.url = '/';
             }
@@ -431,9 +437,15 @@ module.exports = class Router extends EventEmitter {
                     if(thingamabob === 'route' || thingamabob === 'skipPop') {
                         if(route.use && thingamabob !== 'skipPop') {
                             req._stack.pop();
-                            req._opPath = 
-                                (req._stack.length > 0 ? req.path.replace(this.getFullMountpath(req), '') : req.path) + 
-                                (req.endsWithSlash && req.path !== '/' && this.get('strict routing') ? '/' : '');
+                            const strictRouting = this.get('strict routing');
+                            req._opPath = req._stack.length > 0 ? req.path.replace(this.getFullMountpath(req), '') : req.path;
+                            if(strictRouting) {
+                                if(req.endsWithSlash && req.path !== '/') {
+                                    req._opPath += '/';
+                                }
+                            } else if(req.endsWithSlash && req.path !== '/' && req._opPath[req._opPath.length - 1] === '/') {
+                                req._opPath = req._opPath.slice(0, -1);
+                            }
                             req.url = req._opPath + req.urlQuery;
                             if(req.url === '') req.url = '/';
                             if(req.app.parent && route.callback.constructor.name === 'Application') {
@@ -456,6 +468,9 @@ module.exports = class Router extends EventEmitter {
                     }
                     if(callback.settings.mergeParams) {
                         req._paramStack.push(req.params);
+                    }
+                    if(callback.settings['strict routing'] && req.endsWithSlash && req.path !== '/') {
+                        req._opPath += '/';
                     }
                     const routed = await callback._routeRequest(req, res, 0);
                     if(routed) return resolve(true);
