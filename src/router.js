@@ -532,7 +532,7 @@ module.exports = class Router extends EventEmitter {
         request.noEtag = true;
         response.setHeader('Content-Type', 'text/html; charset=utf-8');
         response.setHeader('X-Content-Type-Options', 'nosniff');
-        response.setHeader('Content-Security-Policy', "default-src 'self'");
+        response.setHeader('Content-Security-Policy', "default-src 'none'");
         response.send(`<!DOCTYPE html>\n` +
             `<html lang="en">\n` +
             `<head>\n` +
