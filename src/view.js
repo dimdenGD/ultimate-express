@@ -54,6 +54,9 @@ module.exports = class View {
         this.engine = this.options.engines[this.ext];
         if(path.isAbsolute(name)) {
             this.path = name;
+            if(path.extname(name) === '') {
+                this.path += this.ext;
+            }
         } else {
             this.path = path.join(this.root, fileName);
         }
