@@ -31,12 +31,11 @@ const methods = [
 const supportedUwsMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE'];
 
 module.exports = class Router extends EventEmitter {
-    #paramCallbacks = new Map();
-    #mountpathCache = new Map();
-    #paramFunction;
     constructor(settings = {}) {
         super();
 
+        this._paramCallbacks = new Map();
+        this._mountpathCache = new Map();
         this._routes = [];
         this.errorRoute = undefined;
         this.mountpath = '/';
@@ -61,7 +60,7 @@ module.exports = class Router extends EventEmitter {
 
         for(let method of methods) {
             this[method] = (path, ...callbacks) => {
-                this.#createRoute(method.toUpperCase(), path, this, ...callbacks);
+                this.createRoute(method.toUpperCase(), path, this, ...callbacks);
             };
         };
     }
@@ -76,25 +75,25 @@ module.exports = class Router extends EventEmitter {
                 return res;
             }
         }
-        return this.#createRoute('GET', path, this, ...callbacks);
+        return this.createRoute('GET', path, this, ...callbacks);
     }
 
     del(path, ...callbacks) {
         deprecated('app.del', 'app.delete');
-        return this.#createRoute('DELETE', path, this, ...callbacks);
+        return this.createRoute('DELETE', path, this, ...callbacks);
     }
 
     getFullMountpath(req) {
         let fullStack = req._stack.join("");
-        let fullMountpath = this.#mountpathCache.get(fullStack);
+        let fullMountpath = this._mountpathCache.get(fullStack);
         if(!fullMountpath) {
             fullMountpath = patternToRegex(fullStack, true);
-            this.#mountpathCache.set(fullStack, fullMountpath);
+            this._mountpathCache.set(fullStack, fullMountpath);
         }
         return fullMountpath;
     }
 
-    #pathMatches(route, req) {
+    _pathMatches(route, req) {
         let path = req._opPath;
         let pattern = route.pattern;
 
@@ -115,7 +114,7 @@ module.exports = class Router extends EventEmitter {
         return pattern.test(path);
     }
 
-    #createRoute(method, path, parent = this, ...callbacks) {
+    createRoute(method, path, parent = this, ...callbacks) {
         callbacks = callbacks.flat();
         const paths = Array.isArray(path) ? path : [path];
         const routes = [];
@@ -140,9 +139,9 @@ module.exports = class Router extends EventEmitter {
             // normal routes optimization
             if(canBeOptimized(route.path) && route.pattern !== '/*' && !this.parent && this.get('case sensitive routing') && this.uwsApp) {
                 if(supportedUwsMethods.includes(method)) {
-                    const optimizedPath = this.#optimizeRoute(route, this._routes);
+                    const optimizedPath = this._optimizeRoute(route, this._routes);
                     if(optimizedPath) {
-                        this.#registerUwsRoute(route, optimizedPath);
+                        this._registerUwsRoute(route, optimizedPath);
                     }
                 }
             }
@@ -157,7 +156,7 @@ module.exports = class Router extends EventEmitter {
                 for(let callback of callbacks) {
                     if(callback instanceof Router) {
                         // get optimized path to router
-                        let optimizedPathToRouter = this.#optimizeRoute(route, this._routes);
+                        let optimizedPathToRouter = this._optimizeRoute(route, this._routes);
                         if(!optimizedPathToRouter) {
                             break;
                         }
@@ -170,7 +169,7 @@ module.exports = class Router extends EventEmitter {
                                 }
                                 for(let cbroute of callback._routes) {
                                     if(!needsConversionToRegex(cbroute.path) && cbroute.path !== '/*' && supportedUwsMethods.includes(cbroute.method)) {
-                                        let optimizedRouterPath = this.#optimizeRoute(cbroute, callback._routes);
+                                        let optimizedRouterPath = this._optimizeRoute(cbroute, callback._routes);
                                         if(optimizedRouterPath) {
                                             optimizedRouterPath = optimizedRouterPath.slice(0, -1);
                                             const optimizedPath = [...optimizedPathToRouter, {
@@ -182,7 +181,7 @@ module.exports = class Router extends EventEmitter {
                                                     }
                                                 ]
                                             }, ...optimizedRouterPath];
-                                            this.#registerUwsRoute({
+                                            this._registerUwsRoute({
                                                 ...cbroute,
                                                 path: route.path + cbroute.path,
                                                 pattern: route.path + cbroute.path,
@@ -208,7 +207,7 @@ module.exports = class Router extends EventEmitter {
 
     // if route is a simple string, its possible to pre-calculate its path
     // and then create a native uWS route for it, which is much faster
-    #optimizeRoute(route, routes) {
+    _optimizeRoute(route, routes) {
         const optimizedPath = [];
 
         for(let i = 0; i < routes.length; i++) {
@@ -255,7 +254,7 @@ module.exports = class Router extends EventEmitter {
         return { request, response };
     }
 
-    #registerUwsRoute(route, optimizedPath) {
+    _registerUwsRoute(route, optimizedPath) {
         let method = route.method.toLowerCase();
         if(method === 'all') {
             method = 'any';
@@ -294,7 +293,7 @@ module.exports = class Router extends EventEmitter {
         }
     }
 
-    #handleError(err, request, response) {
+    _handleError(err, request, response) {
         let errorRoute = this.errorRoute, parent = this.parent;
         while(!errorRoute && parent) {
             errorRoute = parent.errorRoute;
@@ -317,7 +316,7 @@ module.exports = class Router extends EventEmitter {
         this._sendErrorPage(request, response, err, true);
     }
 
-    #extractParams(pattern, path) {
+    _extractParams(pattern, path) {
         let match = pattern.exec(path);
         const obj = match?.groups ?? {};
         for(let i = 1; i < match.length; i++) {
@@ -326,7 +325,7 @@ module.exports = class Router extends EventEmitter {
         return obj;
     }
 
-    #preprocessRequest(req, res, route) {
+    _preprocessRequest(req, res, route) {
             req.route = route;
             if(route.optimizedParams) {
                 req.params = req.optimizedParams;
@@ -335,7 +334,7 @@ module.exports = class Router extends EventEmitter {
                 if(req._stack.length > 0) {
                     path = path.replace(this.getFullMountpath(req), '');
                 }
-                req.params = this.#extractParams(route.pattern, path);
+                req.params = this._extractParams(route.pattern, path);
                 if(req._paramStack.length > 0) {
                     for(let params of req._paramStack) {
                         req.params = {...params, ...req.params};
@@ -350,12 +349,12 @@ module.exports = class Router extends EventEmitter {
                 }
             }
 
-            if(this.#paramCallbacks.size > 0) {
+            if(this._paramCallbacks.size > 0) {
                 return new Promise(async resolve => {
                     for(let param in req.params) {
-                        if(this.#paramCallbacks.has(param) && !req._gotParams.has(param)) {
+                        if(this._paramCallbacks.has(param) && !req._gotParams.has(param)) {
                             req._gotParams.add(param);
-                            const pcs = this.#paramCallbacks.get(param);
+                            const pcs = this._paramCallbacks.get(param);
                             for(let i = 0; i < pcs.length; i++) {
                                 const fn = pcs[i];
                                 await new Promise(resolveRoute => {
@@ -364,7 +363,7 @@ module.exports = class Router extends EventEmitter {
                                             if(thingamabob === 'route') {
                                                 return resolve('route');
                                             } else {
-                                                this.#handleError(thingamabob, req, res);
+                                                this._handleError(thingamabob, req, res);
                                                 return resolve(false);
                                             }
                                         }
@@ -386,20 +385,20 @@ module.exports = class Router extends EventEmitter {
     param(name, fn) {
         if(typeof name === 'function') {
             deprecated('app.param(callback)', 'app.param(name, callback)', true);
-            this.#paramFunction = name;
+            this._paramFunction = name;
         } else {
-            if(this.#paramFunction) {
-                if(!this.#paramCallbacks.has(name)) {
-                    this.#paramCallbacks.set(name, []);
+            if(this._paramFunction) {
+                if(!this._paramCallbacks.has(name)) {
+                    this._paramCallbacks.set(name, []);
                 }
-                this.#paramCallbacks.get(name).push(this.#paramFunction(name, fn));
+                this._paramCallbacks.get(name).push(this._paramFunction(name, fn));
             } else {
                 let names = Array.isArray(name) ? name : [name];
                 for(let name of names) {
-                    if(!this.#paramCallbacks.has(name)) {
-                        this.#paramCallbacks.set(name, []);
+                    if(!this._paramCallbacks.has(name)) {
+                        this._paramCallbacks.set(name, []);
                     }
-                    this.#paramCallbacks.get(name).push(fn);
+                    this._paramCallbacks.get(name).push(fn);
                 }
             }
         }
@@ -407,7 +406,7 @@ module.exports = class Router extends EventEmitter {
 
     async _routeRequest(req, res, startIndex = 0, routes = this._routes, skipCheck = false, skipUntil) {
         return new Promise(async (resolve) => {
-            let routeIndex = skipCheck ? startIndex : findIndexStartingFrom(routes, r => (r.all || r.method === req.method || (r.gettable && req.method === 'HEAD')) && this.#pathMatches(r, req), startIndex);
+            let routeIndex = skipCheck ? startIndex : findIndexStartingFrom(routes, r => (r.all || r.method === req.method || (r.gettable && req.method === 'HEAD')) && this._pathMatches(r, req), startIndex);
             const route = routes[routeIndex];
             if(!route) {
                 if(!skipCheck) {
@@ -418,7 +417,7 @@ module.exports = class Router extends EventEmitter {
                 return resolve(this._routeRequest(req, res, 0, this._routes, false, skipUntil));
             }
             let callbackindex = 0;
-            let continueRoute = await this.#preprocessRequest(req, res, route);
+            let continueRoute = await this._preprocessRequest(req, res, route);
             if(route.use) {
                 req._stack.push(route.path);
                 req._opPath = 
@@ -443,7 +442,7 @@ module.exports = class Router extends EventEmitter {
                         }
                         return resolve(this._routeRequest(req, res, routeIndex + 1, routes, skipCheck, skipUntil));
                     } else {
-                        this.#handleError(thingamabob, req, res);
+                        this._handleError(thingamabob, req, res);
                         return resolve(true);
                     }
                 }
@@ -474,7 +473,7 @@ module.exports = class Router extends EventEmitter {
                             });
                         }
                     } catch(err) {
-                        this.#handleError(err, req, res);
+                        this._handleError(err, req, res);
                         return resolve(true);
                     }
                 }
@@ -509,18 +508,18 @@ module.exports = class Router extends EventEmitter {
                 callback.emit('mount', this);
             }
         }
-        this.#createRoute('USE', path, this, ...callbacks);
+        this.createRoute('USE', path, this, ...callbacks);
     }
     
     route(path) {
         let fns = {};
         for(let method of methods) {
             fns[method] = (...callbacks) => {
-                return this.#createRoute(method.toUpperCase(), path, fns, ...callbacks);
+                return this.createRoute(method.toUpperCase(), path, fns, ...callbacks);
             };
         }
         fns.get = (...callbacks) => {
-            return this.#createRoute('GET', path, fns, ...callbacks);
+            return this.createRoute('GET', path, fns, ...callbacks);
         };
         return fns;
     }

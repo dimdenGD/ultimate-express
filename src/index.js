@@ -26,8 +26,19 @@ try {
     uWS._cfg('999999990007');
 } catch (error) {}
 
+// converts router to a function and makes it callable
 Application.Router = function(options) {
-    return new Router(options);
+    const router = new Router(options);
+    const fn = function(req, res, next) {
+        router._routeRequest(req, res, 0).then(routed => {
+            if(!routed) {
+                next();
+            }
+        });
+    };
+    Object.assign(fn, router);
+    Object.setPrototypeOf(fn, Object.getPrototypeOf(router));
+    return fn;
 }
 
 Application.request = Request.prototype;
