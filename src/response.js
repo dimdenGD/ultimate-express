@@ -68,12 +68,12 @@ module.exports = class Response extends Writable {
         this.chunkedTransfer = true;
         this.finished = false;
         this.totalSize = 0;
-        this.headers = {
+        this.headers = new Headers({
             'connection': 'keep-alive',
             'keep-alive': 'timeout=10'
-        };
+        });
         if(this.app.get('x-powered-by')) {
-            this.headers['x-powered-by'] = 'UltimateExpress';
+            this.headers.set('x-powered-by', 'UltimateExpress');
         }
         // support for node internal
         this[kOutHeaders] = new Proxy(this.headers, {
@@ -82,7 +82,7 @@ module.exports = class Response extends Writable {
                 return true;
             },
             get: (obj, prop) => {
-                return obj[prop];
+                return obj.get(prop);
             }
         });
         this.body = undefined;
@@ -116,16 +116,16 @@ module.exports = class Response extends Writable {
             if(!this.headersSent) {
                 this.writeHead(this.statusCode);
                 this._res.writeStatus(this.statusCode.toString());
-                for(const header in this.headers) {
-                    if(header === 'content-length') {
+                for(const header of this.headers.entries()) {
+                    if(header[0] === 'content-length') {
                         // if content-length is set, disable chunked transfer encoding, since size is known
                         this.chunkedTransfer = false;
-                        this.totalSize = parseInt(this.headers[header]);
+                        this.totalSize = parseInt(header[1]);
                         continue;
                     }
-                    this._res.writeHeader(header, this.headers[header]);
+                    this._res.writeHeader(header[0], header[1]);
                 }
-                if(!this.headers['content-type']) {
+                if(!this.headers.get('content-type')) {
                     this._res.writeHeader('content-type', 'text/html' + (typeof chunk === 'string' ? `; charset=utf-8` : ''));
                 }
                 this.headersSent = true;
@@ -207,18 +207,18 @@ module.exports = class Response extends Writable {
         this._res.cork(() => {
             if(!this.headersSent) {
                 const etagFn = this.app.get('etag fn');
-                if(data && !this.headers['etag'] && etagFn && !this.req.noEtag) {
-                    this.headers['etag'] = etagFn(data);
+                if(data && !this.headers.get('etag') && etagFn && !this.req.noEtag) {
+                    this.headers.set('etag', etagFn(data));
                 }
                 const fresh = this.req.fresh;
                 this._res.writeStatus(fresh ? '304' : this.statusCode.toString());
-                for(const header in this.headers) {
-                    if(header === 'content-length') {
+                for(const header of this.headers.entries()) {
+                    if(header[0] === 'content-length') {
                         continue;
                     }
-                    this._res.writeHeader(header, this.headers[header]);
+                    this._res.writeHeader(header[0], header[1]);
                 }
-                if(!this.headers['content-type']) {
+                if(!this.headers.get('content-type')) {
                     this._res.writeHeader('content-type', 'text/html' + (typeof data === 'string' ? `; charset=utf-8` : ''));
                 }
                 this.headersSent = true;
@@ -229,8 +229,8 @@ module.exports = class Response extends Writable {
                     return;
                 }
             }
-            if(!data && this.headers['content-length']) {
-                this._res.endWithoutBody(this.headers['content-length'].toString());
+            if(!data && this.headers.get('content-length')) {
+                this._res.endWithoutBody(this.headers.get('content-length').toString());
             } else {
                 if(data instanceof Buffer) {
                     data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
@@ -269,9 +269,9 @@ module.exports = class Response extends Writable {
             body = String(body);
         }
         if(typeof body === 'string') {
-            const contentType = this.headers['content-type'];
+            const contentType = this.headers.get('content-type');
             if(contentType && !contentType.includes(';')) {
-                this.headers['content-type'] += '; charset=utf-8';
+                this.headers.set('content-type', contentType + '; charset=utf-8');
             }
         }
         this.writeHead(this.statusCode);
@@ -377,15 +377,15 @@ module.exports = class Response extends Writable {
         }
 
         // headers
-        if(!this.headers['content-type']) {
+        if(!this.headers.get('content-type')) {
             const m = mime.lookup(fullpath);
             if(m) this.type(m);
         }
         if(options.cacheControl) {
-            this.headers['cache-control'] = `public, max-age=${options.maxAge / 1000}` + (options.immutable ? ', immutable' : '');
+            this.headers.set('cache-control', `public, max-age=${options.maxAge / 1000}` + (options.immutable ? ', immutable' : ''));
         }
         if(options.lastModified) {
-            this.headers['last-modified'] = stat.mtime.toUTCString();
+            this.headers.set('last-modified', stat.mtime.toUTCString());
         }
         if(options.headers) {
             for(const header in options.headers) {
@@ -397,8 +397,8 @@ module.exports = class Response extends Writable {
         }
 
         // etag
-        if(options.etag && !this.headers['etag'] && etagFn) {
-            this.headers['etag'] = etagFn(stat);
+        if(options.etag && !this.headers.get('etag') && etagFn) {
+            this.headers.set('etag', etagFn(stat));
         }
         if(!options.etag) {
             this.req.noEtag = true;
@@ -413,7 +413,7 @@ module.exports = class Response extends Writable {
         // range requests
         let offset = 0, len = stat.size, ranged = false;
         if(options.acceptRanges) {
-            this.headers['accept-ranges'] = 'bytes';
+            this.headers.set('accept-ranges', 'bytes');
             if(this.req.headers.range) {
                 let ranges = this.req.range(stat.size, {
                     combine: true
@@ -426,12 +426,12 @@ module.exports = class Response extends Writable {
     
                 if(ranges === -1) {
                     this.status(416);
-                    this.headers['content-range'] = `bytes */${stat.size}`;
+                    this.headers.set('content-range', `bytes */${stat.size}`);
                     return done(new Error('Range Not Satisfiable'));
                 }
                 if(ranges !== -2 && ranges.length === 1) {
                     this.status(206);
-                    this.headers['content-range'] = `bytes ${ranges[0].start}-${ranges[0].end}/${stat.size}`;
+                    this.headers.set('content-range', `bytes ${ranges[0].start}-${ranges[0].end}/${stat.size}`);
                     offset = ranges[0].start;
                     len = ranges[0].end - ranges[0].start + 1;
                     ranged = true;
@@ -521,7 +521,7 @@ module.exports = class Response extends Writable {
                     value += '; charset=utf-8';
                 }
             }
-            this.headers[field] = String(value);
+            this.headers.set(field, String(value));
         }
         return this;
     }
@@ -532,29 +532,22 @@ module.exports = class Response extends Writable {
         return this.set(field, value);
     }
     get(field) {
-        return this.headers[field.toLowerCase()];
+        return this.headers.get(field);
     }
     getHeader(field) {
         return this.get(field);
     }
     removeHeader(field) {
-        delete this.headers[field.toLowerCase()];
+        this.headers.delete(field);
         return this;
     }
     append(field, value) {
-        field = field.toLowerCase();
-        if(this.headers[field]) {
-            if(typeof value === 'string' || typeof value === 'number') {
-                this.headers[field] += ', ' + value;
-            } else if(Array.isArray(value)) {
-                this.headers[field] += ', ' + value.join(', ');
+        if(typeof value === 'object') {
+            for(let v of value) {
+                this.headers.append(field, v);
             }
         } else {
-            if(typeof value === 'string' || typeof value === 'number') {
-                this.headers[field] = value.toString();
-            } else if(Array.isArray(value)) {
-                this.headers[field] = value.join(', ');
-            }
+            this.headers.append(field, value);
         }
         return this;
     }
@@ -605,7 +598,7 @@ module.exports = class Response extends Writable {
         return this.cookie(name, '', opts);
     }
     attachment(filename) {
-        this.headers['Content-Disposition'] = `attachment; filename="${filename}"`;
+        this.headers.set('Content-Disposition', `attachment; filename="${filename}"`);
         this.type(filename.split('.').pop());
         return this;
     }
@@ -627,8 +620,8 @@ module.exports = class Response extends Writable {
         return this;
     }
     json(body) {
-        if(!this.headers['content-type']) {
-            this.headers['content-type'] = 'application/json; charset=utf-8';
+        if(!this.headers.get('content-type')) {
+            this.headers.set('content-type', 'application/json; charset=utf-8');
         }
         const escape = this.app.get('json escape');
         const replacer = this.app.get('json replacer');
@@ -639,9 +632,9 @@ module.exports = class Response extends Writable {
         let callback = this.req.query[this.app.get('jsonp callback name')];
         let body = stringify(object, this.app.get('json replacer'), this.app.get('json spaces'), this.app.get('json escape'));
 
-        if(!this.headers['content-type']) {
-            this.headers['content-type'] = 'application/javascript; charset=utf-8';
-            this.headers['X-Content-Type-Options'] = 'nosniff';
+        if(!this.headers.get('content-type')) {
+            this.headers.set('content-type', 'application/javascript; charset=utf-8');
+            this.headers.set('X-Content-Type-Options', 'nosniff');
         }
 
         if(Array.isArray(callback)) {
@@ -665,7 +658,7 @@ module.exports = class Response extends Writable {
         return this.send(body);
     }
     links(links) {
-        this.headers['link'] = Object.entries(links).map(([rel, url]) => `<${url}>; rel="${rel}"`).join(', ');
+        this.headers.set('link', Object.entries(links).map(([rel, url]) => `<${url}>; rel="${rel}"`).join(', '));
         return this;
     }
     location(path) {
@@ -674,7 +667,7 @@ module.exports = class Response extends Writable {
             if(!path) path = this.req.get('Referer');
             if(!path) path = '/';
         }
-        return this.headers['location'] = encodeUrl(path);
+        return this.headers.set('location', encodeUrl(path));
     }
     redirect(status, url) {
         if(typeof status !== 'number' && !url) {
@@ -683,7 +676,7 @@ module.exports = class Response extends Writable {
         }
         this.location(url);
         this.status(status);
-        this.headers['content-type'] = 'text/plain; charset=utf-8';
+        this.headers.set('content-type', 'text/plain; charset=utf-8');
         return this.send(`${statuses.message[status] ?? status}. Redirecting to ${url}`);
     }
 
@@ -719,13 +712,13 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
             if(!res.headersSent) {
                 res.writeHead(res.statusCode);
                 res._res.writeStatus(res.statusCode.toString());
-                for(const header in res.headers) {
-                    if(header === 'content-length') {
+                for(const header of res.headers.entries()) {
+                    if(header[0] === 'content-length') {
                         continue;
                     }
-                    res._res.writeHeader(header, res.headers[header]);
+                    res._res.writeHeader(header[0], header[1]);
                 }
-                if(!res.headers['content-type']) {
+                if(!res.headers.get('content-type')) {
                     res._res.writeHeader('content-type', 'text/html; charset=utf-8');
                 }
                 res.headersSent = true;
