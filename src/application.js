@@ -188,11 +188,17 @@ class Application extends Router {
         });
     }
 
-    listen(port, callback) {
+    listen(port, host, callback) {
         this.#createRequestHandler();
+        // support listen(callback)
         if(!callback && typeof port === 'function') {
             callback = port;
             port = 0;
+        }
+        // support listen(port, callback)
+        if(typeof host === 'function') {
+            callback = host;
+            host = undefined;
         }
         const onListen = socket => {
             if(!socket) {
@@ -208,9 +214,15 @@ class Application extends Router {
             if(!isNaN(Number(port))) {
                 port = Number(port);
                 args.push(onListen);
+                if(host) {
+                    args.unshift(host);
+                }
             } else {
                 fn = 'listen_unix';
                 args.unshift(onListen);
+                if(host) {
+                    args.unshift(host);
+                }
             }
         } else {
             args.push(onListen);
