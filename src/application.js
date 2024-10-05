@@ -223,6 +223,9 @@ class Application extends Router {
             }
         } else {
             args.push(port, onListen);
+            if(host) {
+                args.unshift(host);
+            }
         }
         this.listenCalled = true;
         this.uwsApp[fn](...args);
