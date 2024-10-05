@@ -389,6 +389,7 @@ module.exports = class Response extends Writable {
         if(!this.headers['content-type']) {
             const m = mime.lookup(fullpath);
             if(m) this.type(m);
+            else this.type('application/octet-stream');
         }
         if(options.cacheControl) {
             this.headers['cache-control'] = `public, max-age=${options.maxAge / 1000}` + (options.immutable ? ', immutable' : '');
