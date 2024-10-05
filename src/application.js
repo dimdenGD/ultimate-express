@@ -209,23 +209,20 @@ class Application extends Router {
             callback(this.port);
         };
         let fn = 'listen';
-        let args = [port];
+        let args = [];
         if(typeof port !== 'number') {
             if(!isNaN(Number(port))) {
                 port = Number(port);
-                args.push(onListen);
+                args.push(port, onListen);
                 if(host) {
                     args.unshift(host);
                 }
             } else {
                 fn = 'listen_unix';
-                args.unshift(onListen);
-                if(host) {
-                    args.unshift(host);
-                }
+                args.push(onListen, port);
             }
         } else {
-            args.push(onListen);
+            args.push(port, onListen);
         }
         this.listenCalled = true;
         this.uwsApp[fn](...args);
