@@ -18,6 +18,7 @@ const { patternToRegex, needsConversionToRegex, deprecated, findIndexStartingFro
 const Response = require("./response.js");
 const Request = require("./request.js");
 const { EventEmitter } = require("tseep");
+const compileDeclarative = require("./declarative.js");
 
 let routeKey = 0;
 
@@ -264,7 +265,7 @@ module.exports = class Router extends EventEmitter {
         if(!route.optimizedRouter && route.path.includes(":")) {
             route.optimizedParams = route.path.match(/:(\w+)/g).map(p => p.slice(1));
         }
-        const fn = async (res, req) => {
+        let fn = async (res, req) => {
             const { request, response } = this.handleRequest(res, req);
             if(route.optimizedParams) {
                 request.optimizedParams = {};
@@ -281,6 +282,15 @@ module.exports = class Router extends EventEmitter {
         };
         route.optimizedPath = optimizedPath;
         let replacedPath = route.path.replace(/:(\w+)/g, ':x');
+
+        // check if route is declarative
+        if(optimizedPath.length === 1 && route.callbacks.length === 1 && typeof route.callbacks[0] === 'function') {
+            const decRes = compileDeclarative(route.callbacks[0]);
+            if(decRes) {
+                fn = decRes;
+            }
+        }
+
         this.uwsApp[method](replacedPath, fn);
         if(!this.get('strict routing') && route.path[route.path.length - 1] !== '/') {
             this.uwsApp[method](replacedPath + '/', fn);

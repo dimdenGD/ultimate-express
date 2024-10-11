@@ -101,7 +101,7 @@ app.listen(3000, () => {
 1. µExpress tries to optimize routing as much as possible, but it's only possible if:
 - `case sensitive routing` is enabled (it is by default, unlike in normal Express).
 - only string paths without regex characters like *, +, (), {}, etc. can be optimized.
-- only 1-level deep routers can be optimized.  
+- only 1-level deep routers can be optimized.
   
 Optimized routes can be up to 10 times faster than normal routes, as they're using native uWS router and have pre-calculated path.
 
@@ -113,7 +113,16 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 
 5. By default, µExpress creates 1 (or 0 if your CPU has only 1 core) child thread to improve performance of reading files. You can change this number by setting `threads` to a different number in `express()`, or set to 0 to disable thread pool (`express({ threads: 0 })`). Threads are shared between all express() instances, with largest `threads` number being used. Using more threads will not necessarily improve performance. Sometimes not using threads at all is faster, please [test](https://github.com/wg/wrk/) both options.
 
-6. Don't read `req.connection.remoteAddress` (or `req.ip` if `trust proxy` is disabled) after response is finished. In general, reading IP in uWS is quite slow (~15% slower), and you should only read it when you need it while request is still open. If you'll read it after response, it'll make µExpress read IP for every single request after, even when it's not needed.
+## Optimization levels
+
+µExpress has 3 optimization levels that routes get compiled into:
+
+1. **Normal** - routes that use advanced routing like *, +, regex or multiple levels of routers. They require all routes before them to be searched through before they can be matched.
+2. **Optimized** - routes that use simple string paths (including params) and are only at most 1 level deep in routers. Their path gets precalculated and a native uWS route gets created for them. Depending on route count, they can be significantly faster than normal routes.
+3. **Declarative** - routes that are simple static responses that don't call outside functions or modify anything. They get compiled into a declarative response that is executed directly by uWS. These are the fastest routes, as uWS doesn't even need to call into Node.js for them. In order for a route to be compiled into declarative response, it must:
+- not call any functions other then `res.send()`, `res.set()`, `res.header()`, `res.setHeader()`, `res.status()`, `res.append()` and `res.end()`
+- not create or modify any variables
+- not use any variables other than `req.params` and `req.query`
 
 ## WebSockets
 
