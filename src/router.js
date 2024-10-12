@@ -249,6 +249,7 @@ module.exports = class Router extends EventEmitter {
             const err = new Error('Connection closed');
             err.code = 'ECONNRESET';
             response.aborted = true;
+            response.finished = true;
             response.socket.emit('error', err);
         });
 

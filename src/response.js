@@ -69,13 +69,12 @@ module.exports = class Response extends Writable {
         this._req = req;
         this._res = res;
         this.headersSent = false;
-        this.aborted = false;
         this.app = app;
         this.locals = {};
+        this.finished = false;
         this.aborted = false;
         this.statusCode = 200;
         this.chunkedTransfer = true;
-        this.finished = false;
         this.totalSize = 0;
         this.headers = {
             'connection': 'keep-alive',
@@ -96,7 +95,7 @@ module.exports = class Response extends Writable {
         });
         this.body = undefined;
         this.on('error', (err) => {
-            if(this.aborted) {
+            if(this.finished) {
                 return;
             }
             this._res.cork(() => {
@@ -119,6 +118,10 @@ module.exports = class Response extends Writable {
         if(this.aborted) {
             const err = new Error('Request aborted');
             err.code = 'ECONNABORTED';
+            return this.destroy(err);
+        }
+        if(this.finished) {
+            const err = new Error('Response already finished');
             return this.destroy(err);
         }
         this._res.cork(() => {
@@ -149,7 +152,7 @@ module.exports = class Response extends Writable {
                     if(!ok) {
                         // wait until uWS is ready to accept more data
                         this._res.onWritable((offset) => {
-                            if(this.aborted) {
+                            if(this.finished) {
                                 return true;
                             }
                             const [ok, done] = this._res.tryEnd(chunk.slice(offset - lastOffset), this.totalSize);
@@ -462,7 +465,7 @@ module.exports = class Response extends Writable {
         // serve smaller files using workers
         if(this.app.workers.length && stat.size < 768 * 1024 && !ranged) {
             this.app.readFileWithWorker(fullpath).then((data) => {
-                if(this._res.aborted) {
+                if(this._res.finished) {
                     return;
                 }
                 this.end(data);
@@ -730,7 +733,7 @@ module.exports = class Response extends Writable {
 
 function pipeStreamOverResponse(res, readStream, totalSize, callback) {
     readStream.on('data', (chunk) => {
-        if(res.aborted) {
+        if(res.finished) {
             return readStream.destroy();
         }
         res._res.cork(() => {
@@ -756,7 +759,7 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
                 res._res.abOffset = lastOffset;
         
                 res._res.onWritable((offset) => {
-                    if(res.aborted) {
+                    if(res.finished) {
                         return true;
                     }
                     const [ok, done] = res._res.tryEnd(res._res.ab.slice(offset - res._res.abOffset), totalSize);
