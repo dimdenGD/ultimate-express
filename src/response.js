@@ -224,7 +224,7 @@ module.exports = class Response extends Writable {
         if(this.finished) {
             return;
         }
-        
+        this.writeHead(this.statusCode);
         this._res.cork(() => {
             if(!this.headersSent) {
                 const etagFn = this.app.get('etag fn');
@@ -286,7 +286,6 @@ module.exports = class Response extends Writable {
                 this.headers['content-type'] += '; charset=utf-8';
             }
         }
-        this.writeHead(this.statusCode);
         return this.end(body);
     }
     sendFile(path, options = {}, callback) {
