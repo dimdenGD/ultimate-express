@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const { patternToRegex, deprecated } = require("./utils.js");
+const { patternToRegex, deprecated, NullObject } = require("./utils.js");
 const accepts = require("accepts");
 const typeis = require("type-is");
 const parseRange = require("range-parser");
@@ -64,7 +64,7 @@ module.exports = class Request extends Readable {
             this._opPath = this._opPath.slice(0, -1);
         }
         this.method = req.getCaseSensitiveMethod().toUpperCase();
-        this.params = {};
+        this.params = new NullObject();
 
         this._gotParams = new Set();
         this._stack = [];
@@ -206,7 +206,7 @@ module.exports = class Request extends Readable {
         if(qp) {
             this.#cachedQuery = qp(this.urlQuery.slice(1));
         } else {
-            this.#cachedQuery = {};
+            this.#cachedQuery = new NullObject();
         }
         return this.#cachedQuery;
     }
@@ -351,7 +351,7 @@ module.exports = class Request extends Readable {
         if(this.#cachedHeaders) {
             return this.#cachedHeaders;
         }
-        let headers = {};
+        let headers = new NullObject();
         this.#rawHeadersEntries.forEach((val) => {
             const key = val[0].toLowerCase();
             const value = val[1];
@@ -382,7 +382,7 @@ module.exports = class Request extends Readable {
         if(this.#cachedDistinctHeaders) {
             return this.#cachedDistinctHeaders;
         }
-        let headers = {};
+        let headers = new NullObject();
         this.#rawHeadersEntries.forEach((val) => {
             if(!headers[val[0]]) {
                 headers[val[0]] = [];

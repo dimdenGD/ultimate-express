@@ -16,11 +16,12 @@ limitations under the License.
 
 const path = require("path");
 const fs = require("fs");
+const { NullObject } = require("./utils.js");
 
 module.exports = class View {
     constructor(name, options) {
         this.name = name;
-        this.options = options ? Object.assign({}, options) : {};
+        this.options = options ? Object.assign({}, options) : new NullObject();
         this.defaultEngine = options.defaultEngine;
         this.ext = path.extname(name);
         this.root = options.root;

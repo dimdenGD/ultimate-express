@@ -18,6 +18,7 @@ const { patternToRegex, needsConversionToRegex, deprecated, findIndexStartingFro
 const Response = require("./response.js");
 const Request = require("./request.js");
 const { EventEmitter } = require("tseep");
+const { NullObject } = require("./utils.js");
 const compileDeclarative = require("./declarative.js");
 
 let routeKey = 0;
@@ -269,7 +270,7 @@ module.exports = class Router extends EventEmitter {
         let fn = async (res, req) => {
             const { request, response } = this.handleRequest(res, req);
             if(route.optimizedParams) {
-                request.optimizedParams = {};
+                request.optimizedParams = new NullObject();
                 for(let i = 0; i < route.optimizedParams.length; i++) {
                     request.optimizedParams[route.optimizedParams[i]] = req.getParameter(i);
                 }
@@ -329,7 +330,7 @@ module.exports = class Router extends EventEmitter {
 
     _extractParams(pattern, path) {
         let match = pattern.exec(path);
-        const obj = match?.groups ?? {};
+        const obj = match?.groups ?? new NullObject();
         for(let i = 1; i < match.length; i++) {
             obj[i - 1] = match[i];
         }
@@ -352,7 +353,7 @@ module.exports = class Router extends EventEmitter {
                     }
                 }
             } else {
-                req.params = {};
+                req.params = new NullObject();
                 if(req._paramStack.length > 0) {
                     for(let params of req._paramStack) {
                         req.params = {...params, ...req.params};
@@ -543,7 +544,7 @@ module.exports = class Router extends EventEmitter {
     }
     
     route(path) {
-        let fns = {};
+        let fns = new NullObject();
         for(let method of methods) {
             fns[method] = (...callbacks) => {
                 return this.createRoute(method.toUpperCase(), path, fns, ...callbacks);
