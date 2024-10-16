@@ -123,6 +123,31 @@ Since you don't create http server manually, you can't properly use http.on("upg
 - There's a sister library that implements `ws` compatible API: [Ultimate WS](https://github.com/dimdenGD/ultimate-ws). It's same concept as this library, but for WebSockets: fast drop-in replacement for `ws` module with support for Ultimate Express upgrades. There's a guide for how to upgrade http requests in the documentation.  
 - You can simply use `app.uwsApp` to access uWebSockets.js `App` instance and call its `ws()` method directly.
 
+
+## Typescript compatibility
+
+1. Install the express types:
+```
+npm i @types/express --save-dev
+```
+2. Create a file `src/typings/ultimate-express.d.ts`
+```ts
+declare module 'ultimate-express' {
+    import express from '@types/express';
+    export = express;
+}
+```
+3. Add to the `typeRoots` of `tsconfig.json`
+```json
+{
+    // ...
+    "typeRoots": [
+        "src/typings",
+    ],
+    // ...
+}
+```
+
 ## Compatibility
 
 In general, basically all features and options are supported. Use [Express 4.x documentation](https://expressjs.com/en/4x/api.html) for API reference.
