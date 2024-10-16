@@ -211,9 +211,6 @@ module.exports = class Response extends Writable {
         this.writeHead(this.statusCode);
     }
     status(code) {
-        if(this.headersSent) {
-            throw new Error('Can\'t set status: Response was already sent');
-        }
         this.statusCode = parseInt(code);
         return this;
     }
@@ -518,7 +515,7 @@ module.exports = class Response extends Writable {
     }
     set(field, value) {
         if(this.headersSent) {
-            throw new Error('Can\'t write headers: Response was already sent');
+            throw new Error('Cannot set headers after they are sent to the client');
         }
         if(typeof field === 'object') {
             for(const header in field) {
