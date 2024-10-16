@@ -208,7 +208,7 @@ module.exports = class Response extends Writable {
     _implicitHeader() {
         // compatibility function
         // usually should send headers but this is useless for us
-        return;
+        this.writeHead(this.statusCode);
     }
     status(code) {
         if(this.headersSent) {
