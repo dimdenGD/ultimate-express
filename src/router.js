@@ -485,7 +485,12 @@ module.exports = class Router extends EventEmitter {
                         const out = callback(req, res, next);
                         if(out instanceof Promise) {
                             out.catch(err => {
-                                throw err;
+                                if(this.get("catch async errors")) {
+                                    this._handleError(err, req, res);
+                                    return resolve(true);
+                                } else {
+                                    throw err;
+                                }
                             });
                         }
                     } catch(err) {
