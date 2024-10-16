@@ -61,6 +61,7 @@ Also tested on a [real-world application](https://nekoweb.org) with templates, s
 In a lot of cases, you can just replace `require("express")` with `require("ultimate-express")` and everything works the same. But there are some differences:
 
 - `case sensitive routing` is enabled by default.
+- a new option `catch async errors` is added. If it's enabled, you don't need to use `express-async-errors` module.
 - request body is only read for POST, PUT and PATCH requests by default. You can add additional methods by setting `body methods` to array with uppercased methods.
 - For HTTPS, instead of doing this:  
 ```js
@@ -312,7 +313,8 @@ Almost all middlewares that are compatible with Express are compatible with µEx
 
 Middlewares that are confirmed to not work:
 
-- ❌ [compression](https://npmjs.com/package/compression) (doesn't error, but doesn't compress)
+- ❌ [compression](https://npmjs.com/package/compression) - doesn't error, but doesn't compress
+- ❌ [express-async-errors](https://npmjs.com/package/express-async-errors) - doesn't work, use `app.set('catch async errors', true)` instead.
 
 ## Tested view engines
 
