@@ -159,12 +159,12 @@ class Application extends Router {
     }
 
     enable(key) {
-        this.settings[key] = true;
+        this.set(key, true);
         return this;
     }
 
     disable(key) {
-        this.settings[key] = false;
+        this.set(key, false);
         return this;
     }
 
