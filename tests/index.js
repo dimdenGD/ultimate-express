@@ -56,6 +56,7 @@ for (const testCategory of testCategories) {
                         fs.writeFileSync(testPath, testCode.replace(`const express = require("express");`, `const express = require("../../../src/index.js");`));
                         timeout = setTimeout(() => timeoutFunc('ultimate-express'), 60000)
                         let uExpressOutput = (await exec(`node ${testPath}`)).stdout;
+                        uExpressOutput = uExpressOutput.replaceAll("NullObject <[Object: null prototype] {}> ", "");
                         clearTimeout(timeout);
 
                         assert.strictEqual(uExpressOutput, expressOutput);

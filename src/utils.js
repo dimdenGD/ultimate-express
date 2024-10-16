@@ -315,6 +315,10 @@ function isRangeFresh(req, res) {
     return parseHttpDate(lastModified) <= parseHttpDate(ifRange);
 }
 
+// fast null object
+const NullObject = function() {};
+NullObject.prototype = Object.create(null);
+
 module.exports = {
     removeDuplicateSlashes,
     patternToRegex,
@@ -326,6 +330,7 @@ module.exports = {
     compileTrust,
     deprecated,
     UP_PATH_REGEXP,
+    NullObject,
     decode,
     containsDotFile,
     parseTokenList,
