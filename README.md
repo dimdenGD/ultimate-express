@@ -311,7 +311,7 @@ Almost all middlewares that are compatible with Express are compatible with µEx
 - ✅ [express-subdomain](https://npmjs.com/package/express-subdomain)
 - ✅ [vhost](https://npmjs.com/package/vhost)
 
-Middlewares that are confirmed to not work:
+Middlewares and modules that are confirmed to not work:
 
 - ❌ [compression](https://npmjs.com/package/compression) - doesn't error, but doesn't compress
 - ❌ [express-async-errors](https://npmjs.com/package/express-async-errors) - doesn't work, use `app.set('catch async errors', true)` instead.
