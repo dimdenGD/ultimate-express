@@ -279,7 +279,9 @@ module.exports = class Response extends Writable {
         }
         if(typeof body === 'string') {
             const contentType = this.headers['content-type'];
-            if(contentType && !contentType.includes(';')) {
+            if(!contentType){
+                this.type('html'); // string defaulting to html
+            } else if(!contentType.includes(';')) {
                 this.headers['content-type'] += '; charset=utf-8';
             }
         }
@@ -704,9 +706,7 @@ module.exports = class Response extends Writable {
         let ct = type.indexOf('/') === -1
             ? (mime.contentType(type) || 'application/octet-stream')
             : type;
-        if(ct.startsWith('text/') || ct === 'application/json' || ct === 'application/javascript') {
-            ct += '; charset=UTF-8';
-        }
+
         return this.set('content-type', ct);
     }
     contentType(type) {
