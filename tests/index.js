@@ -15,8 +15,8 @@ const testPath = path.join(__dirname, 'tests');
 let testCategories = fs.readdirSync(testPath).sort((a, b) => parseInt(a) - parseInt(b));
 const filterPath = process.argv[2];
 
-if(filterPath) {
-    if(!filterPath.endsWith('.js')) {
+if (filterPath) {
+    if (!filterPath.endsWith('.js')) {
         testCategories = testCategories.filter(category => category.startsWith(path.basename(filterPath)));
     } else {
         testCategories = [path.dirname(filterPath).split(path.sep).pop()];
@@ -27,8 +27,8 @@ for (const testCategory of testCategories) {
     test(testCategory, async () => {
         let tests = fs.readdirSync(path.join(__dirname, 'tests', testCategory)).sort((a, b) => parseInt(a) - parseInt(b));
         for (const testName of tests) {
-            if(filterPath && filterPath.endsWith('.js')) {
-                if(path.basename(testName) !== path.basename(filterPath)) {
+            if (filterPath && filterPath.endsWith('.js')) {
+                if (path.basename(testName) !== path.basename(filterPath)) {
                     continue;
                 }
             }
@@ -36,7 +36,7 @@ for (const testCategory of testCategories) {
             let testCode = fs.readFileSync(testPath, 'utf8').replace(`const express = require("../../../src/index.js");`, 'const express = require("express");');
             fs.writeFileSync(testPath, testCode);
             let testDescription = testCode.split('\n')[0].slice(2).trim();
-            if(testDescription.endsWith('OFF')) {
+            if (testDescription.endsWith('OFF')) {
                 return true;
             }
 
