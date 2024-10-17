@@ -18,7 +18,13 @@ async function sendRequest(method, url) {
             request += '\r\n';
 
             client.on('data', data => {
-                resolve(data.toString());
+                const rawHttpMessage = data.toString('utf-8');
+                const parts = rawHttpMessage.split(/\r?\n\r?\n/);
+                const headersPart = parts[0];
+                const bodyPart = parts.slice(1).join('\n\n');
+                const headersEndIndex = rawHttpMessage.indexOf('\r\n\r\n') + 4; 
+                const bodyBuffer = data.slice(headersEndIndex);
+                resolve(bodyBuffer);
             });
             
             client.write(request);
@@ -40,7 +46,7 @@ app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
     const response = await sendRequest('GET', 'http://localhost:13333/abc');
-    console.log(response.split('\r\n').slice(-6).join('\r\n'));
+    console.log(response, '\n', response.toString('utf-8'));
 
     process.exit(0);
 
