@@ -1,4 +1,4 @@
-// must support compression middleware OFF
+// must support compression middleware
 
 const express = require("express");
 const compression = require("compression");
@@ -17,8 +17,20 @@ async function sendRequest(method, url) {
             
             request += '\r\n';
 
+            let fullData = '';
+
             client.on('data', data => {
-                resolve(data.toString());
+                fullData += data.toString('utf-8');
+            });
+
+            client.on('end', () => {
+                const rawHttpMessage = fullData;
+                const parts = rawHttpMessage.split(/\r?\n\r?\n/);
+                const headersPart = parts[0];
+                const bodyPart = parts.slice(1).join('\n\n');
+                const headersEndIndex = rawHttpMessage.indexOf('\r\n\r\n') + 4; 
+                const bodyBuffer = fullData.slice(headersEndIndex);
+                resolve(bodyBuffer);
             });
             
             client.write(request);
@@ -39,8 +51,22 @@ app.get('/abc', (req, res) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    const response = await sendRequest('GET', 'http://localhost:13333/abc');
-    console.log(response.split('\r\n').slice(-6).join('\r\n'));
+    console.log('1');
+    let compressedResponse = await sendRequest('GET', 'http://localhost:13333/abc');
+    console.log(compressedResponse);
+
+    console.log('2');
+    let uncompressedResponse = await fetch('http://localhost:13333/abc');
+    console.log(await uncompressedResponse.text());
+
+    // second run
+    console.log('3');
+    compressedResponse = await sendRequest('GET', 'http://localhost:13333/abc');
+    console.log(compressedResponse);
+
+    console.log('4');
+    uncompressedResponse = await fetch('http://localhost:13333/abc');
+    console.log(await uncompressedResponse.text());
 
     process.exit(0);
 

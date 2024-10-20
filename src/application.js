@@ -206,7 +206,7 @@ class Application extends Router {
                 throw err;
             }
             this.port = uWS.us_socket_local_port(socket);
-            callback(this.port);
+            if(callback) callback(this.port);
         };
         let fn = 'listen';
         let args = [];
