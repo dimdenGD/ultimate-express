@@ -1,28 +1,30 @@
-
-const express = require('../src/index');
-const compression = require('compression');
+const express = require("../src/index");
+const compression = require("compression");
 
 const app = express();
 
-app.set('catch async errors');
+app.set("catch async errors", true);
 
-app.use(compression({
-    threshold: 1,
-}));
+app.use(express.json({ limit: "100mb" }));
+app.use(compression({ threshold: 1 }));
 
-app.get('/long-response', async(req, res) => {
-    res.send('Hello World'.repeat(1000) + 'end');
+app.all("/response", async (req, res) => {
+  res.status(200).send(req.body.data ?? "Hello World! ".repeat(1000) + " End");
 });
 
-app.get('/error', async(req, res) => {
-    throw new Error('test')
+app.all("/error", async (req, res, next) => {
+  try {
+    throw new Error(req.query.message ?? "test");
+  } catch (error) {
+    next(error);
+  }
 });
 
-app.use((err, req, res, next) => {
-    console.error(err.stack)
-    res.status(500).send(err.message)
-})
+app.use(async (err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send(err.message);
+});
 
-app.listen(13333, async () => {
-    console.log('Server is running on port 13333');
+app.listen(13333, () => {
+  console.log("Server is running at http://localhost:13333");
 });
