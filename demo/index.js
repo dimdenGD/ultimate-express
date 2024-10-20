@@ -1,4 +1,4 @@
-const express = require("../src/index");
+const express = require("../src/index"); // or require("express");
 const compression = require("compression");
 
 const app = express();
