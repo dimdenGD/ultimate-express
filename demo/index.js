@@ -1,12 +1,15 @@
 const express = require("../src/index"); // or require("express");
 const compression = require("compression");
+const responseTime = require("response-time");
 
 const app = express();
 
 app.set("catch async errors", true);
 
+app.use(responseTime());
 app.use(express.json({ limit: "100mb" }));
 app.use(compression({ threshold: 1 }));
+
 
 app.all("/response", async (req, res) => {
   res.status(200).send(req.body.data ?? "Hello World! ".repeat(1000) + " End");
