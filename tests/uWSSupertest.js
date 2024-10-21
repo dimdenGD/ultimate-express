@@ -1,4 +1,5 @@
 const net = require('net');
+const http = require('http');
 const uWS = require('uWebSockets.js');
 const supertest = require('supertest');
 
@@ -85,7 +86,7 @@ async function fetchResponseToHttpRes(response, res) {
         res.end();
         return;
     }
-    
+
     const chunks = [];
     for await (const chunk of response.body) {
         chunks.push(chunk);
@@ -98,25 +99,61 @@ async function fetchResponseToHttpRes(response, res) {
  * Bridge function that adapts uWebSockets.js app to Supertest.
  */
 function uwsToSupertest(app) {
+    const uwsApp = app.uwsApp ? app.uwsApp : app;
+
     const handler = async (req, res) => {
         try {
-            const uwsApp = app.uwsApp ? app.uwsApp : app;
             // Setup app to listen on a free port
             const port = await findFreePort();
             const token = await asyncListen(uwsApp, port);
 
             // Forward the request to the uWS app
-            const url = httpReqToUrl(req, port);
-            const options = httpReqToFetchOptions(req);
+            // const url = httpReqToUrl(req, port);
+            // const options = httpReqToFetchOptions(req);
 
-            // Fetch the response from the uWS app
-            const response = await fetch(url, options);
-            await fetchResponseToHttpRes(response, res);
+            // // Fetch the response from the uWS app
+            // const response = await fetch(url, options);
+            // await fetchResponseToHttpRes(response, res);
 
-            // Close the uWS app
-            uWS.us_listen_socket_close(token);
+            // // Close the uWS app when the response is done
+            // uWS.us_listen_socket_close(token);
+
+            // Forward the request to the uWS app using HTTP request
+            const options = {
+                hostname: 'localhost',
+                port: port,
+                path: req.url,
+                method: req.method,
+                headers: req.headers,
+            };
+
+            const proxyReq = http.request(options, function (proxyRes) {
+                // Set status code and headers
+                res.writeHead(proxyRes.statusCode, proxyRes.headers);
+                // Pipe the response data back to the original response
+                proxyRes.pipe(res);
+
+                // Close the uWS app when the response is done
+                proxyRes.on('end', () => {
+                    uWS.us_listen_socket_close(token);
+                });
+            });
+
+            proxyReq.on('error', function (e) {
+                throw e;
+            });
+
+            // Pipe the request body
+            req.pipe(proxyReq);
         } catch (error) {
             console.error('Error in uWS supertest bridge: ', error);
+            res.statusCode = 800; // Non standard error code to indicate error in bridge
+            res.end('Error is uWS supertest bridge: ' + error);
+
+            // Ensure the uWS app is closed on error
+            if (token) {
+                uWS.us_listen_socket_close(token);
+            }
         }
     };
 
