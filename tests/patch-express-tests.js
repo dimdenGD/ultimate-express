@@ -21,7 +21,8 @@ async function runAllTests() {
     const expressTestFiles = await getAllJsFiles(expressTestPath);
     for (const testFile of expressTestFiles) {
         let testCode = fs.readFileSync(testFile, 'utf8')
-            .replace(/express = require\(.*\)/, 'express = require("express")') // change to u-express-local later
+            .replace(/express = require\(.*\)/, 'express = require("u-express-local")') // change to u-express-local later
+            .replace(/request = require\(.*\)/, 'request = require("uWSSupertest")')
 
         testCode = testCode
             .replaceAll(`'test/fixtures`, '\'tests/express-tests/test/fixtures')

@@ -94,6 +94,7 @@
     "supertest": "^6.3.0",
     "swig": "^1.4.2",
     "u-express-local": "file://./src/index.js",
+    "uWSSupertest":   "file://./tests/uWSSupertest.js",
     "vhost": "^3.0.2",
     "after": "0.8.2"
   }
