@@ -311,6 +311,7 @@ Almost all middlewares that are compatible with Express are compatible with µEx
 - ✅ [express-rate-limit](https://npmjs.com/package/express-rate-limit)
 - ✅ [express-subdomain](https://npmjs.com/package/express-subdomain)
 - ✅ [vhost](https://npmjs.com/package/vhost)
+- ✅ [tsoa](https://github.com/lukeautry/tsoa)
 
 Middlewares and modules that are confirmed to not work:
 
