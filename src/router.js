@@ -31,6 +31,8 @@ const methods = [
 ];
 const supportedUwsMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE'];
 
+const regExParam = /:(\w+)/g;
+
 module.exports = class Router extends EventEmitter {
     constructor(settings = {}) {
         super();
@@ -264,7 +266,7 @@ module.exports = class Router extends EventEmitter {
             method = 'del';
         }
         if(!route.optimizedRouter && route.path.includes(":")) {
-            route.optimizedParams = route.path.match(/:(\w+)/g).map(p => p.slice(1));
+            route.optimizedParams = route.path.match(regExParam).map(p => p.slice(1));
         }
         const fn = async (res, req) => {
             const { request, response } = this.handleRequest(res, req);
@@ -282,7 +284,7 @@ module.exports = class Router extends EventEmitter {
             }
         };
         route.optimizedPath = optimizedPath;
-        let replacedPath = route.path.replace(/:(\w+)/g, ':x');
+        let replacedPath = route.path.replace(regExParam, ':x');
         this.uwsApp[method](replacedPath, fn);
         if(!this.get('strict routing') && route.path[route.path.length - 1] !== '/') {
             this.uwsApp[method](replacedPath + '/', fn);
