@@ -101,12 +101,13 @@ function acceptParams(str) {
     const parts = str.split(/ *; */);
     const ret = { value: parts[0], quality: 1, params: {} }
   
-    for (let i = 1; i < parts.length; ++i) {
+    for (let i = 1, len = parts.length; i < len; ++i) {
       const pms = parts[i].split(/ *= */);
-      if ('q' === pms[0]) {
-        ret.quality = parseFloat(pms[1]);
+      const [pms_0, pms_1] = pms;
+      if ('q' === pms_0) {
+        ret.quality = parseFloat(pms_1);
       } else {
-        ret.params[pms[0]] = pms[1];
+        ret.params[pms_0] = pms_1;
       }
     }
   
@@ -218,7 +219,7 @@ function decode (path) {
 const UP_PATH_REGEXP = /(?:^|[\\/])\.\.(?:[\\/]|$)/;
 
 function containsDotFile(parts) {
-    for(let i = 0; i < parts.length; i++) {
+    for(let i = 0, len = parts.length; i < len; i++) {
         const part = parts[i];
         if(part.length > 1 && part[0] === '.') {
             return true;
