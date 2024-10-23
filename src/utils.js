@@ -44,9 +44,9 @@ function patternToRegex(pattern, isPrefix = false) {
     }
 
     let regexPattern = pattern
-        .replace(/\./g, '\\.')
-        .replace(/\-/g, '\\-')
-        .replace(/\*/g, '(.*)') // Convert * to .*
+        .replaceAll('.', '\\.')
+        .replaceAll('-', '\\-')
+        .replaceAll('*', '(.*)') // Convert * to .*
         .replace(/:(\w+)(\(.+?\))?/g, (match, param, regex) => {
             return `(?<${param}>${regex ? regex + '($|\\/)' : '[^/]+'})`;
         }); // Convert :param to capture group
