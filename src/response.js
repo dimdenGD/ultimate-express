@@ -225,7 +225,7 @@ module.exports = class Response extends Writable {
         this._res.cork(() => {
             if(!this.headersSent) {
                 const etagFn = this.app.get('etag fn');
-                if(data && !this.headers['etag'] && etagFn && !this.req.noEtag) {
+                if(etagFn && data && !this.headers['etag'] && !this.req.noEtag) {
                     this.headers['etag'] = etagFn(data);
                 }
                 const fresh = this.req.fresh;
@@ -238,8 +238,9 @@ module.exports = class Response extends Writable {
                     return;
                 }
             }
-            if(!data && this.headers['content-length']) {
-                this._res.endWithoutBody(this.headers['content-length'].toString());
+            const contentLength = this.headers['content-length'];
+            if(!data && contentLength) {
+                this._res.endWithoutBody(contentLength.toString());
             } else {
                 if(data instanceof Buffer) {
                     data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
@@ -361,7 +362,8 @@ module.exports = class Response extends Writable {
                     this.status(403);
                     return done(new Error('Forbidden'));
                 case 'ignore_files':
-                    if(parts.length > 1 && parts[parts.length - 1].startsWith('.')) {
+                    const len = parts.length;
+                    if(len > 1 && parts[len - 1].startsWith('.')) {
                         this.status(404);
                         return done(new Error('Not found'));
                     }
@@ -408,7 +410,7 @@ module.exports = class Response extends Writable {
         }
 
         // etag
-        if(options.etag && !this.headers['etag'] && etagFn) {
+        if(options.etag && etagFn && !this.headers['etag']) {
             this.headers['etag'] = etagFn(stat);
         }
         if(!options.etag) {
@@ -442,9 +444,10 @@ module.exports = class Response extends Writable {
                 }
                 if(ranges !== -2 && ranges.length === 1) {
                     this.status(206);
-                    this.headers['content-range'] = `bytes ${ranges[0].start}-${ranges[0].end}/${stat.size}`;
-                    offset = ranges[0].start;
-                    len = ranges[0].end - ranges[0].start + 1;
+                    const range = ranges[0];
+                    this.headers['content-range'] = `bytes ${range.start}-${range.end}/${stat.size}`;
+                    offset = range.start;
+                    len = range.end - range.start + 1;
                     ranged = true;
                 }
             }
@@ -536,18 +539,12 @@ module.exports = class Response extends Writable {
         }
         return this;
     }
-    header(field, value) {
-        return this.set(field, value);
-    }
-    setHeader(field, value) {
-        return this.set(field, value);
-    }
+    header = this.set;
+    setHeader = this.set;
     get(field) {
         return this.headers[field.toLowerCase()];
     }
-    getHeader(field) {
-        return this.get(field);
-    }
+    getHeader = this.get;
     removeHeader(field) {
         delete this.headers[field.toLowerCase()];
         return this;
@@ -709,9 +706,7 @@ module.exports = class Response extends Writable {
 
         return this.set('content-type', ct);
     }
-    contentType(type) {
-        return this.type(type);
-    }
+    contentType = this.type;
 
     vary(field) {
         vary(this, field);
