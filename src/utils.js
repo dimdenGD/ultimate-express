@@ -23,7 +23,11 @@ const etag = require("etag");
 const { Stats } = require("fs");
 
 function fastQueryParse(query, options) {
-    if(query.length <= 128) {
+    const len = query.length;
+    if(len === 0){
+        return null;
+    }
+    if(len <= 128) {
         if(!query.includes('[') && !query.includes('%5B') && !query.includes('.') && !query.includes('%2E')) {
             return querystring.parse(query);
         }
