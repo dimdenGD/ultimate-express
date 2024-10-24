@@ -25,7 +25,7 @@ const { Stats } = require("fs");
 function fastQueryParse(query, options) {
     const len = query.length;
     if(len === 0){
-        return null;
+        return new NullObject();
     }
     if(len <= 128) {
         if(!query.includes('[') && !query.includes('%5B') && !query.includes('.') && !query.includes('%2E')) {
