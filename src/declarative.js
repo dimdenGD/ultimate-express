@@ -154,10 +154,12 @@ module.exports = function compileDeclarative(cb) {
     // get body
     for(let call of callExprs) {
         if(call.obj.propertyName === 'send' || call.obj.propertyName === 'end') {
-            if(call.arguments[0].type !== 'Literal') {
-                return false;
+            if(call.arguments[0]) {
+                if(call.arguments[0].type !== 'Literal') {
+                    return false;
+                }
+                body.push(call.arguments[0].value);
             }
-            body.push(call.arguments[0].value);
         }
     }
 
@@ -165,6 +167,9 @@ module.exports = function compileDeclarative(cb) {
         .writeHeader(statusCode.toString(), 'test');
 
     for(let header of headers) {
+        if(header[0].toLowerCase() === 'content-length') {
+            return false;
+        }
         decRes = decRes.writeHeader(header[0], header[1]);
     }
     for(let bodyPart of body) {

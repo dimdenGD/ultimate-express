@@ -20,6 +20,11 @@ const Request = require("./request.js");
 const { EventEmitter } = require("tseep");
 const compileDeclarative = require("./declarative.js");
 
+let resCodes = {}, resDecMethods = ['set', 'setHeader', 'header', 'send', 'end', 'append', 'status'];
+for(let method of resDecMethods) {
+    resCodes[method] = Response.prototype[method].toString();
+}
+
 let routeKey = 0;
 
 const methods = [
@@ -287,7 +292,13 @@ module.exports = class Router extends EventEmitter {
         let replacedPath = route.path.replace(regExParam, ':x');
 
         // check if route is declarative
-        if(optimizedPath.length === 1 && route.callbacks.length === 1 && typeof route.callbacks[0] === 'function' && this._paramCallbacks.size === 0) {
+        if(
+            optimizedPath.length === 1 && 
+            route.callbacks.length === 1 && 
+            typeof route.callbacks[0] === 'function' && 
+            this._paramCallbacks.size === 0 &&
+            !resDecMethods.some(method => resCodes[method] !== this.response[method].toString())
+        ) {
             const decRes = compileDeclarative(route.callbacks[0]);
             if(decRes) {
                 fn = decRes;
