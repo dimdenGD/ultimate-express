@@ -1,6 +1,6 @@
 // must support app.path()
 
-const express = require("../../../src/index.js");
+const express = require("express");
 
 const app = express();
 const app2 = express();

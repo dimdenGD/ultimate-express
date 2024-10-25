@@ -16,11 +16,16 @@ const fn = function(req, res, next) {
 module.exports = function compileDeclarative(cb) {
     let code = cb.toString();
     // convert anonymous functions to named ones to make it valid code
-    if(code.startsWith("function")) {
+    if(code.startsWith("function") || code.startsWith("async function")) {
         code = code.replace(/function *\(/, "function __cb(");
     }
     // console.log(code);
     const tokens = [...acorn.tokenizer(code, { ecmaVersion: "latest" })];
+
+    if(tokens.some(token => ['throw', 'new', 'await'].includes(token.value))) {
+        return false;
+    }
+
     const parsed = parser.parse(code, { ecmaVersion: "latest" }).body;
     let fn = parsed[0];
 

@@ -287,7 +287,7 @@ module.exports = class Router extends EventEmitter {
         let replacedPath = route.path.replace(regExParam, ':x');
 
         // check if route is declarative
-        if(optimizedPath.length === 1 && route.callbacks.length === 1 && typeof route.callbacks[0] === 'function') {
+        if(optimizedPath.length === 1 && route.callbacks.length === 1 && typeof route.callbacks[0] === 'function' && this._paramCallbacks.size === 0) {
             const decRes = compileDeclarative(route.callbacks[0]);
             if(decRes) {
                 fn = decRes;
