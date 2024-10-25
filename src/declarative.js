@@ -163,8 +163,12 @@ module.exports = function compileDeclarative(cb) {
         }
     }
 
-    let decRes = new uWS.DeclarativeResponse()
-        .writeHeader(statusCode.toString(), 'test');
+    // uws doesnt support status codes other than 200 currently
+    if(statusCode != 200) {
+        return false;
+    }
+
+    let decRes = new uWS.DeclarativeResponse();
 
     for(let header of headers) {
         if(header[0].toLowerCase() === 'content-length') {

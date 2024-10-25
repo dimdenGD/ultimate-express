@@ -289,8 +289,10 @@ module.exports = class Router extends EventEmitter {
             }
         };
         route.optimizedPath = optimizedPath;
-        let replacedPath = route.path.replace(regExParam, ':x');
-
+        
+        const replacedPath = route.path.replace(regExParam, ':x');
+        const realFn = fn;
+        
         // check if route is declarative
         if(
             optimizedPath.length === 1 && 
@@ -309,11 +311,11 @@ module.exports = class Router extends EventEmitter {
         if(!this.get('strict routing') && route.path[route.path.length - 1] !== '/') {
             this.uwsApp[method](replacedPath + '/', fn);
             if(method === 'get') {
-                this.uwsApp.head(replacedPath + '/', fn);
+                this.uwsApp.head(replacedPath + '/', realFn);
             }
         }
         if(method === 'get') {
-            this.uwsApp.head(replacedPath, fn);
+            this.uwsApp.head(replacedPath, realFn);
         }
     }
 
