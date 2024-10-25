@@ -295,13 +295,14 @@ module.exports = class Router extends EventEmitter {
         
         // check if route is declarative
         if(
-            optimizedPath.length === 1 && 
-            route.callbacks.length === 1 && 
-            typeof route.callbacks[0] === 'function' && 
-            this._paramCallbacks.size === 0 &&
-            !resDecMethods.some(method => resCodes[method] !== this.response[method].toString())
+            optimizedPath.length === 1 && // must not have middlewares
+            route.callbacks.length === 1 && // must not have multiple callbacks
+            typeof route.callbacks[0] === 'function' && // must be a function
+            this._paramCallbacks.size === 0 && // app.param() is not supported
+            !resDecMethods.some(method => resCodes[method] !== this.response[method].toString()) && // must not have injected methods
+            this.get('declarative responses') // must have declarative responses enabled
         ) {
-            const decRes = compileDeclarative(route.callbacks[0]);
+            const decRes = compileDeclarative(route.callbacks[0], this);
             if(decRes) {
                 fn = decRes;
             }

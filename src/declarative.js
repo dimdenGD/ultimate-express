@@ -8,12 +8,11 @@ const allowedResMethods = ['set', 'header', 'setHeader', 'status', 'send', 'end'
 const allowedIdentifiers = ['query', 'params', ...allowedResMethods];
 
 const fn = function(req, res, next) {
-    res.set("x-test", "abc");
-    res.setHeader("x-test", "def");
-    res.status(201).send('Hello World');
+    res.send(null);
 };
 
-module.exports = function compileDeclarative(cb) {
+
+module.exports = function compileDeclarative(cb, app) {
     let code = cb.toString();
     // convert anonymous functions to named ones to make it valid code
     if(code.startsWith("function") || code.startsWith("async function")) {
@@ -158,7 +157,14 @@ module.exports = function compileDeclarative(cb) {
                 if(call.arguments[0].type !== 'Literal') {
                     return false;
                 }
-                body.push(call.arguments[0].value);
+                if(typeof call.arguments[0].value === 'number') { // status code
+                    return false;
+                }
+                let val = call.arguments[0].value;
+                if(val === null) {
+                    val = '';
+                }
+                body.push(val);
             }
         }
     }
@@ -176,12 +182,24 @@ module.exports = function compileDeclarative(cb) {
         }
         decRes = decRes.writeHeader(header[0], header[1]);
     }
+
+    if(app.get('etag') && !headers.some(header => header[0].toLowerCase() === 'etag')) {
+        if(body.length === 1) {
+            decRes = decRes.writeHeader('ETag', app.get('etag fn')(body[0].toString()));
+        } else {
+            return false;
+        }
+    }
+
+    if(app.get('x-powered-by')) {
+        decRes = decRes.writeHeader('x-powered-by', 'UltimateExpress');
+    }
+
     for(let bodyPart of body) {
         decRes = decRes.write(bodyPart);
     }
-    decRes = decRes.end();
 
-    return decRes;
+    return decRes.end();
 }
 
 function filterNodes(node, fn) {
