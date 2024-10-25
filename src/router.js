@@ -409,33 +409,33 @@ module.exports = class Router extends EventEmitter {
     }
 
     async _routeRequest(req, res, startIndex = 0, routes = this._routes, skipCheck = false, skipUntil) {
-        return new Promise(async (resolve) => {
-            let routeIndex = skipCheck ? startIndex : findIndexStartingFrom(routes, r => (r.all || r.method === req.method || (r.gettable && req.method === 'HEAD')) && this._pathMatches(r, req), startIndex);
-            const route = routes[routeIndex];
-            if(!route) {
-                if(!skipCheck) {
-                    // on normal unoptimized routes, if theres no match then there is no route
-                    return resolve(false);
-                }
-                // on optimized routes, there can be more routes, so we have to use unoptimized routing and skip until we find route we stopped at
-                return resolve(this._routeRequest(req, res, 0, this._routes, false, skipUntil));
+        let routeIndex = skipCheck ? startIndex : findIndexStartingFrom(routes, r => (r.all || r.method === req.method || (r.gettable && req.method === 'HEAD')) && this._pathMatches(r, req), startIndex);
+        const route = routes[routeIndex];
+        if(!route) {
+            if(!skipCheck) {
+                // on normal unoptimized routes, if theres no match then there is no route
+                return false;
             }
-            let callbackindex = 0;
-            const continueRoute = await this._preprocessRequest(req, res, route);
-            if(route.use) {
-                const strictRouting = this.get('strict routing');
-                req._stack.push(route.path);
-                req._opPath = req.path.replace(this.getFullMountpath(req), '');
-                if(strictRouting) {
-                    if(req.endsWithSlash && req.path !== '/') {
-                        req._opPath += '/';
-                    }
-                } else if(req.endsWithSlash && req.path !== '/') {
-                    req._opPath = req._opPath.slice(0, -1);
+            // on optimized routes, there can be more routes, so we have to use unoptimized routing and skip until we find route we stopped at
+            return this._routeRequest(req, res, 0, this._routes, false, skipUntil);
+        }
+        let callbackindex = 0;
+        const continueRoute = await this._preprocessRequest(req, res, route);
+        if(route.use) {
+            const strictRouting = this.get('strict routing');
+            req._stack.push(route.path);
+            req._opPath = req.path.replace(this.getFullMountpath(req), '');
+            if(strictRouting) {
+                if(req.endsWithSlash && req.path !== '/') {
+                     req._opPath += '/';
                 }
-                req.url = req._opPath + req.urlQuery;
-                if(req.url === '') req.url = '/';
+            } else if(req.endsWithSlash && req.path !== '/') {
+                req._opPath = req._opPath.slice(0, -1);
             }
+            req.url = req._opPath + req.urlQuery;
+            if(req.url === '') req.url = '/';
+        }
+        return new Promise((resolve) => {
             const next = async (thingamabob) => {
                 if(thingamabob) {
                     if(thingamabob === 'route' || thingamabob === 'skipPop') {
