@@ -351,53 +351,54 @@ module.exports = class Request extends Readable {
         if(this.#cachedHeaders) {
             return this.#cachedHeaders;
         }
-        let headers = new NullObject();
-        this.#rawHeadersEntries.forEach((val) => {
-            const key = val[0].toLowerCase();
-            const value = val[1];
-            if(headers[key]) {
+        this.#cachedHeaders = new NullObject();
+        for (let index = 0, len = this.#rawHeadersEntries.length; index < len; index++) {
+            let [key, value] = this.#rawHeadersEntries[index];   
+            key = key.toLowerCase();
+            if(this.#cachedHeaders[key]) {
                 if(discardedDuplicates.includes(key)) {
-                    return;
+                    continue;
                 }
                 if(key === 'cookie') {
-                    headers[key] += '; ' + value;
+                    this.#cachedHeaders[key] += '; ' + value;
                 } else if(key === 'set-cookie') {
-                    headers[key].push(value);
+                    this.#cachedHeaders[key].push(value);
                 } else {
-                    headers[key] += ', ' + value;
+                    this.#cachedHeaders[key] += ', ' + value;
                 }
-                return;
+                continue;
             }
             if(key === 'set-cookie') {
-                headers[key] = [value];
+                this.#cachedHeaders[key] = [value];
             } else {
-                headers[key] = value;
+                this.#cachedHeaders[key] = value;
             }
-        });
-        this.#cachedHeaders = headers;
-        return headers;
+        }
+        return this.#cachedHeaders;
     }
 
     get headersDistinct() {
         if(this.#cachedDistinctHeaders) {
             return this.#cachedDistinctHeaders;
         }
-        let headers = new NullObject();
+        this.#cachedDistinctHeaders = new NullObject();
         this.#rawHeadersEntries.forEach((val) => {
-            if(!headers[val[0]]) {
-                headers[val[0]] = [];
+            const [key, value] = val;
+            if(!this.#cachedDistinctHeaders[key]) {
+                this.#cachedDistinctHeaders[key] = [value];
+                return;
             }
-            headers[val[0]].push(val[1]);
+            this.#cachedDistinctHeaders[key].push(value);
         });
-        this.#cachedDistinctHeaders = headers;
-        return headers;
+        return this.#cachedDistinctHeaders;
     }
 
     get rawHeaders() {
         const res = [];
-        this.#rawHeadersEntries.forEach((val) => {
+        for (let index = 0, len = this.#rawHeadersEntries.length; index < len; index++) {
+            const val = this.#rawHeadersEntries[index];
             res.push(val[0], val[1]);
-        });
+        }
         return res;
     }
 }
