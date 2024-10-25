@@ -18,7 +18,6 @@ const { patternToRegex, needsConversionToRegex, deprecated, findIndexStartingFro
 const Response = require("./response.js");
 const Request = require("./request.js");
 const { EventEmitter } = require("tseep");
-const { NullObject } = require("./utils.js");
 const compileDeclarative = require("./declarative.js");
 
 let routeKey = 0;
