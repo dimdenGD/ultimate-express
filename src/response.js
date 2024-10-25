@@ -545,7 +545,6 @@ module.exports = class Response extends Writable {
     setHeader(field, value) {
         return this.set(field, value);
     }
-    
     get(field) {
         return this.headers[field.toLowerCase()];
     }
