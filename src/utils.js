@@ -159,7 +159,8 @@ const defaultSettings = {
     'views': () => path.join(process.cwd(), 'views'),
     'view cache': () => process.env.NODE_ENV === 'production',
     'x-powered-by': true,
-    'case sensitive routing': true
+    'case sensitive routing': true,
+    'declarative responses': true
 };
 
 function compileTrust(val) {

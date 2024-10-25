@@ -14,11 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const { patternToRegex, needsConversionToRegex, deprecated, findIndexStartingFrom, canBeOptimized } = require("./utils.js");
+const { patternToRegex, needsConversionToRegex, deprecated, findIndexStartingFrom, canBeOptimized, NullObject } = require("./utils.js");
 const Response = require("./response.js");
 const Request = require("./request.js");
 const { EventEmitter } = require("tseep");
-const { NullObject } = require("./utils.js");
+const compileDeclarative = require("./declarative.js");
+
+let resCodes = {}, resDecMethods = ['set', 'setHeader', 'header', 'send', 'end', 'append', 'status'];
+for(let method of resDecMethods) {
+    resCodes[method] = Response.prototype[method].toString();
+}
 
 let routeKey = 0;
 
@@ -268,7 +273,7 @@ module.exports = class Router extends EventEmitter {
         if(!route.optimizedRouter && route.path.includes(":")) {
             route.optimizedParams = route.path.match(regExParam).map(p => p.slice(1));
         }
-        const fn = async (res, req) => {
+        let fn = async (res, req) => {
             const { request, response } = this.handleRequest(res, req);
             if(route.optimizedParams) {
                 request.optimizedParams = new NullObject();
@@ -284,16 +289,34 @@ module.exports = class Router extends EventEmitter {
             }
         };
         route.optimizedPath = optimizedPath;
-        let replacedPath = route.path.replace(regExParam, ':x');
+        
+        const replacedPath = route.path.replace(regExParam, ':x');
+        const realFn = fn;
+        
+        // check if route is declarative
+        if(
+            optimizedPath.length === 1 && // must not have middlewares
+            route.callbacks.length === 1 && // must not have multiple callbacks
+            typeof route.callbacks[0] === 'function' && // must be a function
+            this._paramCallbacks.size === 0 && // app.param() is not supported
+            !resDecMethods.some(method => resCodes[method] !== this.response[method].toString()) && // must not have injected methods
+            this.get('declarative responses') // must have declarative responses enabled
+        ) {
+            const decRes = compileDeclarative(route.callbacks[0], this);
+            if(decRes) {
+                fn = decRes;
+            }
+        }
+
         this.uwsApp[method](replacedPath, fn);
         if(!this.get('strict routing') && route.path[route.path.length - 1] !== '/') {
             this.uwsApp[method](replacedPath + '/', fn);
             if(method === 'get') {
-                this.uwsApp.head(replacedPath + '/', fn);
+                this.uwsApp.head(replacedPath + '/', realFn);
             }
         }
         if(method === 'get') {
-            this.uwsApp.head(replacedPath, fn);
+            this.uwsApp.head(replacedPath, realFn);
         }
     }
 
