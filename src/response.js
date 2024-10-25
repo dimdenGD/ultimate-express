@@ -280,8 +280,8 @@ module.exports = class Response extends Writable {
         }
         if(typeof body === 'string') {
             const contentType = this.headers['content-type'];
-            if(!contentType){
-                this.type('html'); // string defaulting to html
+            if(!contentType) {
+                this.headers['content-type'] = 'text/html; charset=utf-8';
             } else if(!contentType.includes(';')) {
                 this.headers['content-type'] += '; charset=utf-8';
             }
