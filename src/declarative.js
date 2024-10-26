@@ -11,6 +11,15 @@ const fn = function(req, res, next) {
     res.send(null);
 };
 
+// generates a declarative response from a callback
+// uWS allows creating such responses and they are extremely fast
+// since you don't even have to call into Node.js at all
+// declarative response will only be created if callback is 'simple enough'
+// simple enough means:
+// - doesnt call external functions
+// - doesnt create variables
+// - only uses req.query and req.params
+// basically, its only simple, static responses
 module.exports = function compileDeclarative(cb, app) {
     try {
         let code = cb.toString();
