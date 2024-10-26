@@ -256,6 +256,7 @@ module.exports = function compileDeclarative(cb, app) {
 
         return decRes.end();
     } catch(e) {
+        console.log(e);
         return false;
     }
 }
@@ -308,6 +309,13 @@ function filterNodes(node, fn) {
     }
     if(node.init) {
         filtered.push(...filterNodes(node.init, fn));
+    }
+    
+    if(node.left) {
+        filtered.push(...filterNodes(node.left, fn));
+    }
+    if(node.right) {
+        filtered.push(...filterNodes(node.right, fn));
     }
 
     if(node.arguments) {

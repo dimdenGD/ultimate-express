@@ -290,7 +290,7 @@ module.exports = class Router extends EventEmitter {
         };
         route.optimizedPath = optimizedPath;
         
-        const replacedPath = route.path.replace(regExParam, ':x');
+        let replacedPath = route.path;
         const realFn = fn;
         
         // check if route is declarative
@@ -306,6 +306,8 @@ module.exports = class Router extends EventEmitter {
             if(decRes) {
                 fn = decRes;
             }
+        } else {
+            replacedPath = route.path.replace(regExParam, ':x');
         }
 
         this.uwsApp[method](replacedPath, fn);
