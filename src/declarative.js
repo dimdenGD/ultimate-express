@@ -296,7 +296,7 @@ module.exports = function compileDeclarative(cb, app) {
             if(body.some(part => part.type !== 'text')) {
                 return false;
             } else {
-                decRes = decRes.writeHeader('ETag', app.get('etag fn')(body.map(part => part.value).join('')));
+                decRes = decRes.writeHeader('ETag', app.get('etag fn')(body.map(part => part.value.toString()).join('')));
             }
         }
 
@@ -305,8 +305,8 @@ module.exports = function compileDeclarative(cb, app) {
         }
 
         for(let bodyPart of body) {
-            if(bodyPart.type === 'text' && bodyPart.value.length) {
-                decRes = decRes.write(bodyPart.value);
+            if(bodyPart.type === 'text' && String(bodyPart.value).length) {
+                decRes = decRes.write(String(bodyPart.value));
             } else if(bodyPart.type === 'params') {
                 decRes = decRes.writeParameterValue(bodyPart.value);
             } else if(bodyPart.type === 'query') {
