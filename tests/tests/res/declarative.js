@@ -71,14 +71,12 @@ app2.get('/test8', (req, res) => {
 });
 
 app2.get('/test9/:id', ({ params: { id }, query: { name } }, res) => {
-    res.setHeader('x-powered-by', 'benchmark')
-        .setHeader('content-type', 'text/plain')
+    res.setHeader('content-type', 'text/plain')
         .send(`${id} ${name}`);
 });
 
 app2.get('/test10/:id', ({ params, query }, res) => {
-    res.setHeader('x-powered-by', 'benchmark')
-        .setHeader('content-type', 'text/plain')
+    res.setHeader('content-type', 'text/plain')
         .send(`${params.id} ${query.name}`);
 });
 
