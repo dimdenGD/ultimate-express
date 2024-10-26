@@ -1,15 +1,10 @@
 const acorn = require("acorn");
-const util = require("util");
 const uWS = require("uWebSockets.js");
 
 const parser = acorn.Parser;
 
 const allowedResMethods = ['set', 'header', 'setHeader', 'status', 'send', 'end', 'append'];
 const allowedIdentifiers = ['query', 'params', ...allowedResMethods];
-
-const fn = function(req, res, next) {
-    res.send(null);
-};
 
 // generates a declarative response from a callback
 // uWS allows creating such responses and they are extremely fast
@@ -41,9 +36,6 @@ module.exports = function compileDeclarative(cb, app) {
             fn = fn.expression;
         }
 
-        // console.log(tokens, util.inspect(fn, { depth: 100, colors: true }));
-        // console.log("===============")
-        
         // check if it is a function
         if (fn.type !== 'FunctionDeclaration' && fn.type !== 'ArrowFunctionExpression') {
             return false;
@@ -325,7 +317,6 @@ module.exports = function compileDeclarative(cb, app) {
 
         return decRes.end();
     } catch(e) {
-        console.log(e);
         return false;
     }
 }
