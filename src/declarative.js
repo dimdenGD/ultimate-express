@@ -149,8 +149,8 @@ module.exports = function compileDeclarative(cb, app) {
             allowedIdentifiers.includes(id) || 
             id === req || 
             id === res || 
-            (identifiers[i - 2] === 'req' && identifiers[i - 1] === 'params') || 
-            (identifiers[i - 2] === 'req' && identifiers[i - 1] === 'query') ||
+            (identifiers[i - 2] === req && identifiers[i - 1] === 'params') || 
+            (identifiers[i - 2] === req && identifiers[i - 1] === 'query') ||
             id === queryName ||
             id === paramsName ||
             queries.includes(id) ||
