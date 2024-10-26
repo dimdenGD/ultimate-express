@@ -11,14 +11,13 @@ const fn = function(req, res, next) {
     res.send(null);
 };
 
-
 module.exports = function compileDeclarative(cb, app) {
     let code = cb.toString();
     // convert anonymous functions to named ones to make it valid code
     if(code.startsWith("function") || code.startsWith("async function")) {
         code = code.replace(/function *\(/, "function __cb(");
     }
-    // console.log(code);
+
     const tokens = [...acorn.tokenizer(code, { ecmaVersion: "latest" })];
 
     if(tokens.some(token => ['throw', 'new', 'await'].includes(token.value))) {
@@ -112,7 +111,13 @@ module.exports = function compileDeclarative(cb, app) {
     if(identifiers[identifiers.length - 1] === '__cb') {
         identifiers.pop();
     }
-    if(!identifiers.every(id => allowedIdentifiers.includes(id) || id === req || id === res)) {
+    if(!identifiers.every((id, i) => 
+        allowedIdentifiers.includes(id) || 
+        id === req || 
+        id === res || 
+        (identifiers[i - 2] === 'req' && identifiers[i - 1] === 'params') || 
+        (identifiers[i - 2] === 'req' && identifiers[i - 1] === 'query')
+    )) {
         return false;
     }
     
@@ -153,18 +158,61 @@ module.exports = function compileDeclarative(cb, app) {
     // get body
     for(let call of callExprs) {
         if(call.obj.propertyName === 'send' || call.obj.propertyName === 'end') {
-            if(call.arguments[0]) {
-                if(call.arguments[0].type !== 'Literal') {
+            const arg = call.arguments[0];
+            if(arg) {
+                if(arg.type === 'Literal') {
+                    if(typeof arg.value === 'number') { // status code
+                        return false;
+                    }
+                    let val = arg.value;
+                    if(val === null) {
+                        val = '';
+                    }
+                    body.push({type: 'text', value: val});
+                } else if(arg.type === 'TemplateLiteral') {
+                    const exprs = [...arg.quasis, ...arg.expressions].sort((a, b) => a.start - b.start);
+                    for(let expr of exprs) {
+                        if(expr.type === 'TemplateElement') {
+                            body.push({type: 'text', value: expr.value.cooked});
+                        } else if(expr.type === 'MemberExpression') {
+                            const obj = expr.object;
+                            if(obj.type !== 'MemberExpression' || obj.property.type !== 'Identifier') {
+                                return false;
+                            }
+                            const type = obj.property.name;
+                            if(type !== 'params' && type !== 'query') {
+                                return false;
+                            }
+                            body.push({type: obj.property.name, value: expr.property.name});
+                        }
+                    }
+                } else if(arg.type === 'MemberExpression') {
+                    body.push({type: arg.object.property.name, value: arg.property.name});
+                } else if(arg.type === 'BinaryExpression') {
+                    let stuff = [];
+                    function check(node) {
+                        if(node.right.type === 'Literal') {
+                            stuff.push({type: 'text', value: node.right.value});
+                        } else if(node.right.type === 'MemberExpression')  {
+                            stuff.push({type: node.right.object.property.name, value: node.right.property.name});
+                        } else return false;
+                        if(node.left.type === 'Literal') {
+                            stuff.push({type: 'text', value: node.left.value});
+                        } else if(node.left.type === 'MemberExpression') {
+                            stuff.push({type: node.left.object.property.name, value: node.left.property.name});
+                        } else if(node.left.type === 'BinaryExpression') {
+                            return check(node.left);
+                        } else return false;
+
+                        return true;
+                    }
+                    if(!check(arg)) {
+                        return false;
+                    }
+                    body.push(...stuff.reverse());
+                } else {
                     return false;
                 }
-                if(typeof call.arguments[0].value === 'number') { // status code
-                    return false;
-                }
-                let val = call.arguments[0].value;
-                if(val === null) {
-                    val = '';
-                }
-                body.push(val);
             }
         }
     }
@@ -184,10 +232,10 @@ module.exports = function compileDeclarative(cb, app) {
     }
 
     if(app.get('etag') && !headers.some(header => header[0].toLowerCase() === 'etag')) {
-        if(body.length === 1) {
-            decRes = decRes.writeHeader('ETag', app.get('etag fn')(body[0].toString()));
-        } else {
+        if(body.some(part => part.type !== 'text')) {
             return false;
+        } else {
+            decRes = decRes.writeHeader('ETag', app.get('etag fn')(body.map(part => part.value).join('')));
         }
     }
 
@@ -196,7 +244,13 @@ module.exports = function compileDeclarative(cb, app) {
     }
 
     for(let bodyPart of body) {
-        decRes = decRes.write(bodyPart);
+        if(bodyPart.type === 'text') {
+            decRes = decRes.write(bodyPart.value);
+        } else if(bodyPart.type === 'params') {
+            decRes = decRes.writeParameterValue(bodyPart.value);
+        } else if(bodyPart.type === 'query') {
+            decRes = decRes.writeQueryValue(bodyPart.value);
+        }
     }
 
     return decRes.end();
