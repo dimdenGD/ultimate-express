@@ -70,11 +70,21 @@ app2.get('/test8', (req, res) => {
     res.header('x-test', 'test').send('test');
 });
 
-// app.get('/test9/:id', ({ params: { id }, query: { name } }, res) => {
-//     res.setHeader('x-powered-by', 'benchmark')
-//         .setHeader('content-type', 'text/plain')
-//         .send(`${id} ${name}`);
-// });
+app2.get('/test9/:id', ({ params: { id }, query: { name } }, res) => {
+    res.setHeader('x-powered-by', 'benchmark')
+        .setHeader('content-type', 'text/plain')
+        .send(`${id} ${name}`);
+});
+
+app2.get('/test10/:id', ({ params, query }, res) => {
+    res.setHeader('x-powered-by', 'benchmark')
+        .setHeader('content-type', 'text/plain')
+        .send(`${params.id} ${query.name}`);
+});
+
+app2.get('/test11', (req, res) => {
+    res.send(req.query);
+});
 
 app.listen(13333, async () => {
     app2.listen(13334, async () => {
@@ -90,7 +100,10 @@ app.listen(13333, async () => {
             fetch('http://localhost:13333/test6?name=test&name2=test2&name3=test3').then(res => res.text()),
             fetch('http://localhost:13333/test7').then(res => res.status),
             fetch('http://localhost:13333/test8').then(res => res.headers.get('x-test')),
-            // fetch('http://localhost:13333/test9/123?name=test').then(res => res.text()),
+
+            fetch('http://localhost:13334/test9/123?name=test').then(res => res.text()),
+            fetch('http://localhost:13334/test10/123?name=test').then(res => res.text()),
+            fetch('http://localhost:13334/test11?name=test').then(res => res.text()),
 
             fetch('http://localhost:13334/test').then(res => res.text()),
             fetch('http://localhost:13334/test2?name=test&name2=test2').then(res => res.text()),

@@ -48,6 +48,38 @@ module.exports = function compileDeclarative(cb, app) {
         }
 
         const [req, res] = args;
+        let queryName, paramsName, queries = [], params = [];
+
+        if(fn.params[0].type === 'ObjectPattern') {
+            let query = fn.params[0].properties.find(prop => prop.key.name === 'query');
+            let param = fn.params[0].properties.find(prop => prop.key.name === 'params');
+
+            if(query?.value?.type === 'Identifier') {
+                queryName = query.value.name;
+            } else if(query?.value?.type === 'ObjectPattern') {
+                for(let prop of query.value.properties) {
+                    if(prop.value.type !== 'Identifier') {
+                        return false;
+                    }
+                    queries.push(prop.value.name);
+                }
+            } else {
+                return false;
+            }
+
+            if(param?.value?.type === 'Identifier') {
+                paramsName = param.value.name;
+            } else if(param?.value?.type === 'ObjectPattern') {
+                for(let prop of param.value.properties) {
+                    if(prop.value.type !== 'Identifier') {
+                        return false;
+                    }
+                    params.push(prop.value.name);
+                }
+            } else {
+                return false;
+            }
+        }
 
         // check if it calls any other function other than the one in `res`
         const callExprs = filterNodes(fn, node => node.type === 'CallExpression');
@@ -117,10 +149,15 @@ module.exports = function compileDeclarative(cb, app) {
             id === req || 
             id === res || 
             (identifiers[i - 2] === 'req' && identifiers[i - 1] === 'params') || 
-            (identifiers[i - 2] === 'req' && identifiers[i - 1] === 'query')
+            (identifiers[i - 2] === 'req' && identifiers[i - 1] === 'query') ||
+            id === queryName ||
+            id === paramsName ||
+            queries.includes(id) ||
+            params.includes(id)
         )) {
             return false;
         }
+
         
         let statusCode = 200;
         const headers = [];
@@ -177,17 +214,40 @@ module.exports = function compileDeclarative(cb, app) {
                                 body.push({type: 'text', value: expr.value.cooked});
                             } else if(expr.type === 'MemberExpression') {
                                 const obj = expr.object;
-                                if(obj.type !== 'MemberExpression' || obj.property.type !== 'Identifier') {
+                                let type;
+                                if(obj.type === 'MemberExpression') {
+                                    if(obj.property.type !== 'Identifier') {
+                                        return false;
+                                    }
+                                    type = obj.property.name;
+                                } else if(obj.type === 'Identifier') {
+                                    type = obj.name;
+                                } else {
                                     return false;
                                 }
-                                const type = obj.property.name;
                                 if(type !== 'params' && type !== 'query') {
                                     return false;
                                 }
-                                body.push({type: obj.property.name, value: expr.property.name});
+                                body.push({type, value: expr.property.name});
+                            } else if(expr.type === 'Identifier') {
+                                if(queries.includes(expr.name)) {
+                                    body.push({type: 'query', value: expr.name});
+                                } else if(params.includes(expr.name)) {
+                                    body.push({type: 'params', value: expr.name});
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
                             }
                         }
                     } else if(arg.type === 'MemberExpression') {
+                        if(!arg.object.property) {
+                            return false;
+                        }
+                        if(arg.object.property.type !== 'Identifier' || (arg.object.property.name !== 'query' && arg.object.property.name !== 'params')) {
+                            return false;
+                        }
                         body.push({type: arg.object.property.name, value: arg.property.name});
                     } else if(arg.type === 'BinaryExpression') {
                         let stuff = [];
@@ -245,7 +305,7 @@ module.exports = function compileDeclarative(cb, app) {
         }
 
         for(let bodyPart of body) {
-            if(bodyPart.type === 'text') {
+            if(bodyPart.type === 'text' && bodyPart.value.length) {
                 decRes = decRes.write(bodyPart.value);
             } else if(bodyPart.type === 'params') {
                 decRes = decRes.writeParameterValue(bodyPart.value);
