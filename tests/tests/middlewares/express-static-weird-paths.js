@@ -10,7 +10,6 @@ app.post('/abc', (req, res) => {
 app.use('/static', express.static('tests/parts'));
 
 app.use((err, req, res, next) => {
-
     res.status(500).send(err);
 });
 
@@ -25,6 +24,8 @@ app.listen(13333, async () => {
         fetch('http://localhost:13333/static/space%20test.js'),
         fetch('http://localhost:13333/static/parenthesis(1).js'),
         fetch('http://localhost:13333/static/%2E%2E/index.js'),
+        fetch('http://localhost:13333/static/percentage%file.txt'),
+        fetch('http://localhost:13333/static/percentage%25file.txt'),
     ]);
 
     console.log(responses.map(r => r.status), await Promise.all(responses.map(r => r.text())));

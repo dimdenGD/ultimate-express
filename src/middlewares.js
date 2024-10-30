@@ -38,7 +38,6 @@ function static(root, options) {
         options.extensions = options.extensions.map(ext => ext.startsWith('.') ? ext.slice(1) : ext);
     }
     options.root = root;
-    options.skipEncodePath = true;
 
     return (req, res, next) => {
         const iq = req.url.indexOf('?');
