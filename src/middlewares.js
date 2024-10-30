@@ -42,7 +42,15 @@ function static(root, options) {
 
     return (req, res, next) => {
         const iq = req.url.indexOf('?');
-        let url = decodeURIComponent(iq !== -1 ? req.url.substring(0, iq) : req.url);
+        let url;
+        try {
+            url = decodeURIComponent(iq !== -1 ? req.url.substring(0, iq) : req.url);
+        } catch(e) {
+            if(!options.fallthrough) {
+                res.status(404);
+                return next(new Error('Not found'));
+            } else return next();
+        }
         let _path = url;
         let fullpath = path.resolve(path.join(options.root, url));
         if(options.root && !fullpath.startsWith(path.resolve(options.root))) {
