@@ -285,7 +285,7 @@ module.exports = class Router extends EventEmitter {
             if(!matchedRoute && !response.headersSent && !response.aborted) {
                 response.status(404);
                 request.noEtag = true;
-                this._sendErrorPage(request, response, `Cannot ${request.method} ${request.path}`, false);
+                this._sendErrorPage(request, response, `Cannot ${request.method} ${request._originalPath}`, false);
             }
         };
         route.optimizedPath = optimizedPath;
@@ -359,7 +359,7 @@ module.exports = class Router extends EventEmitter {
             if(route.optimizedParams) {
                 req.params = req.optimizedParams;
             } else if(typeof route.path === 'string' && (route.path.includes(':') || route.path.includes('*')) && route.pattern instanceof RegExp) {
-                let path = req.path;
+                let path = req._originalPath;
                 if(req._stack.length > 0) {
                     path = path.replace(this.getFullMountpath(req), '');
                 }
@@ -449,16 +449,20 @@ module.exports = class Router extends EventEmitter {
         if(route.use) {
             const strictRouting = this.get('strict routing');
             req._stack.push(route.path);
-            req._opPath = req.path.replace(this.getFullMountpath(req), '');
-            if(strictRouting) {
-                if(req.endsWithSlash && req.path !== '/') {
-                     req._opPath += '/';
+            req._opPath = req._originalPath.replace(this.getFullMountpath(req), '');
+            if(req.endsWithSlash && req._opPath[req._opPath.length - 1] !== '/') {
+                if(strictRouting) {
+                    req._opPath += '/';
+                } else {
+                    req._opPath = req._opPath.slice(0, -1);
                 }
-            } else if(req.endsWithSlash && req.path !== '/') {
-                req._opPath = req._opPath.slice(0, -1);
             }
             req.url = req._opPath + req.urlQuery;
-            if(req.url === '') req.url = '/';
+            req.path = req._opPath;
+            if(req._opPath === '') {
+                req.url = '/';
+                req.path = '/';
+            }
         }
         return new Promise((resolve) => {
             const next = async (thingamabob) => {
@@ -467,16 +471,21 @@ module.exports = class Router extends EventEmitter {
                         if(route.use && thingamabob !== 'skipPop') {
                             req._stack.pop();
                             const strictRouting = this.get('strict routing');
-                            req._opPath = req._stack.length > 0 ? req.path.replace(this.getFullMountpath(req), '') : req.path;
+                            req._opPath = req._stack.length > 0 ? req._originalPath.replace(this.getFullMountpath(req), '') : req._originalPath;
                             if(strictRouting) {
-                                if(req.endsWithSlash && req.path !== '/') {
+                                if(req.endsWithSlash && req._opPath[req._opPath.length - 1] !== '/') {
                                     req._opPath += '/';
                                 }
-                            } else if(req.endsWithSlash && req.path !== '/' && req._opPath[req._opPath.length - 1] === '/') {
-                                req._opPath = req._opPath.slice(0, -1);
                             }
                             req.url = req._opPath + req.urlQuery;
-                            if(req.url === '') req.url = '/';
+                            req.path = req._opPath;
+                            if(req._opPath === '') {
+                                req.url = '/';
+                                req.path = '/';
+                            }
+                            if(!strictRouting && req.endsWithSlash && req._originalPath !== '/' && req._opPath[req._opPath.length - 1] === '/') {
+                                req._opPath = req._opPath.slice(0, -1);
+                            }
                             if(req.app.parent && route.callback.constructor.name === 'Application') {
                                 req.app = req.app.parent;
                             }
@@ -498,7 +507,7 @@ module.exports = class Router extends EventEmitter {
                     if(callback.settings.mergeParams) {
                         req._paramStack.push(req.params);
                     }
-                    if(callback.settings['strict routing'] && req.endsWithSlash && req.path !== '/') {
+                    if(callback.settings['strict routing'] && req.endsWithSlash && req._opPath[req._opPath.length - 1] !== '/') {
                         req._opPath += '/';
                     }
                     const routed = await callback._routeRequest(req, res, 0);

@@ -24,7 +24,7 @@ Similar projects based on uWebSockets:
 
 ### Test results
 
-Tested using [wrk](https://github.com/wg/wrk) (`-d 60 -t 1 -c 200`). Etag was disabled in both Express and µExpress. Tested on Ubuntu 22.04, Node.js 20.17.0, AMD Ryzen 5 3600, 64GB RAM.
+Tested using [wrk](https://github.com/wg/wrk) (`-d 60 -t 1 -c 200`). Tested on Ubuntu 22.04, Node.js 20.17.0, AMD Ryzen 5 3600, 64GB RAM.
 
 | Test                                          | Express req/sec | µExpress req/sec | Express throughput | µExpress throughput | µExpress speedup |
 | --------------------------------------------- | --------------- | ---------------- | ------------------ | ------------------- | ---------------- |

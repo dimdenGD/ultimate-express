@@ -60,6 +60,7 @@ module.exports = class Request extends Readable {
         this.path = iq !== -1 ? this.url.substring(0, iq) : this.url;
         this.endsWithSlash = this.path[this.path.length - 1] === '/';
         this._opPath = this.path;
+        this._originalPath = this.path;
         if(this.endsWithSlash && this.path !== '/' && !this.app.get('strict routing')) {
             this._opPath = this._opPath.slice(0, -1);
         }
@@ -119,7 +120,7 @@ module.exports = class Request extends Readable {
     }
 
     get baseUrl() {
-        let match = this.path.match(patternToRegex(this._stack.join(""), true));
+        let match = this._originalPath.match(patternToRegex(this._stack.join(""), true));
         return match ? match[0] : '';
     }
 

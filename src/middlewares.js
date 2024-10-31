@@ -86,7 +86,7 @@ function static(root, options) {
 
         if(stat.isDirectory()) {
             if(!req.endsWithSlash) {
-                if(options.redirect) return res.redirect(301, req.path + '/');
+                if(options.redirect) return res.redirect(301, req._originalPath + '/');
                 else {
                     if(!options.fallthrough) {
                         res.status(404);
