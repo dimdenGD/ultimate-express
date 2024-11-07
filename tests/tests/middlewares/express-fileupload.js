@@ -2,6 +2,7 @@
 
 const express = require("express");
 const fileUpload = require("express-fileupload");
+const { File } = require("web-file-polyfill");
 
 const app = express();
 
