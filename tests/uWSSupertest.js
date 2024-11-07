@@ -1,14 +1,5 @@
-const http = require('http');
 const uWS = require('uWebSockets.js');
 const supertest = require('supertest');
-
-function findFreePortSync() {
-    const app = http.createServer();
-    app.listen(0);
-    const port = app.address().port;
-    app.close();
-    return port;
-}
 class AppWrapper {
     constructor(app) {
         this.app = app.uwsApp ? app.uwsApp : app;
@@ -16,31 +7,28 @@ class AppWrapper {
         this.port = null;
     }
 
-    listen(_port) {
-
-
-        // const port = _port === 0 ? findFreePortSync() : port;
-
-        this.app.listen(0, (token) => {
+    listen(port) {
+        this.app.listen(port, (token) => {
             if (!token) {
                 throw new Error('Failed to start uWS.js app');
             }
             this.token = token;
             this.port = uWS.us_socket_local_port(token);
-            console.log('cb token:', this.port);
         });
 
-        return { 
+        return {
             _handle: true,
-            close(fn) {
-            if (this.token) {
-                uWS.us_listen_socket_close(this.token);
-                this.token = null;
-                this.port = null;
-            }
-            fn?.();
+            close: this.close.bind(this),
         }
     }
+
+    close(fn) {
+        if (this.token) {
+            uWS.us_listen_socket_close(this.token);
+            this.token = null;
+            this.port = null;
+        }
+        fn?.();
     }
 
     address() {
@@ -49,8 +37,7 @@ class AppWrapper {
 }
 
 function uWSSupertest(app) {
-    const _app = new AppWrapper(app);
-    return supertest(_app)
+    return supertest(new AppWrapper(app))
 }
 
 module.exports = uWSSupertest;
