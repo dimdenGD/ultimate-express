@@ -61,6 +61,7 @@
     "vary": "^1.1.2"
   },
   "devDependencies": {
+    "after": "0.8.2",
     "body-parser": "^1.20.3",
     "compression": "^1.7.4",
     "cookie-parser": "^1.4.6",
@@ -94,8 +95,7 @@
     "supertest": "^6.3.0",
     "swig": "^1.4.2",
     "u-express-local": "file://./src/index.js",
-    "uWSSupertest":   "file://./tests/uWSSupertest.js",
-    "vhost": "^3.0.2",
-    "after": "0.8.2"
+    "uWSSupertest": "file://./tests/uWSSupertest.js",
+    "vhost": "^3.0.2"
   }
 }

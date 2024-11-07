@@ -2,7 +2,8 @@ const uWS = require('uWebSockets.js');
 const supertest = require('supertest');
 class AppWrapper {
     constructor(app) {
-        this.app = app.uwsApp ? app.uwsApp : app;
+        // Get uws instance from ultimate or hyper express or plain uws
+        this.app = app.uwsApp || app.uws_instance || app;
         this.token = null;
         this.port = null;
     }
@@ -13,6 +14,7 @@ class AppWrapper {
                 throw new Error('Failed to start uWS.js app');
             }
             this.token = token;
+            // This cb is invoked immediately so we can assume the port is stored
             this.port = uWS.us_socket_local_port(token);
         });
 
