@@ -4,13 +4,14 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "main" ] 
+    branches: [ "main" ]
 
 jobs:
   test:
-
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        node-version: [16.20, 18.17, 20.5, 22]
     steps:
       - name: Checkout Source Tree
         uses: actions/checkout@v3
@@ -18,13 +19,14 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: "${{ matrix.node-version }}"
 
       - name: Install dependencies
         run: npm install --include=dev
-        
+
       - name: Run tests
         run: npm run test
 
       - name: Publish dev package
+        if: github.ref == 'refs/heads/main' && matrix.node-version == '22'
         run: npx pkg-pr-new publish
