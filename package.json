@@ -87,6 +87,7 @@
     "pkg-pr-new": "^0.0.29",
     "pug": "^3.0.3",
     "response-time": "^2.3.2",
+    "form-data": "^4.0.1",
     "serve-index": "^1.9.1",
     "serve-static": "^1.16.2",
     "swig": "^1.4.2",

@@ -2,6 +2,7 @@
 
 const express = require("express");
 const fileUpload = require("express-fileupload");
+const FormData = require("form-data");
 
 const app = express();
 
@@ -13,8 +14,8 @@ app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
     const formData = new FormData();
-    const file = new File([1, 2, 3], 'test.txt');
-    formData.append('file', file);
+    const fileBuffer = Buffer.from([1, 2, 3]);
+    formData.append('file', fileBuffer, 'test.txt');
 
     const response = await fetch('http://localhost:13333/file', {
         method: 'POST',

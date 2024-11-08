@@ -3,6 +3,7 @@
 const express = require("express");
 const fileUpload = require("express-fileupload");
 const fs = require("fs");
+const FormData = require("form-data");
 
 const app = express();
 
@@ -26,8 +27,7 @@ app.listen(13333, async () => {
         arr[i] = i % 256;
     }
     console.log('appending file');
-    const file = new File(arr, 'test.txt');
-    formData.append('file', file);
+    formData.append('file', Buffer.from(arr), 'test.txt');
 
     console.log('sending request');
     const response = await fetch('http://localhost:13333/file', {
