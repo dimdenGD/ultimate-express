@@ -10,8 +10,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        fail-fast: false
         node-version: [18, 20, 22]
     steps:
       - name: Checkout Source Tree
