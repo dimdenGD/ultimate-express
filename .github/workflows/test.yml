@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        fail-fast: false
         node-version: [18, 20, 22]
     steps:
       - name: Checkout Source Tree
@@ -26,7 +27,6 @@ jobs:
 
       - name: Run tests
         run: npm run test
-        continue-on-error: true
 
   publish:
     runs-on: ubuntu-latest
