@@ -1,7 +1,6 @@
 // must support express-fileupload middleware with temp file
 // Support for node 18
-const { File } = require('file-api');
-const FormData = require('form-data');
+import {FormData, File} from "formdata-node"
 
 const express = require("express");
 const fileUpload = require("express-fileupload");
@@ -29,7 +28,7 @@ app.listen(13333, async () => {
         arr[i] = i % 256;
     }
     console.log('appending file');
-    const file = new File({buffer: Buffer.from(arr), name: 'test.txt'});
+    const file = new File(arr, 'test.txt');
     formData.append('file', file);
 
     console.log('sending request');

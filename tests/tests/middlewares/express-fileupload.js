@@ -1,7 +1,6 @@
 // must support express-fileupload middleware
 // Support for node 18
-const { File } = require('file-api');
-const FormData = require('form-data');
+import {FormData, File} from "formdata-node"
 
 const express = require("express");
 const fileUpload = require("express-fileupload");
@@ -16,7 +15,7 @@ app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
     const formData = new FormData();
-    const file = new File({buffer: Buffer.from([1, 2, 3]), name: 'test.txt'});
+    const file = new File([1, 2, 3], 'test.txt');
     formData.append('file', file);
 
     const response = await fetch('http://localhost:13333/file', {

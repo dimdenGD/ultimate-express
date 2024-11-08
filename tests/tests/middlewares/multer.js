@@ -1,7 +1,6 @@
 // must support multer middleware
 // Support for node 18
-const { File } = require('file-api');
-const FormData = require('form-data');
+import {FormData, File} from "formdata-node"
 
 const express = require("express");
 const multer = require("multer");
@@ -31,7 +30,7 @@ app.listen(13333, async () => {
     console.log(text);
 
     const formData2 = new FormData();
-    const file = new File({buffer: Buffer.from([1, 2, 3]), name: 'test.txt'});
+    const file = new File([1, 2, 3], 'test.txt');
     formData2.append('file', file);
 
     const response2 = await fetch('http://localhost:13333/file', {
