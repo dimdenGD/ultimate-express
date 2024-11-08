@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [16.20, 18.17, 20.5, 22]
+        node-version: [18.17, 20.5, 22]
     steps:
       - name: Checkout Source Tree
         uses: actions/checkout@v3
