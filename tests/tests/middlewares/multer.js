@@ -2,6 +2,7 @@
 
 const express = require("express");
 const multer = require("multer");
+const FormData = require("form-data");
 
 const app = express();
 const upload = multer();
@@ -28,8 +29,8 @@ app.listen(13333, async () => {
     console.log(text);
 
     const formData2 = new FormData();
-    const file = new File([1, 2, 3], 'test.txt');
-    formData2.append('file', file);
+    const fileBuffer = Buffer.from([1, 2, 3]);
+    formData2.append('file', fileBuffer, 'test.txt');
 
     const response2 = await fetch('http://localhost:13333/file', {
         method: 'POST',
