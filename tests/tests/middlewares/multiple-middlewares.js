@@ -21,7 +21,7 @@ app.listen(13333, async () => {
     const formData = new FormData();
     console.log('creating file');
     const arr = [...new Array(1024 * 32)].map((_, i) => i % 256); // 32 KB
-    const file = new File(arr, 'test.txt');
+    const file = new File({buffer: Buffer.from(arr), name: 'test.txt'});
     console.log('appending file');
     formData.append('file', file);
     formData.append('text', 'hello');

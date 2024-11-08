@@ -16,7 +16,7 @@ app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
     const formData = new FormData();
-    const file = new File([1, 2, 3], 'test.txt');
+    const file = new File({buffer: Buffer.from([1, 2, 3]), name: 'test.txt'});
     formData.append('file', file);
 
     const response = await fetch('http://localhost:13333/file', {
