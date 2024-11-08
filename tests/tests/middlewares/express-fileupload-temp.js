@@ -1,4 +1,7 @@
 // must support express-fileupload middleware with temp file
+// Support for node 18
+const { File } = require('file-api');
+const FormData = require('form-data');
 
 const express = require("express");
 const fileUpload = require("express-fileupload");

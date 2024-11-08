@@ -1,4 +1,7 @@
 // must support multer middleware
+// Support for node 18
+const { File } = require('file-api');
+const FormData = require('form-data');
 
 const express = require("express");
 const multer = require("multer");
