@@ -234,7 +234,10 @@ function createBodyParser(defaultType, beforeReturn) {
                 if(inflate) {
                     buf = inflate.process(buf);
                 }
-                abs.push(buf);
+
+                // shallow copy, to avoid shared references for large bodies.
+                abs.push(Buffer.from(buf));
+
                 totalSize += buf.length;
                 if(totalSize > options.limit) {
                     return next(new Error('Request entity too large'));
