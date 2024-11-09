@@ -144,11 +144,8 @@ function createBodyParser(defaultType, beforeReturn) {
         if(typeof options.limit === 'undefined') options.limit = bytes('100kb');
         else options.limit = bytes(options.limit);
     
-        if(typeof options.type === 'undefined') options.type = defaultType;
-        else if(typeof options.type !== 'string') {
-            throw new Error('type must be a string');
-        }
         if(typeof options.inflate === 'undefined') options.inflate = true;
+        if(typeof options.type === 'undefined') options.type = defaultType;
         if(typeof options.type === 'string') {
             if(!options.type.includes("*")) {
                 options.simpleType = options.type;
