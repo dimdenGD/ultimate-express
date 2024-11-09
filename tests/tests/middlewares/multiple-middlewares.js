@@ -1,6 +1,6 @@
 // must support multiple middlewares
 // Support for node 18
-import {FormData, File} from "formdata-node"
+const {FormData, File}  = require( "formdata-node")
 
 const express = require("express");
 const bodyParser = require("body-parser");
