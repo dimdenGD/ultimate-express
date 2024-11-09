@@ -1,4 +1,6 @@
 // must support multer middleware
+// Support for node 18
+const {FormData, File}  = require( "formdata-node")
 
 const express = require("express");
 const multer = require("multer");
