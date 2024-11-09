@@ -1,6 +1,6 @@
 // must support compression middleware
 
-const express = require("express");
+const express = require("../../../src/index.js");
 const compression = require("compression");
 const net = require("net");
 

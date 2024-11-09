@@ -4,8 +4,15 @@
   "description": "The Ultimate Express. Fastest http server with full Express compatibility, based on uWebSockets.",
   "main": "src/index.js",
   "scripts": {
-    "test": "node tests/index.js",
-    "dev": "node --inspect=9229 demo/index.js"
+    "test": "run-s test:*",
+    "test:lint": "eslint src",
+    "test:prettier": "prettier \"src/**/*.js\" --list-different",
+    "test:spelling": "cspell \"{README.md,.github/*.md,src/**/*.js}\"",
+    "test:unit": "node tests/index.js",
+    "dev": "node --inspect=9229 demo/index.js",
+    "fix": "run-s fix:*",
+    "fix:prettier": "prettier \"src/**/*.js\" --write",
+    "fix:lint": "eslint src --fix"
   },
   "engines": {
     "node": ">=18"
@@ -68,8 +75,11 @@
     "cookie-parser": "^1.4.6",
     "cookie-session": "^2.1.0",
     "cors": "^2.8.5",
+    "cspell": "^8.16.0",
     "ejs": "^3.1.10",
     "errorhandler": "^1.5.1",
+    "eslint": "^8.53.0",
+    "eslint-config-prettier": "^9.1.0",
     "exit-hook": "^2.2.1",
     "express": "^4.19.2",
     "express-art-template": "^1.0.1",
@@ -84,8 +94,10 @@
     "method-override": "^3.0.0",
     "multer": "^1.4.5-lts.1",
     "mustache-express": "^1.3.2",
+    "npm-run-all": "^4.1.5",
     "pako": "^2.1.0",
     "pkg-pr-new": "^0.0.29",
+    "prettier": "^3.3.3",
     "pug": "^3.0.3",
     "response-time": "^2.3.2",
     "serve-index": "^1.9.1",
