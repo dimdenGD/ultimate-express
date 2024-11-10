@@ -65,7 +65,7 @@ module.exports = class Request extends Readable {
             this._opPath = this._opPath.slice(0, -1);
         }
         this.method = req.getCaseSensitiveMethod().toUpperCase();
-        this.params = {...new NullObject()};
+        this.params = {};
 
         this._gotParams = new Set();
         this._stack = [];

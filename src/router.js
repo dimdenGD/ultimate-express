@@ -370,7 +370,7 @@ module.exports = class Router extends EventEmitter {
                     }
                 }
             } else {
-                req.params = {...new NullObject()};
+                req.params = {};
                 if(req._paramStack.length > 0) {
                     for(let params of req._paramStack) {
                         req.params = {...params, ...req.params};

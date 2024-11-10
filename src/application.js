@@ -47,7 +47,7 @@ function createWorker() {
 }
 
 class Application extends Router {
-    constructor(settings = {...new NullObject()}) {
+    constructor(settings = new NullObject()) {
         super(settings);
         if(!settings?.uwsOptions) {
             settings.uwsOptions = {};
@@ -62,8 +62,8 @@ class Application extends Router {
             this.uwsApp = uWS.App(settings.uwsOptions);
             this.ssl = false;
         }
-        this.cache = {...new NullObject()};
-        this.engines = {...new NullObject()};
+        this.cache = new NullObject();
+        this.engines = {};
         this.locals = {
             settings: this.settings
         };
@@ -261,10 +261,10 @@ class Application extends Router {
     render(name, options, callback) {
         if(typeof options === 'function') {
             callback = options;
-            options = {...new NullObject()};
+            options = new NullObject();
         }
         if(!options) {
-            options = {...new NullObject()};
+            options = new NullObject();
         } else {
             options = Object.assign({}, options);
         }
