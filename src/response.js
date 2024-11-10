@@ -83,6 +83,7 @@ module.exports = class Response extends Writable {
         if(this.app.get('x-powered-by')) {
             this.headers['x-powered-by'] = 'UltimateExpress';
         }
+
         // support for node internal
         this[kOutHeaders] = new Proxy(this.headers, {
             set: (obj, prop, value) => {
@@ -256,8 +257,10 @@ module.exports = class Response extends Writable {
             if(this.socketExists) this.socket.emit('close');
         });
 
+        this.emit('finish')
         return this;
     }
+
     send(body) {
         if(this.headersSent) {
             throw new Error('Can\'t write body: Response was already sent');
@@ -288,6 +291,7 @@ module.exports = class Response extends Writable {
         }
         return this.end(body);
     }
+
     sendFile(path, options = new NullObject(), callback) {
         if(typeof path !== 'string') {
             throw new TypeError('path argument is required to res.sendFile');
@@ -496,10 +500,10 @@ module.exports = class Response extends Writable {
         if (typeof filename === 'function') {
             done = filename;
             name = null;
-            opts = new NullObject();
+            opts = {};
         } else if (typeof options === 'function') {
             done = options;
-            opts = new NullObject();
+            opts = {};
         }
 
         // support optional filename, where options may be in it's place
@@ -577,10 +581,10 @@ module.exports = class Response extends Writable {
     render(view, options, callback) {
         if(typeof options === 'function') {
             callback = options;
-            options = new NullObject();
+            options = {};
         }
         if(!options) {
-            options = new NullObject();
+            options = {};
         } else {
             options = Object.assign({}, options);
         }
@@ -594,7 +598,7 @@ module.exports = class Response extends Writable {
     }
     cookie(name, value, options) {
         if(!options) {
-            options = new NullObject();
+            options = {};
         }
         let val = typeof value === 'object' ? "j:"+JSON.stringify(value) : String(value);
         if(options.maxAge != null) {

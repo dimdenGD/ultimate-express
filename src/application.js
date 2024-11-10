@@ -63,7 +63,7 @@ class Application extends Router {
             this.ssl = false;
         }
         this.cache = new NullObject();
-        this.engines = new NullObject();
+        this.engines = {};
         this.locals = {
             settings: this.settings
         };
@@ -292,7 +292,7 @@ class Application extends Router {
             view = new View(name, {
                 defaultEngine: this.get('view engine'),
                 root: this.get('views'),
-                engines: this.engines
+                engines: {...this.engines}
             });
             if(!view.path) {
                 const dirs = Array.isArray(view.root) && view.root.length > 1

@@ -357,20 +357,20 @@ module.exports = class Router extends EventEmitter {
     _preprocessRequest(req, res, route) {
             req.route = route;
             if(route.optimizedParams) {
-                req.params = req.optimizedParams;
+                req.params = {...req.optimizedParams};
             } else if(typeof route.path === 'string' && (route.path.includes(':') || route.path.includes('*')) && route.pattern instanceof RegExp) {
                 let path = req._originalPath;
                 if(req._stack.length > 0) {
                     path = path.replace(this.getFullMountpath(req), '');
                 }
-                req.params = this._extractParams(route.pattern, path);
+                req.params = {...this._extractParams(route.pattern, path)};
                 if(req._paramStack.length > 0) {
                     for(let params of req._paramStack) {
                         req.params = {...params, ...req.params};
                     }
                 }
             } else {
-                req.params = new NullObject();
+                req.params = {};
                 if(req._paramStack.length > 0) {
                     for(let params of req._paramStack) {
                         req.params = {...params, ...req.params};

@@ -29,10 +29,12 @@ function fastQueryParse(query, options) {
     }
     if(len <= 128) {
         if(!query.includes('[') && !query.includes('%5B') && !query.includes('.') && !query.includes('%2E')) {
-            return querystring.parse(query);
+            // [Object: null prototype] issue
+            return {...querystring.parse(query)};
         }
     }
-    return qs.parse(query, options);
+    // [Object: null prototype] issue
+    return {...qs.parse(query, options)};
 }
 
 function removeDuplicateSlashes(path) {
