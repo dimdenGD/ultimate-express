@@ -1,4 +1,5 @@
 const acorn = require("acorn");
+const { stringify } = require("./utils.js");
 const uWS = require("uWebSockets.js");
 
 const parser = acorn.Parser;
@@ -272,6 +273,20 @@ module.exports = function compileDeclarative(cb, app) {
                             return false;
                         }
                         body.push(...stuff.reverse());
+                    } else if(arg.type === 'ObjectExpression') {
+                        // only simple objects can be optimized
+                        for(let property of arg.properties) {
+                            if(property.key.type !== 'Identifier' && property.key.type !== 'Literal') {
+                                return false;
+                            }
+                            if(property.value.type !== 'Literal') {
+                                return false;
+                            }
+                        }
+                        if(typeof app.get('json replacer') !== 'undefined' && typeof app.get('json replacer') !== 'string') {
+                            return false;
+                        }
+                        body.push({type: 'text', value: stringify(JSON.parse(code.slice(arg.start, arg.end)), app.get('json replacer'), app.get('json spaces'), app.get('json escape'))});
                     } else {
                         return false;
                     }
