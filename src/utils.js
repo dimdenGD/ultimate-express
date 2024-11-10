@@ -25,7 +25,7 @@ const { Stats } = require("fs");
 function fastQueryParse(query, options) {
     const len = query.length;
     if(len === 0){
-        return new NullObject();
+        return {};
     }
     if(len <= 128) {
         if(!query.includes('[') && !query.includes('%5B') && !query.includes('.') && !query.includes('%2E')) {
@@ -321,10 +321,6 @@ function isRangeFresh(req, res) {
     return parseHttpDate(lastModified) <= parseHttpDate(ifRange);
 }
 
-// fast null object
-const NullObject = function() {};
-NullObject.prototype = Object.create(null);
-
 module.exports = {
     removeDuplicateSlashes,
     patternToRegex,
@@ -336,7 +332,6 @@ module.exports = {
     compileTrust,
     deprecated,
     UP_PATH_REGEXP,
-    NullObject,
     decode,
     containsDotFile,
     parseTokenList,

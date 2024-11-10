@@ -20,7 +20,7 @@ const vary = require("vary");
 const encodeUrl = require("encodeurl");
 const { 
     normalizeType, stringify, deprecated, UP_PATH_REGEXP, decode,
-    containsDotFile, isPreconditionFailure, isRangeFresh, NullObject
+    containsDotFile, isPreconditionFailure, isRangeFresh
 } = require("./utils.js");
 const { Writable } = require("stream");
 const { isAbsolute } = require("path");
@@ -70,7 +70,7 @@ module.exports = class Response extends Writable {
         this._res = res;
         this.headersSent = false;
         this.app = app;
-        this.locals = new NullObject();
+        this.locals = {};
         this.finished = false;
         this.aborted = false;
         this.statusCode = 200;
@@ -288,15 +288,15 @@ module.exports = class Response extends Writable {
         }
         return this.end(body);
     }
-    sendFile(path, options = new NullObject(), callback) {
+    sendFile(path, options = {}, callback) {
         if(typeof path !== 'string') {
             throw new TypeError('path argument is required to res.sendFile');
         }
         if(typeof options === 'function') {
             callback = options;
-            options = new NullObject();
+            options = {};
         }
-        if(!options) options = new NullObject();
+        if(!options) options = {};
         let done = callback;
         if(!done) done = this.req.next;
         // default options
@@ -490,16 +490,16 @@ module.exports = class Response extends Writable {
     download(path, filename, options, callback) {
         let done = callback;
         let name = filename;
-        let opts = options || new NullObject();
+        let opts = options || {};
 
         // support function as second or third arg
         if (typeof filename === 'function') {
             done = filename;
             name = null;
-            opts = new NullObject();
+            opts = {};
         } else if (typeof options === 'function') {
             done = options;
-            opts = new NullObject();
+            opts = {};
         }
 
         // support optional filename, where options may be in it's place
@@ -577,12 +577,12 @@ module.exports = class Response extends Writable {
     render(view, options, callback) {
         if(typeof options === 'function') {
             callback = options;
-            options = new NullObject();
+            options = {};
         }
         if(!options) {
-            options = new NullObject();
+            options = {};
         } else {
-            options = Object.assign({}, options);
+            options = {...options};
         }
         options._locals = this.locals;
         const done = callback || ((err, str) => {
@@ -594,7 +594,7 @@ module.exports = class Response extends Writable {
     }
     cookie(name, value, options) {
         if(!options) {
-            options = new NullObject();
+            options = {};
         }
         let val = typeof value === 'object' ? "j:"+JSON.stringify(value) : String(value);
         if(options.maxAge != null) {

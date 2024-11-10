@@ -16,7 +16,7 @@ limitations under the License.
 
 const uWS = require("uWebSockets.js");
 const Router = require("./router.js");
-const { removeDuplicateSlashes, defaultSettings, compileTrust, createETagGenerator, fastQueryParse, NullObject } = require("./utils.js");
+const { removeDuplicateSlashes, defaultSettings, compileTrust, createETagGenerator, fastQueryParse } = require("./utils.js");
 const querystring = require("fast-querystring");
 const ViewClass = require("./view.js");
 const path = require("path");
@@ -27,7 +27,7 @@ const cpuCount = os.cpus().length;
 
 let workers = [];
 let taskKey = 0;
-const workerTasks = new NullObject();
+const workerTasks = {};
 
 function createWorker() {
     const worker = new Worker(path.join(__dirname, 'worker.js'));
@@ -47,7 +47,7 @@ function createWorker() {
 }
 
 class Application extends Router {
-    constructor(settings = new NullObject()) {
+    constructor(settings = {}) {
         super(settings);
         if(!settings?.uwsOptions) {
             settings.uwsOptions = {};
@@ -62,8 +62,8 @@ class Application extends Router {
             this.uwsApp = uWS.App(settings.uwsOptions);
             this.ssl = false;
         }
-        this.cache = new NullObject();
-        this.engines = new NullObject();
+        this.cache = {};
+        this.engines = {};
         this.locals = {
             settings: this.settings
         };
@@ -261,12 +261,12 @@ class Application extends Router {
     render(name, options, callback) {
         if(typeof options === 'function') {
             callback = options;
-            options = new NullObject();
+            options = {};
         }
         if(!options) {
-            options = new NullObject();
+            options = {};
         } else {
-            options = Object.assign({}, options);
+            options = {...options};
         }
         for(let key in this.locals) {
             options[key] = this.locals[key];

@@ -20,10 +20,10 @@ const bytes = require('bytes');
 const zlib = require('fast-zlib');
 const typeis = require('type-is');
 const querystring = require('fast-querystring');
-const { fastQueryParse, NullObject } = require('./utils.js');
+const { fastQueryParse } = require('./utils.js');
 
 function static(root, options) {
-    if(!options) options = new NullObject();
+    if(!options) options = {};
     if(typeof options.index === 'undefined') options.index = 'index.html';
     if(typeof options.redirect === 'undefined') options.redirect = true;
     if(typeof options.fallthrough === 'undefined') options.fallthrough = true;
@@ -139,7 +139,7 @@ function createInflate(contentEncoding) {
 function createBodyParser(defaultType, beforeReturn) {
     return function(options) {
         if(typeof options !== 'object') {
-            options = new NullObject();
+            options = {};
         }
         if(typeof options.limit === 'undefined') options.limit = bytes('100kb');
         else options.limit = bytes(options.limit);
@@ -164,7 +164,7 @@ function createBodyParser(defaultType, beforeReturn) {
                 return next();
             }
 
-            req.body = new NullObject();
+            req.body = {};
 
             // skip reading body for non-json content type
             if(!type) {
