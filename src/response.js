@@ -83,6 +83,7 @@ module.exports = class Response extends Writable {
         if(this.app.get('x-powered-by')) {
             this.headers['x-powered-by'] = 'UltimateExpress';
         }
+
         // support for node internal
         this[kOutHeaders] = new Proxy(this.headers, {
             set: (obj, prop, value) => {
@@ -256,8 +257,10 @@ module.exports = class Response extends Writable {
             if(this.socketExists) this.socket.emit('close');
         });
 
+        this.emit('finish')
         return this;
     }
+
     send(body) {
         if(this.headersSent) {
             throw new Error('Can\'t write body: Response was already sent');
@@ -288,6 +291,7 @@ module.exports = class Response extends Writable {
         }
         return this.end(body);
     }
+
     sendFile(path, options = {}, callback) {
         if(typeof path !== 'string') {
             throw new TypeError('path argument is required to res.sendFile');
