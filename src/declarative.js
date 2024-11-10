@@ -279,6 +279,9 @@ module.exports = function compileDeclarative(cb, app) {
                         }
                         body.push(...stuff.reverse());
                     } else if(arg.type === 'ObjectExpression') {
+                        if(call.obj.propertyName === 'end') {
+                            return false;
+                        }
                         // only simple objects can be optimized
                         let objCode = code;
                         for(let property of arg.properties) {
