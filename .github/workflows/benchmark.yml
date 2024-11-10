@@ -71,14 +71,33 @@ jobs:
       - name: Prepare benchmark output
         id: benchmark_output
         run: |
+          # Parse Requests/sec values
           ultimate_requests=$(grep "Requests/sec" ultimate-express-benchmark.txt | awk '{print $2}')
           express_requests=$(grep "Requests/sec" express-benchmark.txt | awk '{print $2}')
           requests_ratio=$(echo "scale=2; $ultimate_requests / $express_requests" | bc)
-          
-          ultimate_latency=$(grep "Latency" ultimate-express-benchmark.txt | awk '{print $2}' | sed 's/ms//')
-          express_latency=$(grep "Latency" express-benchmark.txt | awk '{print $2}' | sed 's/ms//')
+
+          # Parse and convert latency values to ms
+          ultimate_latency_raw=$(grep "Latency" ultimate-express-benchmark.txt | awk '{print $2}')
+          express_latency_raw=$(grep "Latency" express-benchmark.txt | awk '{print $2}')
+
+          # Convert ultimate latency to ms if in us
+          if [[ "$ultimate_latency_raw" == *us ]]; then
+            ultimate_latency=$(echo "scale=3; ${ultimate_latency_raw%us} / 1000" | bc)
+          else
+            ultimate_latency=${ultimate_latency_raw%ms}
+          fi
+
+          # Convert express latency to ms if in us
+          if [[ "$express_latency_raw" == *us ]]; then
+            express_latency=$(echo "scale=3; ${express_latency_raw%us} / 1000" | bc)
+          else
+            express_latency=${express_latency_raw%ms}
+          fi
+
+          # Calculate latency ratio
           latency_ratio=$(echo "scale=2; $express_latency / $ultimate_latency" | bc)
 
+          # Parse and format Transfer/sec values
           ultimate_transfer=$(grep "Transfer/sec" ultimate-express-benchmark.txt | awk '{print $2}' | sed 's/MB//')
           express_transfer=$(grep "Transfer/sec" express-benchmark.txt | awk '{print $2}' | sed 's/MB//')
           transfer_ratio=$(echo "scale=2; $ultimate_transfer / $express_transfer" | bc)
@@ -95,6 +114,7 @@ jobs:
 
           # Display the summary in the Actions log
           cat benchmark_summary.md
+      
 
       - name: Comment on Pull Request
         if: github.event_name == 'pull_request'
