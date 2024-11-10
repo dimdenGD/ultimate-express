@@ -108,8 +108,8 @@ jobs:
             printf "| %-18s | %-18s | %-15s | %-15s |\n" "Metric" "Ultimate Express" "Express" "Difference"
             printf "|--------------------|--------------------|-----------------|-----------------|\n"
             printf "| %-18s | %-18s | %-15s | %-15s |\n" "Requests/sec" "$ultimate_requests" "$express_requests" "${requests_ratio}x faster"
-            printf "| %-18s | %-16sms | %-13sms | %-7sx faster |\n" "Avg Latency" "$ultimate_latency" "$express_latency" "$latency_ratio"
-            printf "| %-18s | %-16sMB | %-13sMB | %-7sx faster |\n" "Transfer/sec" "$ultimate_transfer" "$express_transfer" "$transfer_ratio"
+            printf "| %-18s | %-16sms | %-13sms | %-15s |\n" "Avg Latency" "$ultimate_latency" "$express_latency" "${latency_ratio}x faster"
+            printf "| %-18s | %-16sMB | %-13sMB | %-15s |\n" "Transfer/sec" "$ultimate_transfer" "$express_transfer" "${transfer_ratio}x faster"
           } >> benchmark_summary.md
 
           # Display the summary in the Actions log
