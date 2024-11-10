@@ -65,7 +65,7 @@ module.exports = class Request extends Readable {
             this._opPath = this._opPath.slice(0, -1);
         }
         this.method = req.getCaseSensitiveMethod().toUpperCase();
-        this.params = new NullObject();
+        this.params = {...new NullObject()};
 
         this._gotParams = new Set();
         this._stack = [];
@@ -350,7 +350,7 @@ module.exports = class Request extends Readable {
     get headers() {
         // https://nodejs.org/api/http.html#messageheaders
         if(this.#cachedHeaders) {
-            return this.#cachedHeaders;
+            return {...this.#cachedHeaders};
         }
         this.#cachedHeaders = new NullObject();
         for (let index = 0, len = this.#rawHeadersEntries.length; index < len; index++) {
@@ -375,7 +375,7 @@ module.exports = class Request extends Readable {
                 this.#cachedHeaders[key] = value;
             }
         }
-        return this.#cachedHeaders;
+        return {...this.#cachedHeaders};
     }
 
     get headersDistinct() {
@@ -391,7 +391,7 @@ module.exports = class Request extends Readable {
             }
             this.#cachedDistinctHeaders[key].push(value);
         });
-        return this.#cachedDistinctHeaders;
+        return {...this.#cachedDistinctHeaders};
     }
 
     get rawHeaders() {
