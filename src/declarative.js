@@ -6,6 +6,11 @@ const parser = acorn.Parser;
 
 const allowedResMethods = ['set', 'header', 'setHeader', 'status', 'send', 'end', 'append'];
 const allowedIdentifiers = ['query', 'params', ...allowedResMethods];
+const objKeyRegex = /[\s{\n]([A-Za-z-0-9_]+)(\s|\n)*?:/g;
+
+function replaceSingleCharacter(str, index, char) {
+    return str.slice(0, index) + char + str.slice(index + 1);
+}
 
 // generates a declarative response from a callback
 // uWS allows creating such responses and they are extremely fast
@@ -275,9 +280,14 @@ module.exports = function compileDeclarative(cb, app) {
                         body.push(...stuff.reverse());
                     } else if(arg.type === 'ObjectExpression') {
                         // only simple objects can be optimized
+                        let objCode = code;
                         for(let property of arg.properties) {
                             if(property.key.type !== 'Identifier' && property.key.type !== 'Literal') {
                                 return false;
+                            }
+                            if(property.value.raw.startsWith("'") && property.value.raw.endsWith("'") && !property.value.value.includes("'")) {
+                                objCode = replaceSingleCharacter(objCode, property.value.start, '"');
+                                objCode = replaceSingleCharacter(objCode, property.value.end - 1, '"');
                             }
                             if(property.value.type !== 'Literal') {
                                 return false;
@@ -286,7 +296,18 @@ module.exports = function compileDeclarative(cb, app) {
                         if(typeof app.get('json replacer') !== 'undefined' && typeof app.get('json replacer') !== 'string') {
                             return false;
                         }
-                        body.push({type: 'text', value: stringify(JSON.parse(code.slice(arg.start, arg.end)), app.get('json replacer'), app.get('json spaces'), app.get('json escape'))});
+
+                        headers.push(['content-type', 'application/json; charset=utf-8']);
+                        body.push({
+                            type: 'text',
+                            value: 
+                            stringify(
+                                JSON.parse(objCode.slice(arg.start, arg.end).replace(objKeyRegex, '"$1":')), 
+                                app.get('json replacer'), 
+                                app.get('json spaces'), 
+                                app.get('json escape')
+                            )
+                        });
                     } else {
                         return false;
                     }

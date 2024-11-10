@@ -72,6 +72,8 @@ app.listen(13333, async () => {
         fetch('http://localhost:13333/arraybuffer').then(res => res.status),
     ]);
 
+    console.log(await fetch('http://localhost:13333/json').then(res => res.headers.get('content-type')));
+
     console.log(responses);
     console.log(codes);
     process.exit(0);
