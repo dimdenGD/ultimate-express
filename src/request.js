@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const { patternToRegex, deprecated } = require("./utils.js");
+const { patternToRegex, deprecated, NullObject } = require("./utils.js");
 const accepts = require("accepts");
 const typeis = require("type-is");
 const parseRange = require("range-parser");
@@ -65,7 +65,7 @@ module.exports = class Request extends Readable {
             this._opPath = this._opPath.slice(0, -1);
         }
         this.method = req.getCaseSensitiveMethod().toUpperCase();
-        this.params = {};
+        this.params = new NullObject();
 
         this._gotParams = new Set();
         this._stack = [];
@@ -207,9 +207,9 @@ module.exports = class Request extends Readable {
         if(qp) {
             this.#cachedQuery = qp(this.urlQuery.slice(1));
         } else {
-            this.#cachedQuery = {};
+            this.#cachedQuery = new NullObject();
         }
-        return this.#cachedQuery;
+        return {...this.#cachedQuery};
     }
 
     get secure() {
@@ -352,7 +352,7 @@ module.exports = class Request extends Readable {
         if(this.#cachedHeaders) {
             return this.#cachedHeaders;
         }
-        this.#cachedHeaders = {};
+        this.#cachedHeaders = new NullObject();
         for (let index = 0, len = this.#rawHeadersEntries.length; index < len; index++) {
             let [key, value] = this.#rawHeadersEntries[index];   
             key = key.toLowerCase();
@@ -382,7 +382,7 @@ module.exports = class Request extends Readable {
         if(this.#cachedDistinctHeaders) {
             return this.#cachedDistinctHeaders;
         }
-        this.#cachedDistinctHeaders = {};
+        this.#cachedDistinctHeaders = new NullObject();
         this.#rawHeadersEntries.forEach((val) => {
             const [key, value] = val;
             if(!this.#cachedDistinctHeaders[key]) {

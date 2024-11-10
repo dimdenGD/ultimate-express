@@ -25,14 +25,16 @@ const { Stats } = require("fs");
 function fastQueryParse(query, options) {
     const len = query.length;
     if(len === 0){
-        return {};
+        return new NullObject();
     }
     if(len <= 128) {
         if(!query.includes('[') && !query.includes('%5B') && !query.includes('.') && !query.includes('%2E')) {
-            return querystring.parse(query);
+            // [Object: null prototype] issue
+            return {...querystring.parse(query)};
         }
     }
-    return qs.parse(query, options);
+    // [Object: null prototype] issue
+    return {...qs.parse(query, options)};
 }
 
 function removeDuplicateSlashes(path) {
@@ -321,6 +323,10 @@ function isRangeFresh(req, res) {
     return parseHttpDate(lastModified) <= parseHttpDate(ifRange);
 }
 
+// fast null object
+const NullObject = function() {};
+NullObject.prototype = Object.create(null);
+
 module.exports = {
     removeDuplicateSlashes,
     patternToRegex,
@@ -332,6 +338,7 @@ module.exports = {
     compileTrust,
     deprecated,
     UP_PATH_REGEXP,
+    NullObject,
     decode,
     containsDotFile,
     parseTokenList,

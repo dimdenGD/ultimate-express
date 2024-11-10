@@ -1,7 +1,7 @@
 'use strict';
 
-const express = require('express');
+const express = require('../src/index');
 const app = express();
 
 app.get('/', async (req, res) => res.send('Hello world'));
-app.listen(3001);
+app.listen(3000);

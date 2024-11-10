@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const { patternToRegex, needsConversionToRegex, deprecated, findIndexStartingFrom, canBeOptimized } = require("./utils.js");
+const { patternToRegex, needsConversionToRegex, deprecated, findIndexStartingFrom, canBeOptimized, NullObject } = require("./utils.js");
 const Response = require("./response.js");
 const Request = require("./request.js");
 const { EventEmitter } = require("tseep");
@@ -276,7 +276,7 @@ module.exports = class Router extends EventEmitter {
         let fn = async (res, req) => {
             const { request, response } = this.handleRequest(res, req);
             if(route.optimizedParams) {
-                request.optimizedParams = {};
+                request.optimizedParams = new NullObject();
                 for(let i = 0; i < route.optimizedParams.length; i++) {
                     request.optimizedParams[route.optimizedParams[i]] = req.getParameter(i);
                 }
@@ -347,7 +347,7 @@ module.exports = class Router extends EventEmitter {
 
     _extractParams(pattern, path) {
         let match = pattern.exec(path);
-        const obj = match?.groups ?? {};
+        const obj = match?.groups ?? new NullObject();
         for(let i = 1; i < match.length; i++) {
             obj[i - 1] = match[i];
         }
@@ -357,20 +357,20 @@ module.exports = class Router extends EventEmitter {
     _preprocessRequest(req, res, route) {
             req.route = route;
             if(route.optimizedParams) {
-                req.params = req.optimizedParams;
+                req.params = {...req.optimizedParams};
             } else if(typeof route.path === 'string' && (route.path.includes(':') || route.path.includes('*')) && route.pattern instanceof RegExp) {
                 let path = req._originalPath;
                 if(req._stack.length > 0) {
                     path = path.replace(this.getFullMountpath(req), '');
                 }
-                req.params = this._extractParams(route.pattern, path);
+                req.params = {...this._extractParams(route.pattern, path)};
                 if(req._paramStack.length > 0) {
                     for(let params of req._paramStack) {
                         req.params = {...params, ...req.params};
                     }
                 }
             } else {
-                req.params = {};
+                req.params = {...new NullObject()};
                 if(req._paramStack.length > 0) {
                     for(let params of req._paramStack) {
                         req.params = {...params, ...req.params};
@@ -570,7 +570,7 @@ module.exports = class Router extends EventEmitter {
     }
     
     route(path) {
-        let fns = {};
+        let fns = new NullObject();
         for(let method of methods) {
             fns[method] = (...callbacks) => {
                 return this.createRoute(method.toUpperCase(), path, fns, ...callbacks);
