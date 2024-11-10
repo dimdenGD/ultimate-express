@@ -59,10 +59,11 @@
     "statuses": "^2.0.1",
     "tseep": "^1.2.2",
     "type-is": "^1.6.18",
-    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.70.0",
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.49.0",
     "vary": "^1.1.2"
   },
   "devDependencies": {
+    "@codechecks/client": "^0.1.12",
     "body-parser": "^1.20.3",
     "compression": "^1.7.4",
     "cookie-parser": "^1.4.6",

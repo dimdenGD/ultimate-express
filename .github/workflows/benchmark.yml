@@ -8,6 +8,9 @@ on:
 jobs:
   benchmark:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
 
     steps:
       - name: Checkout code
@@ -95,6 +98,7 @@ jobs:
 
       - name: Comment on Pull Request
         if: github.event_name == 'pull_request'
+        continue-on-error: true
         uses: peter-evans/create-or-update-comment@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
