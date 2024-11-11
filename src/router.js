@@ -453,9 +453,9 @@ module.exports = class Router extends EventEmitter {
         // so call it as async when the request has been through every 300 routes to reset it
         const continueRoute = this._paramCallbacks.size === 0 && req.routeCount % 300 !== 0 ? 
             this._preprocessRequest(req, res, route) : await this._preprocessRequest(req, res, route);
-        
+
+        const strictRouting = this.get('strict routing');
         if(route.use) {
-            const strictRouting = this.get('strict routing');
             req._stack.push(route.path);
             req._opPath = req._originalPath.replace(this.getFullMountpath(req), '');
             if(req.endsWithSlash && req._opPath[req._opPath.length - 1] !== '/') {
@@ -472,7 +472,6 @@ module.exports = class Router extends EventEmitter {
                 req.path = '/';
             }
         }
-        const strictRouting = this.get('strict routing');
         return new Promise((resolve) => {
             const next = async (thingamabob) => {
                 if(thingamabob) {
