@@ -118,7 +118,9 @@ module.exports = class Router extends EventEmitter {
             }
             return pattern === path;
         }
-        
+        if (pattern.source === '(?:)'){
+            return true;
+        }
         return pattern.test(path);
     }
 
@@ -470,13 +472,14 @@ module.exports = class Router extends EventEmitter {
                 req.path = '/';
             }
         }
+        const strictRouting = this.get('strict routing');
         return new Promise((resolve) => {
             const next = async (thingamabob) => {
                 if(thingamabob) {
                     if(thingamabob === 'route' || thingamabob === 'skipPop') {
                         if(route.use && thingamabob !== 'skipPop') {
                             req._stack.pop();
-                            const strictRouting = this.get('strict routing');
+                            
                             req._opPath = req._stack.length > 0 ? req._originalPath.replace(this.getFullMountpath(req), '') : req._originalPath;
                             if(strictRouting) {
                                 if(req.endsWithSlash && req._opPath[req._opPath.length - 1] !== '/') {
