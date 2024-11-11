@@ -445,7 +445,13 @@ module.exports = class Router extends EventEmitter {
             return this._routeRequest(req, res, 0, this._routes, false, skipUntil);
         }
         let callbackindex = 0;
-        const continueRoute = this._paramCallbacks.size === 0 ? this._preprocessRequest(req, res, route) : await this._preprocessRequest(req, res, route);
+
+        // avoid calling _preprocessRequest as async function as its slower
+        // but it seems like calling it as async has unintended consequence of resetting max call stack size
+        // so we only call it as async when the request has been through every 300 routes to reset it
+        const continueRoute = this._paramCallbacks.size === 0 && req.routeCount % 300 !== 0 ? 
+            this._preprocessRequest(req, res, route) : await this._preprocessRequest(req, res, route);
+        
         if(route.use) {
             const strictRouting = this.get('strict routing');
             req._stack.push(route.path);
@@ -490,6 +496,7 @@ module.exports = class Router extends EventEmitter {
                                 req.app = req.app.parent;
                             }
                         }
+                        req.routeCount++;
                         return resolve(this._routeRequest(req, res, routeIndex + 1, routes, skipCheck, skipUntil));
                     } else {
                         this._handleError(thingamabob, req, res);

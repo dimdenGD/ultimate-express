@@ -45,6 +45,7 @@ module.exports = class Request extends Readable {
         this._req.forEach((key, value) => {
             this.#rawHeadersEntries.push([key, value]);
         });
+        this.routeCount = 0;
         this.key = key++;
         if(key > 100000) {
             key = 0;
