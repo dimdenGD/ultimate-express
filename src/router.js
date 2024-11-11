@@ -355,60 +355,60 @@ module.exports = class Router extends EventEmitter {
     }
 
     _preprocessRequest(req, res, route) {
-            req.route = route;
-            if(route.optimizedParams) {
-                req.params = {...req.optimizedParams};
-            } else if(typeof route.path === 'string' && (route.path.includes(':') || route.path.includes('*')) && route.pattern instanceof RegExp) {
-                let path = req._originalPath;
-                if(req._stack.length > 0) {
-                    path = path.replace(this.getFullMountpath(req), '');
-                }
-                req.params = {...this._extractParams(route.pattern, path)};
-                if(req._paramStack.length > 0) {
-                    for(let params of req._paramStack) {
-                        req.params = {...params, ...req.params};
-                    }
-                }
-            } else {
-                req.params = {};
-                if(req._paramStack.length > 0) {
-                    for(let params of req._paramStack) {
-                        req.params = {...params, ...req.params};
-                    }
+        req.route = route;
+        if(route.optimizedParams) {
+            req.params = {...req.optimizedParams};
+        } else if(typeof route.path === 'string' && (route.path.includes(':') || route.path.includes('*')) && route.pattern instanceof RegExp) {
+            let path = req._originalPath;
+            if(req._stack.length > 0) {
+                path = path.replace(this.getFullMountpath(req), '');
+            }
+            req.params = {...this._extractParams(route.pattern, path)};
+            if(req._paramStack.length > 0) {
+                for(let params of req._paramStack) {
+                    req.params = {...params, ...req.params};
                 }
             }
+        } else {
+            req.params = {};
+            if(req._paramStack.length > 0) {
+                for(let params of req._paramStack) {
+                    req.params = {...params, ...req.params};
+                }
+            }
+        }
 
-            if(this._paramCallbacks.size > 0) {
-                return new Promise(async resolve => {
-                    for(let param in req.params) {
-                        if(this._paramCallbacks.has(param) && !req._gotParams.has(param)) {
-                            req._gotParams.add(param);
-                            const pcs = this._paramCallbacks.get(param);
-                            for(let i = 0; i < pcs.length; i++) {
-                                const fn = pcs[i];
-                                await new Promise(resolveRoute => {
-                                    const next = (thingamabob) => {
-                                        if(thingamabob) {
-                                            if(thingamabob === 'route') {
-                                                return resolve('route');
-                                            } else {
-                                                this._handleError(thingamabob, req, res);
-                                                return resolve(false);
-                                            }
+        if(this._paramCallbacks.size > 0) {
+            return new Promise(async resolve => {
+                for(let param in req.params) {
+                    if(this._paramCallbacks.has(param) && !req._gotParams.has(param)) {
+                        req._gotParams.add(param);
+                        const pcs = this._paramCallbacks.get(param);
+                        for(let i = 0; i < pcs.length; i++) {
+                            const fn = pcs[i];
+                            await new Promise(resolveRoute => {
+                                const next = (thingamabob) => {
+                                    if(thingamabob) {
+                                        if(thingamabob === 'route') {
+                                            return resolve('route');
+                                        } else {
+                                            this._handleError(thingamabob, req, res);
+                                            return resolve(false);
                                         }
-                                        return resolveRoute();
-                                    };
-                                    req.next = next;
-                                    fn(req, res, next, req.params[param], param);
-                                });
-                            }
+                                    }
+                                    return resolveRoute();
+                                };
+                                req.next = next;
+                                fn(req, res, next, req.params[param], param);
+                            });
                         }
                     }
+                }
 
-                    resolve(true)
-                });
-            }
-            return true;
+                resolve(true)
+            });
+        }
+        return true;
     }
 
     param(name, fn) {
@@ -445,7 +445,7 @@ module.exports = class Router extends EventEmitter {
             return this._routeRequest(req, res, 0, this._routes, false, skipUntil);
         }
         let callbackindex = 0;
-        const continueRoute = await this._preprocessRequest(req, res, route);
+        const continueRoute = this._paramCallbacks.size === 0 ? this._preprocessRequest(req, res, route) : await this._preprocessRequest(req, res, route);
         if(route.use) {
             const strictRouting = this.get('strict routing');
             req._stack.push(route.path);
