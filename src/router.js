@@ -448,7 +448,7 @@ module.exports = class Router extends EventEmitter {
 
         // avoid calling _preprocessRequest as async function as its slower
         // but it seems like calling it as async has unintended consequence of resetting max call stack size
-        // so we only call it as async when the request has been through every 300 routes to reset it
+        // so call it as async when the request has been through every 300 routes to reset it
         const continueRoute = this._paramCallbacks.size === 0 && req.routeCount % 300 !== 0 ? 
             this._preprocessRequest(req, res, route) : await this._preprocessRequest(req, res, route);
         
