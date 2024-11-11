@@ -118,9 +118,7 @@ module.exports = class Router extends EventEmitter {
             }
             return pattern === path;
         }
-        if (pattern.source === '(?:)'){
-            return true;
-        }
+        
         return pattern.test(path);
     }
 
@@ -453,9 +451,9 @@ module.exports = class Router extends EventEmitter {
         // so call it as async when the request has been through every 300 routes to reset it
         const continueRoute = this._paramCallbacks.size === 0 && req.routeCount % 300 !== 0 ? 
             this._preprocessRequest(req, res, route) : await this._preprocessRequest(req, res, route);
-
-        const strictRouting = this.get('strict routing');
+        
         if(route.use) {
+            const strictRouting = this.get('strict routing');
             req._stack.push(route.path);
             req._opPath = req._originalPath.replace(this.getFullMountpath(req), '');
             if(req.endsWithSlash && req._opPath[req._opPath.length - 1] !== '/') {
@@ -478,7 +476,7 @@ module.exports = class Router extends EventEmitter {
                     if(thingamabob === 'route' || thingamabob === 'skipPop') {
                         if(route.use && thingamabob !== 'skipPop') {
                             req._stack.pop();
-                            
+                            const strictRouting = this.get('strict routing');
                             req._opPath = req._stack.length > 0 ? req._originalPath.replace(this.getFullMountpath(req), '') : req._originalPath;
                             if(strictRouting) {
                                 if(req.endsWithSlash && req._opPath[req._opPath.length - 1] !== '/') {
