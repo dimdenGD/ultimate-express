@@ -22,6 +22,8 @@ const querystring = require("fast-querystring");
 const etag = require("etag");
 const { Stats } = require("fs");
 
+const EMPTY_REGEX = new RegExp(``);
+
 function fastQueryParse(query, options) {
     const len = query.length;
     if(len === 0){
@@ -46,7 +48,7 @@ function patternToRegex(pattern, isPrefix = false) {
         return pattern;
     }
     if(isPrefix && pattern === '') {
-        return new RegExp(``);
+        return EMPTY_REGEX;
     }
 
     let regexPattern = pattern
@@ -207,7 +209,7 @@ function deprecated(oldMethod, newMethod, full = false) {
 }
 
 function findIndexStartingFrom(arr, fn, index = 0) {
-    for(let i = index; i < arr.length; i++) {
+    for(let i = index, end = arr.length; i < end; i++) {
         if(fn(arr[i], i, arr)) {
             return i;
         }
