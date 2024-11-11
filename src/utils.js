@@ -207,7 +207,7 @@ function deprecated(oldMethod, newMethod, full = false) {
 }
 
 function findIndexStartingFrom(arr, fn, index = 0) {
-    for(let i = index; i < arr.length; i++) {
+    for(let i = index, end = arr.length; i < end; i++) {
         if(fn(arr[i], i, arr)) {
             return i;
         }
