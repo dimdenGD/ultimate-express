@@ -106,17 +106,33 @@ function canBeOptimized(pattern) {
 }
 
 function acceptParams(str) {
-    const parts = str.split(/ *; */);
-    const ret = { value: parts[0], quality: 1, params: {} }
-  
-    for (let i = 1, len = parts.length; i < len; ++i) {
-      const pms = parts[i].split(/ *= */);
-      const [pms_0, pms_1] = pms;
-      if ('q' === pms_0) {
-        ret.quality = parseFloat(pms_1);
-      } else {
-        ret.params[pms_0] = pms_1;
-      }
+    const length = str.length;
+    const colonIndex = str.indexOf(';');
+    const index = colonIndex === -1 ? length : colonIndex;
+    const ret = { value: str.slice(0, index).trim(), quality: 1, params: {} };
+
+    while (index < length) {
+        const splitIndex = str.indexOf('=', index);
+        if (splitIndex === -1) break;
+
+        const colonIndex = str.indexOf(';', index);
+        const endIndex = colonIndex === -1 ? length : colonIndex;
+
+        if (splitIndex > endIndex) {
+            index = str.lastIndexOf(';', splitIndex - 1) + 1;
+            continue;
+        }
+
+        const key = str.slice(index, splitIndex).trim();
+        const value = str.slice(splitIndex + 1, endIndex).trim();
+
+        if (key === 'q') {
+            ret.quality = parseFloat(value);
+        } else {
+            ret.params[key] = value;
+        }
+
+        index = endIndex + 1;
     }
   
     return ret;
