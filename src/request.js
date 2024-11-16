@@ -308,20 +308,19 @@ module.exports = class Request extends Readable {
     }
 
     accepts(...types) {
-        const accept = accepts({ headers: this.headers });
-        return accept.types(...types);
+        return accepts(this).types(...types);
     }
 
     acceptsCharsets(...charsets) {
-        return accepts({ headers: this.headers }).charsets(...charsets);
+        return accepts(this).charsets(...charsets);
     }
 
     acceptsEncodings(...encodings) {
-        return accepts({ headers: this.headers }).encodings(...encodings);
+        return accepts(this).encodings(...encodings);
     }
     
     acceptsLanguages(...languages) {
-        return accepts({ headers: this.headers }).languages(...languages);
+        return accepts(this).languages(...languages);
     }
 
     is(type) {
