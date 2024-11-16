@@ -318,8 +318,7 @@ module.exports = class Request extends Readable {
     }
 
     acceptsEncodings(...encodings) {
-        const accept = accepts({ headers: this.headers });
-        return accept.encodings(...encodings);
+        return accepts({ headers: this.headers }).encodings(...encodings);
     }
     
     acceptsLanguages(...languages) {
