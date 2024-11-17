@@ -366,5 +366,6 @@ module.exports = {
     isRangeFresh,
     findIndexStartingFrom,
     fastQueryParse,
-    canBeOptimized
+    canBeOptimized,
+    EMPTY_REGEX
 };

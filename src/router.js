@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const { patternToRegex, needsConversionToRegex, deprecated, findIndexStartingFrom, canBeOptimized, NullObject } = require("./utils.js");
+const { patternToRegex, needsConversionToRegex, deprecated, findIndexStartingFrom, canBeOptimized, NullObject, EMPTY_REGEX } = require("./utils.js");
 const Response = require("./response.js");
 const Request = require("./request.js");
 const { EventEmitter } = require("tseep");
@@ -93,6 +93,9 @@ module.exports = class Router extends EventEmitter {
 
     getFullMountpath(req) {
         let fullStack = req._stack.join("");
+        if(!fullStack){
+            return EMPTY_REGEX;
+        }
         let fullMountpath = this._mountpathCache.get(fullStack);
         if(!fullMountpath) {
             fullMountpath = patternToRegex(fullStack, true);
@@ -118,7 +121,7 @@ module.exports = class Router extends EventEmitter {
             }
             return pattern === path;
         }
-        if (pattern.source === '(?:)'){
+        if (pattern === EMPTY_REGEX){
             return true;
         }
         return pattern.test(path);
@@ -458,7 +461,7 @@ module.exports = class Router extends EventEmitter {
         if(route.use) {
             req._stack.push(route.path);
             const fullMountpath = this.getFullMountpath(req);
-            req._opPath = fullMountpath !== '' ? req._originalPath.replace(fullMountpath, '') : fullMountpath;
+            req._opPath = fullMountpath !== EMPTY_REGEX ? req._originalPath.replace(fullMountpath, '') : req._originalPath;
             if(req.endsWithSlash && req._opPath[req._opPath.length - 1] !== '/') {
                 if(strictRouting) {
                     req._opPath += '/';
