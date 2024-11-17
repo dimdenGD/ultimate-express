@@ -386,10 +386,10 @@ module.exports = class Router extends EventEmitter {
         if(this._paramCallbacks.size > 0) {
             return new Promise(async resolve => {
                 for(let param in req.params) {
-                    if(this._paramCallbacks.has(param) && !req._gotParams.has(param)) {
+                    const pcs = this._paramCallbacks.get(param);
+                    if(pcs && !req._gotParams.has(param)) {
                         req._gotParams.add(param);
-                        const pcs = this._paramCallbacks.get(param);
-                        for(let i = 0; i < pcs.length; i++) {
+                        for(let i = 0, len = pcs.length; i < len; i++) {
                             const fn = pcs[i];
                             await new Promise(resolveRoute => {
                                 const next = (thingamabob) => {
