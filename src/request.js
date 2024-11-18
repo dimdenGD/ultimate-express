@@ -306,6 +306,7 @@ module.exports = class Request extends Readable {
         } 
         return this.headers[field];
     }
+    header = this.get
 
     accepts(...types) {
         return accepts(this).types(...types);
