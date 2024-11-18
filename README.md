@@ -194,6 +194,7 @@ In general, basically all features and options are supported. Use [Express 4.x d
 - ✅ req.cookies
 - ✅ req.fresh
 - ✅ req.hostname
+- ✅ req.header
 - ✅ req.headers
 - ✅ req.headersDistinct
 - ✅ req.rawHeaders
