@@ -187,18 +187,19 @@ module.exports = class Response extends Writable {
     }
     writeHeaders(utf8) {
         for(const header in this.headers) {
+            const value = this.headers[header];
             if(header === 'content-length') {
                 // if content-length is set, disable chunked transfer encoding, since size is known
                 this.chunkedTransfer = false;
-                this.totalSize = parseInt(this.headers[header]);
+                this.totalSize = parseInt(value);
                 continue;
             }
-            if(Array.isArray(this.headers[header])) {
-                for(let value of this.headers[header]) {
+            if(Array.isArray(value)) {
+                for(let value of value) {
                     this._res.writeHeader(header, value);
                 }
             } else {
-                this._res.writeHeader(header, this.headers[header]);
+                this._res.writeHeader(header, value);
             }
         }
         if(!this.headers['content-type']) {
@@ -306,8 +307,7 @@ module.exports = class Response extends Writable {
         // default options
         if(typeof options.maxAge === 'string') {
             options.maxAge = ms(options.maxAge);
-        }
-        if(typeof options.maxAge === 'undefined') {
+        } else if(typeof options.maxAge === 'undefined') {
             options.maxAge = 0;
         }
         if(typeof options.lastModified === 'undefined') {
