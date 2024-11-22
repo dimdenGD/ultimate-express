@@ -195,8 +195,8 @@ module.exports = class Response extends Writable {
                 continue;
             }
             if(Array.isArray(value)) {
-                for(let value of value) {
-                    this._res.writeHeader(header, value);
+                for(let val of value) {
+                    this._res.writeHeader(header, val);
                 }
             } else {
                 this._res.writeHeader(header, value);
