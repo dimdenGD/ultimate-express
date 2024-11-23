@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const cookie = require("cookie");
-const mime = require("mime-types");
+const { serialize } = require("cookie");
+const { lookup, contentType } = require("mime-types");
 const vary = require("vary");
 const encodeUrl = require("encodeurl");
 const { 
@@ -24,18 +24,18 @@ const {
 } = require("./utils.js");
 const { Writable } = require("stream");
 const { isAbsolute } = require("path");
-const fs = require("fs");
-const Path = require("path");
-const statuses = require("statuses");
+const { statSync, createReadStream } = require("fs");
+const { normalize, sep, resolve, join, basename } = require("path");
+const { message } = require("statuses");
 const { sign } = require("cookie-signature");
 // events is faster at init, tseep is faster at sending events
 // since we create a ton of objects and dont send a ton of events, its better to use events here
 const { EventEmitter } = require("events");
-const http = require("http");
+const { OutgoingMessage } = require("http");
 const ms = require('ms');   
 const etag = require("etag");
 
-const outgoingMessage = new http.OutgoingMessage();
+const outgoingMessage = new OutgoingMessage();
 const symbols = Object.getOwnPropertySymbols(outgoingMessage);
 const kOutHeaders = symbols.find(s => s.toString() === 'Symbol(kOutHeaders)');
 
@@ -217,7 +217,7 @@ module.exports = class Response extends Writable {
         return this;
     }
     sendStatus(code) {
-        return this.status(code).send(statuses.message[+code] ?? code.toString());
+        return this.status(code).send(message[+code] ?? code.toString());
     }
     end(data) {
         if(this.finished) {
@@ -350,9 +350,9 @@ module.exports = class Response extends Writable {
             this.status(403);
             return done(new Error('Forbidden'));
         }
-        const parts = Path.normalize(path).split(Path.sep);
-        const fullpath = options.root ? Path.resolve(Path.join(options.root, path)) : path;
-        if(options.root && !fullpath.startsWith(Path.resolve(options.root))) {
+        const parts = normalize(path).split(sep);
+        const fullpath = options.root ? resolve(join(options.root, path)) : path;
+        if(options.root && !fullpath.startsWith(resolve(options.root))) {
             this.status(403);
             return done(new Error('Forbidden'));
         }
@@ -382,7 +382,7 @@ module.exports = class Response extends Writable {
         let stat = options._stat;
         if(!stat) {
             try {
-                stat = fs.statSync(fullpath);
+                stat = statSync(fullpath);
             } catch(err) {
                 return done(err);
             }
@@ -394,7 +394,7 @@ module.exports = class Response extends Writable {
 
         // headers
         if(!this.headers['content-type']) {
-            const m = mime.lookup(fullpath);
+            const m = lookup(fullpath);
             if(m) this.type(m);
             else this.type('application/octet-stream');
         }
@@ -487,7 +487,7 @@ module.exports = class Response extends Writable {
                 opts.start = offset;
                 opts.end = Math.max(offset, offset + len - 1);
             }
-            const file = fs.createReadStream(fullpath, opts);
+            const file = createReadStream(fullpath, opts);
             pipeStreamOverResponse(this, file, len, callback);
         }
     }
@@ -513,7 +513,7 @@ module.exports = class Response extends Writable {
             opts = filename;
         }
         if(!name) {
-            name = Path.basename(path);
+            name = basename(path);
         }
         if(!opts.root && !isAbsolute(path)) {
             opts.root = process.cwd();
@@ -616,7 +616,7 @@ module.exports = class Response extends Writable {
             options.path = '/';
         }
 
-        this.append('Set-Cookie', cookie.serialize(name, val, options));
+        this.append('Set-Cookie', serialize(name, val, options));
         return this;
     }
     clearCookie(name, options) {
@@ -704,12 +704,12 @@ module.exports = class Response extends Writable {
         this.location(url);
         this.status(status);
         this.headers['content-type'] = 'text/plain; charset=utf-8';
-        return this.send(`${statuses.message[status] ?? status}. Redirecting to ${url}`);
+        return this.send(`${message[status] ?? status}. Redirecting to ${url}`);
     }
 
     type(type) {
         let ct = type.indexOf('/') === -1
-            ? (mime.contentType(type) || 'application/octet-stream')
+            ? (contentType(type) || 'application/octet-stream')
             : type;
 
         return this.set('content-type', ct);

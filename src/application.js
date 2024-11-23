@@ -17,20 +17,20 @@ limitations under the License.
 const uWS = require("uWebSockets.js");
 const Router = require("./router.js");
 const { removeDuplicateSlashes, defaultSettings, compileTrust, createETagGenerator, fastQueryParse, NullObject } = require("./utils.js");
-const querystring = require("fast-querystring");
+const { parse } = require("fast-querystring");
 const ViewClass = require("./view.js");
-const path = require("path");
-const os = require("os");
+const { join, resolve } = require("path");
+const { cpus } = require("os");
 const { Worker } = require("worker_threads");
 
-const cpuCount = os.cpus().length;
+const cpuCount = cpus().length;
 
 let workers = [];
 let taskKey = 0;
 const workerTasks = new NullObject();
 
 function createWorker() {
-    const worker = new Worker(path.join(__dirname, 'worker.js'));
+    const worker = new Worker(join(__dirname, 'worker.js'));
     workers.push(worker);
 
     worker.on('message', (message) => {
@@ -87,7 +87,7 @@ class Application extends Router {
             }
         }
         this.set('view', ViewClass);
-        this.set('views', path.resolve('views'));
+        this.set('views', resolve('views'));
     }
 
     createWorkerTask(resolve, reject) {
@@ -118,7 +118,7 @@ class Application extends Router {
             if(value === 'extended') {
                 this.settings['query parser fn'] = fastQueryParse;
             } else if(value === 'simple') {
-                this.settings['query parser fn'] = querystring.parse;
+                this.settings['query parser fn'] = parse;
             } else if(typeof value === 'function') {
                 this.settings['query parser fn'] = value;
             } else {
@@ -131,7 +131,7 @@ class Application extends Router {
                 this.settings['view cache'] = undefined;
             }
         } else if(key === 'views') {
-            this.settings[key] = path.resolve(value);
+            this.settings[key] = resolve(value);
             return this;
         } else if(key === 'etag') {
             if(typeof value === 'function') {

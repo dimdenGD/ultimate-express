@@ -1,8 +1,8 @@
-const acorn = require("acorn");
+const { tokenizer, Parser } = require("acorn");
 const { stringify } = require("./utils.js");
 const uWS = require("uWebSockets.js");
 
-const parser = acorn.Parser;
+const parser = Parser;
 
 const allowedResMethods = ['set', 'header', 'setHeader', 'status', 'send', 'end', 'append'];
 const allowedIdentifiers = ['query', 'params', ...allowedResMethods];
@@ -29,7 +29,7 @@ module.exports = function compileDeclarative(cb, app) {
             code = code.replace(/function *\(/, "function __cb(");
         }
 
-        const tokens = [...acorn.tokenizer(code, { ecmaVersion: "latest" })];
+        const tokens = [...tokenizer(code, { ecmaVersion: "latest" })];
 
         if(tokens.some(token => ['throw', 'new', 'await'].includes(token.value))) {
             return false;

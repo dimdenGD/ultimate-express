@@ -14,12 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const fs = require('fs');
-const path = require('path');
+const { statSync } = require('fs');
+const { resolve, join, extname } = require('path');
 const bytes = require('bytes');
-const zlib = require('fast-zlib');
+const { Inflate, Gunzip, BrotliDecompress } = require('fast-zlib');
 const typeis = require('type-is');
-const querystring = require('fast-querystring');
+const { parse } = require('fast-querystring');
 const { fastQueryParse, NullObject } = require('./utils.js');
 
 function static(root, options) {
@@ -51,8 +51,8 @@ function static(root, options) {
             } else return next();
         }
         let _path = url;
-        let fullpath = path.resolve(path.join(options.root, url));
-        if(options.root && !fullpath.startsWith(path.resolve(options.root))) {
+        let fullpath = resolve(join(options.root, url));
+        if(options.root && !fullpath.startsWith(resolve(options.root))) {
             if(!options.fallthrough) {
                 res.status(403);
                 return next(new Error('Forbidden'));
@@ -61,14 +61,14 @@ function static(root, options) {
 
         let stat;
         try {
-            stat = fs.statSync(fullpath);
+            stat = statSync(fullpath);
         } catch(err) {
-            const ext = path.extname(fullpath);
+            const ext = extname(fullpath);
             let i = 0;
             if(ext === '' && options.extensions) {
                 while(i < options.extensions.length) {
                     try {
-                        stat = fs.statSync(fullpath + '.' + options.extensions[i]);
+                        stat = statSync(fullpath + '.' + options.extensions[i]);
                         _path = url + '.' + options.extensions[i];
                         break;
                     } catch(err) {
@@ -96,8 +96,8 @@ function static(root, options) {
             }
             if(options.index) {
                 try {
-                    stat = fs.statSync(path.join(fullpath, options.index));
-                    _path = path.join(url, options.index);
+                    stat = statSync(join(fullpath, options.index));
+                    _path = join(url, options.index);
                 } catch(err) {
                     if(!options.fallthrough) {
                         res.status(404);
@@ -126,11 +126,11 @@ function createInflate(contentEncoding) {
         case 'identity':
             return;
         case 'deflate':
-            return new zlib.Inflate();
+            return new Inflate();
         case 'gzip':
-            return new zlib.Gunzip();
+            return new Gunzip();
         case 'br':
-            return new zlib.BrotliDecompress();
+            return new BrotliDecompress();
         default:
             return false;
     }
@@ -320,7 +320,7 @@ const urlencoded = createBodyParser('application/x-www-form-urlencoded', functio
         if(options.extended) {
             req.body = fastQueryParse(buf.toString(), options);
         } else {
-            req.body = querystring.parse(buf.toString());
+            req.body = parse(buf.toString());
         }
     } catch(e) {
         return next(e);

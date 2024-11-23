@@ -14,11 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const mime = require("mime-types");
-const path = require("path");
-const proxyaddr = require("proxy-addr");
-const qs = require("qs");
-const querystring = require("fast-querystring");
+const { lookup } = require("mime-types");
+const { join } = require("path");
+const { compile } = require("proxy-addr");
+const parseQs = require("qs").parse;
+const parseFqs = require("fast-querystring").parse;
 const etag = require("etag");
 const { Stats } = require("fs");
 
@@ -32,11 +32,11 @@ function fastQueryParse(query, options) {
     if(len <= 128) {
         if(!query.includes('[') && !query.includes('%5B') && !query.includes('.') && !query.includes('%2E')) {
             // [Object: null prototype] issue
-            return {...querystring.parse(query)};
+            return {...parseFqs(query)};
         }
     }
     // [Object: null prototype] issue
-    return {...qs.parse(query, options)};
+    return {...parseQs(query, options)};
 }
 
 function removeDuplicateSlashes(path) {
@@ -141,7 +141,7 @@ function acceptParams(str) {
 function normalizeType(type) {
     return ~type.indexOf('/') ?
         acceptParams(type) :
-        { value: (mime.lookup(type) || 'application/octet-stream'), params: {} };
+        { value: (lookup(type) || 'application/octet-stream'), params: {} };
 }
 
 function stringify(value, replacer, spaces, escape) {
@@ -176,7 +176,7 @@ const defaultSettings = {
     'query parser fn': () => fastQueryParse,
     'subdomain offset': 2,
     'trust proxy': false,
-    'views': () => path.join(process.cwd(), 'views'),
+    'views': () => join(process.cwd(), 'views'),
     'view cache': () => process.env.NODE_ENV === 'production',
     'x-powered-by': true,
     'case sensitive routing': true,
@@ -202,7 +202,7 @@ function compileTrust(val) {
             .map(function (v) { return v.trim() })
     }
   
-    return proxyaddr.compile(val || []);
+    return compile(val || []);
 }
 
 const shownWarnings = new Set();
