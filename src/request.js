@@ -348,9 +348,9 @@ module.exports = class Request extends Readable {
     get headers() {
         // https://nodejs.org/api/http.html#messageheaders
         if(this.#cachedHeaders) {
-            return {...this.#cachedHeaders};
+            return this.#cachedHeaders;
         }
-        this.#cachedHeaders = new NullObject();
+        this.#cachedHeaders = {...new NullObject()}; // seems to be faster
         for (let index = 0, len = this.#rawHeadersEntries.length; index < len; index++) {
             let [key, value] = this.#rawHeadersEntries[index];   
             key = key.toLowerCase();
@@ -373,14 +373,14 @@ module.exports = class Request extends Readable {
                 this.#cachedHeaders[key] = value;
             }
         }
-        return {...this.#cachedHeaders};
+        return this.#cachedHeaders;
     }
 
     get headersDistinct() {
         if(this.#cachedDistinctHeaders) {
             return this.#cachedDistinctHeaders;
         }
-        this.#cachedDistinctHeaders = new NullObject();
+        this.#cachedDistinctHeaders = {...new NullObject()};
         this.#rawHeadersEntries.forEach((val) => {
             const [key, value] = val;
             if(!this.#cachedDistinctHeaders[key]) {
@@ -389,7 +389,7 @@ module.exports = class Request extends Readable {
             }
             this.#cachedDistinctHeaders[key].push(value);
         });
-        return {...this.#cachedDistinctHeaders};
+        return this.#cachedDistinctHeaders;
     }
 
     get rawHeaders() {
