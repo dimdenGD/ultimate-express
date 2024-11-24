@@ -208,9 +208,9 @@ module.exports = class Request extends Readable {
         if(qp) {
             this.#cachedQuery = qp(this.urlQuery.slice(1));
         } else {
-            this.#cachedQuery = new NullObject();
+            this.#cachedQuery = {...new NullObject()};
         }
-        return {...this.#cachedQuery};
+        return this.#cachedQuery;
     }
 
     get secure() {
