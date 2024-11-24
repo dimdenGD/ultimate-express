@@ -601,26 +601,24 @@ module.exports = class Response extends Writable {
         this.app.render(view, options, done);
     }
     cookie(name, value, options) {
-        if(!options) {
-            options = {};
-        }
+        const opt = {...(options ?? {})}; // create a new ref because we change original object (https://github.com/dimdenGD/ultimate-express/issues/68)
         let val = typeof value === 'object' ? "j:"+JSON.stringify(value) : String(value);
-        if(options.maxAge != null) {
-            const maxAge = options.maxAge - 0;
+        if(opt.maxAge != null) {
+            const maxAge = opt.maxAge - 0;
             if(!isNaN(maxAge)) {
-                options.expires = new Date(Date.now() + maxAge);
-                options.maxAge = Math.floor(maxAge / 1000);
+                opt.expires = new Date(Date.now() + maxAge);
+                opt.maxAge = Math.floor(maxAge / 1000);
             }
         }
-        if(options.signed) {
+        if(opt.signed) {
             val = 's:' + sign(val, this.req.secret);
         }
 
-        if(options.path == null) {
-            options.path = '/';
+        if(opt.path == null) {
+            opt.path = '/';
         }
 
-        this.append('Set-Cookie', cookie.serialize(name, val, options));
+        this.append('Set-Cookie', cookie.serialize(name, val, opt));
         return this;
     }
     clearCookie(name, options) {
