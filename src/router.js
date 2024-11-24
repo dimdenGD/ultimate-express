@@ -68,7 +68,7 @@ module.exports = class Router extends EventEmitter {
 
         for(let method of methods) {
             this[method] = (path, ...callbacks) => {
-                this.createRoute(method.toUpperCase(), path, this, ...callbacks);
+                return this.createRoute(method.toUpperCase(), path, this, ...callbacks);
             };
         };
     }
