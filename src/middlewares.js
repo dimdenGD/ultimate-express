@@ -156,13 +156,16 @@ function createBodyParser(defaultType, beforeReturn) {
         }
         if(typeof options.defaultCharset === 'undefined') options.defaultCharset = 'utf-8';
 
-        return (req, res, next) => {
-            const type = req.headers['content-type'];
+        let additionalMethods;
 
+        return (req, res, next) => {
+            
             // skip reading body twice
             if(req.bodyRead) {
                 return next();
             }
+
+            const type = req.headers['content-type'];
 
             req.body = new NullObject();
 
@@ -202,7 +205,7 @@ function createBodyParser(defaultType, beforeReturn) {
 
             // skip reading body for non-POST requests
             // this makes it +10k req/sec faster
-            const additionalMethods = req.app.get('body methods');
+            if( additionalMethods === undefined ) additionalMethods = req.app.get('body methods') ?? null;
             if(
                 req.method !== 'POST' &&
                 req.method !== 'PUT' &&
