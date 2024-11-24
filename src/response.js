@@ -52,6 +52,10 @@ class Socket extends EventEmitter {
         return !this.response.finished;
     }
 
+    end(body) {
+        this.response.end(body);
+    }
+
     close() {
         if(this.response.finished) {
             return;

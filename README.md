@@ -214,7 +214,7 @@ In general, basically all features and options are supported. Use [Express 4.x d
 - ✅ req.subdomains
 - ✅ req.xhr
 - 🚧 req.route (route implementation is different from Express)
-- 🚧 req.connection, req.socket (only `encrypted`, `remoteAddress`, `localPort` and `remotePort` are supported)
+- 🚧 req.connection, req.socket (only `end()`, `encrypted`, `remoteAddress`, `localPort` and `remotePort` are supported)
 - ✅ req.accepts()
 - ✅ req.acceptsCharsets()
 - ✅ req.acceptsEncodings()

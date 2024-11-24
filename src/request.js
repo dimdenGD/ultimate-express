@@ -271,6 +271,7 @@ module.exports = class Request extends Readable {
             localPort: this.app.port,
             remotePort: this.app.port,
             encrypted: this.app.ssl,
+            end: (body) => this.res.end(body)
         };
     }
 
