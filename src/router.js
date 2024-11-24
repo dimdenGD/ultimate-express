@@ -580,6 +580,7 @@ module.exports = class Router extends EventEmitter {
             }
         }
         this.createRoute('USE', path, this, ...callbacks);
+        return this;
     }
     
     route(path) {
