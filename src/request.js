@@ -206,7 +206,7 @@ module.exports = class Request extends Readable {
         }
         const qp = this.app.get('query parser fn');
         if(qp) {
-            this.#cachedQuery = qp(this.urlQuery.slice(1));
+            this.#cachedQuery = {...qp(this.urlQuery.slice(1))};
         } else {
             this.#cachedQuery = {...new NullObject()};
         }
