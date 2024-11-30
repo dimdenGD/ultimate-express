@@ -225,10 +225,12 @@ function deprecated(oldMethod, newMethod, full = false) {
 }
 
 function findIndexStartingFrom(arr, fn, index = 0) {
-    for(let i = index, end = arr.length; i < end; i++) {
-        if(fn(arr[i], i, arr)) {
-            return i;
+    const end = arr.length;
+    while(index < end) {
+        if(fn(arr[index], index, arr)) {
+            return index;
         }
+        index++;
     }
     return -1;
 };
