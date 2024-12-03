@@ -108,7 +108,7 @@ function canBeOptimized(pattern) {
 function acceptParams(str) {
     const length = str.length;
     const colonIndex = str.indexOf(';');
-    const index = colonIndex === -1 ? length : colonIndex;
+    let index = colonIndex === -1 ? length : colonIndex;
     const ret = { value: str.slice(0, index).trim(), quality: 1, params: {} };
 
     while (index < length) {
