@@ -20,6 +20,7 @@ const Router = require("./router.js");
 const middlewares = require("./middlewares.js");
 const Request = require("./request.js");
 const Response = require("./response.js");
+const NestExpressAdapter = require("./nest-adapter.js");
 
 try {
     // disable Uwebsockets header
@@ -50,5 +51,7 @@ Application.json = middlewares.json;
 Application.urlencoded = middlewares.urlencoded;
 Application.text = middlewares.text;
 Application.raw = middlewares.raw;
+
+Application.NestExpressAdapter = NestExpressAdapter;
 
 module.exports = Application;

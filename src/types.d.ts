@@ -1,6 +1,7 @@
 declare module "ultimate-express" {
   import e from "@types/express";
   import { AppOptions } from "uWebSockets.js";
+  import NestPlatform from "@nestjs/platform-express";
 
   type Settings = {
     uwsOptions?: AppOptions;
@@ -41,6 +42,9 @@ declare module "ultimate-express" {
     export import Response = e.Response;
     export import Router = e.Router;
     export import Send = e.Send;
+
+    export import NestExpressAdapter = NestPlatform.ExpressAdapter;
+    export import NestExpressApplication = NestPlatform.NestExpressApplication;
   }
 
   function express(settings?: Settings): e.Express;
