@@ -1,0 +1,48 @@
+name: Performance Benchmark
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # This fetches all history for all branches
+        
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        
+    - name: Install dependencies
+      run: npm install
+        
+    - name: Run benchmark tests
+      run: npm run benchmark
+      
+    - name: Compare results
+      run: node scripts/compare-benchmark.js
+      
+    - name: Comment PR
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const benchmarkResults = fs.readFileSync('benchmark-comparison.json', 'utf8');
+          const results = JSON.parse(benchmarkResults);
+          
+          let comment = '## Performance Benchmark Results\n\n';
+          comment += results.summary + '\n\n';
+          comment += '### Detailed Results\n\n';
+          comment += results.details;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.name,
+            body: comment
+          });
