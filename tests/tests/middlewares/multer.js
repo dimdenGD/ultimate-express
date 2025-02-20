@@ -13,6 +13,7 @@ app.post('/abc', upload.none(), (req, res) => {
 });
 
 app.post('/file', upload.single('file'), (req, res) => {
+    delete req.file.buffer;
     res.send(req.file);
 });
 
@@ -39,6 +40,19 @@ app.listen(13333, async () => {
     });
     const text2 = await response2.text();
     console.log(text2);
+
+    const formData3 = new FormData();
+    // 300kb
+    const bigFile = new File(new Array(Math.floor(1024 * 1024 * 0.3)).fill(0), 'big.txt');
+    formData3.append('file', bigFile);
+
+    const response3 = await fetch('http://localhost:13333/file', {
+        method: 'POST',
+        body: formData3
+    });
+    console.log(response3.status);
+    const text3 = await response3.text();
+    console.log(text3);
 
     process.exit(0);
 
