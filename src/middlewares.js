@@ -180,11 +180,6 @@ function createBodyParser(defaultType, beforeReturn) {
                 return next();
             }
 
-            // skip reading too large body
-            if(length && +length > options.limit) {
-                return next(new Error('Request entity too large'));
-            }
-
             if(options.simpleType) {
                 const semicolonIndex = type.indexOf(';');
                 const clearType = semicolonIndex !== -1 ? type.substring(0, semicolonIndex) : type;
@@ -202,6 +197,12 @@ function createBodyParser(defaultType, beforeReturn) {
                     }
                 }
             }
+
+            // skip reading too large body
+            if(length && +length > options.limit) {
+                return next(new Error('Request entity too large'));
+            }
+
 
             // skip reading body for non-POST requests
             // this makes it +10k req/sec faster
