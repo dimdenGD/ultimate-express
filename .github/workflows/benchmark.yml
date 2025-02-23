@@ -65,7 +65,7 @@ jobs:
         run: |
           echo "Benchmarking express 4..."
           wrk -t 1 -c 200 -d 30 http://localhost:3001 > express-4-benchmark.txt
-          cat express-benchmark.txt
+          cat express-4-benchmark.txt
           tmux kill-session -t express-4-session
 
       - name: Start express 5 server in tmux session
@@ -77,7 +77,7 @@ jobs:
         run: |
           echo "Benchmarking express 5..."
           wrk -t 1 -c 200 -d 30 http://localhost:3001 > express-5-benchmark.txt
-          cat express-benchmark.txt
+          cat express-5-benchmark.txt
           tmux kill-session -t express-5-session
 
       - name: Prepare benchmark output
