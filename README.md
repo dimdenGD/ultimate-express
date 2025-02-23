@@ -115,6 +115,8 @@ Optimized routes can be up to 10 times faster than normal routes, as they're usi
 
 5. By default, µExpress creates 1 (or 0 if your CPU has only 1 core) child thread to improve performance of reading files. You can change this number by setting `threads` to a different number in `express()`, or set to 0 to disable thread pool (`express({ threads: 0 })`). Threads are shared between all express() instances, with largest `threads` number being used. Using more threads will not necessarily improve performance. Sometimes not using threads at all is faster, please [test](https://github.com/wg/wrk/) both options.
 
+6. Express treats URLs with and without a trailing slash as the same route, while µExpress considers them as two distinct route. If you want to standardize the behavior in µExpress, you can enable redirection of URLs with a trailing slash to their version without a trailing slash using `redirect trailing slash`
+
 ## WebSockets
 
 Since you don't create http server manually, you can't properly use http.on("upgrade") to handle WebSockets. To solve this, there's currently 2 options:

@@ -178,6 +178,14 @@ class Application extends Router {
 
     #createRequestHandler() {
         this.uwsApp.any('/*', async (res, req) => {
+
+            // redirect to non-trailing slash url
+            if(this.settings['redirect trailing slash']) {
+                const path = req.getUrl()
+                const query = req.getQuery()
+                if(path.endsWith('/') && path != '/') return res.writeStatus('301').writeHeader('Location',`${path.slice(0,-1)}${query?'?'+query:''}`).end()
+            }
+
             const { request, response } = this.handleRequest(res, req);
 
             const matchedRoute = await this._routeRequest(request, response);
