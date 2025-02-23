@@ -61,7 +61,7 @@ jobs:
           tmux new-session -d -s express-4-session 'node benchmark/express-4.js'
           sleep 3
 
-      - name: Run wrk on express
+      - name: Run wrk on express 4
         run: |
           echo "Benchmarking express 4..."
           wrk -t 1 -c 200 -d 30 http://localhost:3001 > express-4-benchmark.txt
@@ -73,7 +73,7 @@ jobs:
           tmux new-session -d -s express-5-session 'node benchmark/express-5.js'
           sleep 3
 
-      - name: Run wrk on express
+      - name: Run wrk on express 5
         run: |
           echo "Benchmarking express 5..."
           wrk -t 1 -c 200 -d 30 http://localhost:3001 > express-5-benchmark.txt
