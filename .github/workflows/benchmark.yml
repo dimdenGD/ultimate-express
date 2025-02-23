@@ -135,6 +135,7 @@ jobs:
             printf "| %-18s | %-18s | %-15s | %-15s |\n" "Requests/sec" "$ultimate_requests" "$express_4_requests" "${requests_4_ratio}x faster"
             printf "| %-18s | %-16sms | %-13sms | %-15s |\n" "Avg Latency" "$ultimate_latency" "$express_4_latency" "${latency_4_ratio}x faster"
             printf "| %-18s | %-16sMB | %-13sMB | %-15s |\n" "Transfer/sec" "$ultimate_transfer" "$express_4_transfer" "${transfer_4_ratio}x faster"
+            echo ""
             echo "### Comparison Summary with v.5"
             printf "| %-18s | %-18s | %-15s | %-15s |\n" "Metric" "Ultimate Express" "Express" "Difference"
             printf "|--------------------|--------------------|-----------------|-----------------|\n"
