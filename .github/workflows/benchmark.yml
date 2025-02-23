@@ -56,29 +56,44 @@ jobs:
           cat ultimate-express-benchmark.txt
           tmux kill-session -t ultimate-session
 
-      - name: Start express server in tmux session
+      - name: Start express 4 server in tmux session
         run: |
-          tmux new-session -d -s express-session 'node benchmark/express.js'
+          tmux new-session -d -s express-4-session 'node benchmark/express-4.js'
           sleep 3
 
       - name: Run wrk on express
         run: |
-          echo "Benchmarking express..."
-          wrk -t 1 -c 200 -d 30 http://localhost:3001 > express-benchmark.txt
+          echo "Benchmarking express 4..."
+          wrk -t 1 -c 200 -d 30 http://localhost:3001 > express-4-benchmark.txt
           cat express-benchmark.txt
-          tmux kill-session -t express-session
+          tmux kill-session -t express-4-session
+
+      - name: Start express 5 server in tmux session
+        run: |
+          tmux new-session -d -s express-5-session 'node benchmark/express-5.js'
+          sleep 3
+
+      - name: Run wrk on express
+        run: |
+          echo "Benchmarking express 5..."
+          wrk -t 1 -c 200 -d 30 http://localhost:3001 > express-5-benchmark.txt
+          cat express-benchmark.txt
+          tmux kill-session -t express-5-session
 
       - name: Prepare benchmark output
         id: benchmark_output
         run: |
           # Parse Requests/sec values
           ultimate_requests=$(grep "Requests/sec" ultimate-express-benchmark.txt | awk '{print $2}')
-          express_requests=$(grep "Requests/sec" express-benchmark.txt | awk '{print $2}')
-          requests_ratio=$(echo "scale=2; $ultimate_requests / $express_requests" | bc)
+          express_4_requests=$(grep "Requests/sec" express-4-benchmark.txt | awk '{print $2}')
+          express_5_requests=$(grep "Requests/sec" express-5-benchmark.txt | awk '{print $2}')
+          requests_ratio_4=$(echo "scale=2; $ultimate_requests / $express_4_requests" | bc)
+          requests_ratio_5=$(echo "scale=2; $ultimate_requests / $express_5_requests" | bc)
 
           # Parse and convert latency values to ms
           ultimate_latency_raw=$(grep "Latency" ultimate-express-benchmark.txt | awk '{print $2}')
-          express_latency_raw=$(grep "Latency" express-benchmark.txt | awk '{print $2}')
+          express_4_latency_raw=$(grep "Latency" express-4-benchmark.txt | awk '{print $2}')
+          express_5_latency_raw=$(grep "Latency" express-5-benchmark.txt | awk '{print $2}')
 
           # Convert ultimate latency to ms if in us
           if [[ "$ultimate_latency_raw" == *us ]]; then
@@ -87,29 +102,45 @@ jobs:
             ultimate_latency=${ultimate_latency_raw%ms}
           fi
 
-          # Convert express latency to ms if in us
-          if [[ "$express_latency_raw" == *us ]]; then
-            express_latency=$(echo "scale=3; ${express_latency_raw%us} / 1000" | bc)
+          # Convert express 4 latency to ms if in us
+          if [[ "$express_4_latency_raw" == *us ]]; then
+            express_4_latency=$(echo "scale=3; ${express_4_latency_raw%us} / 1000" | bc)
           else
-            express_latency=${express_latency_raw%ms}
+            express_4_latency=${express_4_latency_raw%ms}
+          fi
+
+          # Convert express 5 latency to ms if in us
+          if [[ "$express_5_latency_raw" == *us ]]; then
+            express_5_latency=$(echo "scale=3; ${express_5_latency_raw%us} / 1000" | bc)
+          else
+            express_5_latency=${express_5_latency_raw%ms}
           fi
 
           # Calculate latency ratio
-          latency_ratio=$(echo "scale=2; $express_latency / $ultimate_latency" | bc)
+          latency_4_ratio=$(echo "scale=2; $express_4_latency / $ultimate_latency" | bc)
+          latency_5_ratio=$(echo "scale=2; $express_5_latency / $ultimate_latency" | bc)
 
           # Parse and format Transfer/sec values
           ultimate_transfer=$(grep "Transfer/sec" ultimate-express-benchmark.txt | awk '{print $2}' | sed 's/MB//')
-          express_transfer=$(grep "Transfer/sec" express-benchmark.txt | awk '{print $2}' | sed 's/MB//')
-          transfer_ratio=$(echo "scale=2; $ultimate_transfer / $express_transfer" | bc)
+          express_4_transfer=$(grep "Transfer/sec" express-4-benchmark.txt | awk '{print $2}' | sed 's/MB//')
+          transfer_4_ratio=$(echo "scale=2; $ultimate_transfer / $express_4_transfer" | bc)
+          express_5_transfer=$(grep "Transfer/sec" express-5-benchmark.txt | awk '{print $2}' | sed 's/MB//')
+          transfer_5_ratio=$(echo "scale=2; $ultimate_transfer / $express_5_transfer" | bc)
 
           # Using printf to format each line with dynamic column widths
           {
-            echo "### Comparison Summary"
+            echo "### Comparison Summary with v.4"
             printf "| %-18s | %-18s | %-15s | %-15s |\n" "Metric" "Ultimate Express" "Express" "Difference"
             printf "|--------------------|--------------------|-----------------|-----------------|\n"
-            printf "| %-18s | %-18s | %-15s | %-15s |\n" "Requests/sec" "$ultimate_requests" "$express_requests" "${requests_ratio}x faster"
-            printf "| %-18s | %-16sms | %-13sms | %-15s |\n" "Avg Latency" "$ultimate_latency" "$express_latency" "${latency_ratio}x faster"
-            printf "| %-18s | %-16sMB | %-13sMB | %-15s |\n" "Transfer/sec" "$ultimate_transfer" "$express_transfer" "${transfer_ratio}x faster"
+            printf "| %-18s | %-18s | %-15s | %-15s |\n" "Requests/sec" "$ultimate_requests" "$express_4_requests" "${requests_4_ratio}x faster"
+            printf "| %-18s | %-16sms | %-13sms | %-15s |\n" "Avg Latency" "$ultimate_latency" "$express_4_latency" "${latency_4_ratio}x faster"
+            printf "| %-18s | %-16sMB | %-13sMB | %-15s |\n" "Transfer/sec" "$ultimate_transfer" "$express_4_transfer" "${transfer_4_ratio}x faster"
+            echo "### Comparison Summary with v.5"
+            printf "| %-18s | %-18s | %-15s | %-15s |\n" "Metric" "Ultimate Express" "Express" "Difference"
+            printf "|--------------------|--------------------|-----------------|-----------------|\n"
+            printf "| %-18s | %-18s | %-15s | %-15s |\n" "Requests/sec" "$ultimate_requests" "$express_5_requests" "${requests_5_ratio}x faster"
+            printf "| %-18s | %-16sms | %-13sms | %-15s |\n" "Avg Latency" "$ultimate_latency" "$express_5_latency" "${latency_5_ratio}x faster"
+            printf "| %-18s | %-16sMB | %-13sMB | %-15s |\n" "Transfer/sec" "$ultimate_transfer" "$express_5_transfer" "${transfer_5_ratio}x faster"
           } >> benchmark_summary.md
 
           # Display the summary in the Actions log
