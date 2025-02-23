@@ -106,7 +106,7 @@ module.exports = class Request extends Readable {
         }
     }
 
-    async _read() {
+    _read() {
         if(!this.receivedData || !this.bufferedData) {
             return;
         }
