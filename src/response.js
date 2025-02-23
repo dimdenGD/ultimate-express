@@ -179,15 +179,8 @@ module.exports = class Response extends Writable {
             }
         });
     }
-    writeHead(statusCode, statusMessage, headers) {
+    writeHead(statusCode) {
         this.statusCode = statusCode;
-        if(!headers) {
-            if(!statusMessage) return;
-            headers = statusMessage;
-        }
-        for(let header in headers) {
-            this.set(header, headers[header]);
-        }
     }
     writeHeaders(utf8) {
         for(const header in this.headers) {
