@@ -19,6 +19,7 @@ const Response = require("./response.js");
 const Request = require("./request.js");
 const { EventEmitter } = require("tseep");
 const compileDeclarative = require("./declarative.js");
+const holder = require("./holder.js");
 
 let resCodes = {}, resDecMethods = ['set', 'setHeader', 'header', 'send', 'end', 'append', 'status'];
 for(let method of resDecMethods) {
@@ -253,19 +254,7 @@ module.exports = class Router extends EventEmitter {
     }
 
     handleRequest(res, req) {
-        const request = new this._request(req, res, this);
-        const response = new this._response(res, request, this);
-        request.res = response;
-        response.req = request;
-        res.onAborted(() => {
-            const err = new Error('Connection closed');
-            err.code = 'ECONNRESET';
-            response.aborted = true;
-            response.finished = true;
-            response.socket.emit('error', err);
-        });
-
-        return { request, response };
+        return holder(this, res, req);
     }
 
     _registerUwsRoute(route, optimizedPath) {
