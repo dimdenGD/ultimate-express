@@ -227,6 +227,10 @@ module.exports = class Response extends Writable {
         if(this.finished) {
             return;
         }
+        const finish = () => {
+            this.finished = true;
+            if(this.socketExists) this.socket.emit('close'); 
+        };
         this.writeHead(this.statusCode);
         this._res.cork(() => {
             if(!this.headersSent) {
@@ -239,8 +243,7 @@ module.exports = class Response extends Writable {
                 this.writeHeaders(true);
                 if(fresh) {
                     this._res.end();
-                    this.finished = true;
-                    if(this.socketExists) this.socket.emit('close');
+                    finish();
                     return;
                 }
             }
@@ -254,12 +257,34 @@ module.exports = class Response extends Writable {
                 if(this.req.method === 'HEAD') {
                     const length = Buffer.byteLength(data ?? '');
                     this._res.endWithoutBody(length.toString());
+                    finish();
+                } else if(contentLength > 1024) {
+                
+                    // fixed size transfer encoding
+                    const lastOffset = this._res.getWriteOffset();
+                    const [ok, done] = this._res.tryEnd(data, contentLength);
+                    if(done) {
+                        finish();
+                    } else if(!ok) {
+                        this._res.onWritable((offset) => {
+                            if(this.finished) {
+                                return true;
+                            }
+                            const [ok, done] = this._res.tryEnd(chunk.slice(offset - lastOffset), contentLength);
+                            if(done || ok) {
+                                finish();
+                            }
+                        })
+                    } else {
+                        finish();
+                    }
+
                 } else {
                     this._res.end(data);
+                    finish();
                 }
             }
-            this.finished = true;
-            if(this.socketExists) this.socket.emit('close');
+            
         });
 
         this.emit('finish')
@@ -556,9 +581,7 @@ module.exports = class Response extends Writable {
     get(field) {
         return this.headers[field.toLowerCase()];
     }
-    getHeader(field) {
-        return this.get(field);
-    }
+    getHeader = this.get;
     removeHeader(field) {
         delete this.headers[field.toLowerCase()];
         return this;
@@ -570,7 +593,7 @@ module.exports = class Response extends Writable {
             const newVal = [];
             if(Array.isArray(old)) {
                 newVal.push(...old);
-            } else {
+            } else if(old) {
                 newVal.push(old);
             }
             if(Array.isArray(value)) {
