@@ -108,6 +108,10 @@ module.exports = class Router extends EventEmitter {
         let path = req._opPath;
         let pattern = route.pattern;
 
+        if(req.endsWithSlash && path.endsWith('/') && !this.get('strict routing')) {
+            path = path.slice(0, -1);
+        }
+
         if (typeof pattern === 'string') {
             if(pattern === '/*') {
                 return true;
