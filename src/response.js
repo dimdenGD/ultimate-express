@@ -547,12 +547,8 @@ module.exports = class Response extends Writable {
         }
         return this;
     }
-    header(field, value) {
-        return this.set(field, value);
-    }
-    setHeader(field, value) {
-        return this.set(field, value);
-    }
+    header = this.set;
+    setHeader = this.set;
     get(field) {
         return this.headers[field.toLowerCase()];
     }
