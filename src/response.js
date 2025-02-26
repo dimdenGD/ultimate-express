@@ -556,7 +556,9 @@ module.exports = class Response extends Writable {
     get(field) {
         return this.headers[field.toLowerCase()];
     }
-    getHeader = this.get;
+    getHeader(field) {
+        return this.get(field);
+    }
     removeHeader(field) {
         delete this.headers[field.toLowerCase()];
         return this;
