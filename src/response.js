@@ -568,7 +568,7 @@ module.exports = class Response extends Writable {
             const newVal = [];
             if(Array.isArray(old)) {
                 newVal.push(...old);
-            } else if(old) {
+            } else {
                 newVal.push(old);
             }
             if(Array.isArray(value)) {
