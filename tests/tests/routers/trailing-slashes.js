@@ -13,21 +13,21 @@ router.get("/de", (req, res) => {
     res.send("de");
 })
 
-// router.get("/test", (req, res) => {
-//     res.send("test");
-// });
+router.get("/test", (req, res) => {
+    res.send("test");
+});
 
-// router.get("/test/page/:page", (req, res) => {
-//     res.send(`test page ${req.params.page}`);
-// });
+router.get("/test/page/:page", (req, res) => {
+    res.send(`test page ${req.params.page}`);
+});
 
-// router.get("/de/test", (req, res) => {
-//     res.send("de test");
-// });
+router.get("/de/test", (req, res) => {
+    res.send("de test");
+});
 
-// router.get("/de/test/page/:page", (req, res) => {
-//     res.send(`de test page ${req.params.page}`);
-// });
+router.get("/de/test/page/:page", (req, res) => {
+    res.send(`de test page ${req.params.page}`);
+});
 
 app.use("/", router);
 
