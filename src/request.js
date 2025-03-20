@@ -112,9 +112,9 @@ module.exports = class Request extends Readable {
             return;
         }
         if(this.bufferedData.length > 0) {
-            // push 64kb chunks
-            const chunk = this.bufferedData.subarray(0, 1024 * 64);
-            this.bufferedData = this.bufferedData.subarray(1024 * 64);
+            // push 128kb chunks
+            const chunk = this.bufferedData.subarray(0, 1024 * 128);
+            this.bufferedData = this.bufferedData.subarray(1024 * 128);
             this.push(chunk);
         } else if(this.doneReadingData) {
             this.push(null);

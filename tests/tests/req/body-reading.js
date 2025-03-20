@@ -9,17 +9,14 @@ const app = express();
 app.post("/test", (req, res) => {
     const body = new PassThrough();
     req.pipe(body);
-    let i = 0;
     let total = 0;
     let data = '';
-    let firstNumber = '';
     body.on('data', (chunk) => {
-        i++;
         total += chunk.length;
         data += chunk.toString();
     });
     body.on('finish', () => {
-        console.log('finish', total, data.length, i);
+        console.log('finish', total, data.length);
         console.log(crypto.createHash('md5').update(data).digest('hex'));
         res.send('ok');
     });
