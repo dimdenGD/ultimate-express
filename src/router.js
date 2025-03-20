@@ -19,6 +19,7 @@ const Response = require("./response.js");
 const Request = require("./request.js");
 const { EventEmitter } = require("tseep");
 const compileDeclarative = require("./declarative.js");
+const statuses = require("statuses");
 
 let resCodes = {}, resDecMethods = ['set', 'setHeader', 'header', 'send', 'end', 'append', 'status'];
 for(let method of resDecMethods) {
@@ -605,7 +606,7 @@ module.exports = class Router extends EventEmitter {
 
     _sendErrorPage(request, response, err, checkEnv = false) {
         if(checkEnv && this.get('env') === 'production') {
-            err = 'Internal Server Error';
+            err = response.statusCode >= 400 ? (statuses.message[response.statusCode] ?? 'Internal Server Error') : 'Internal Server Error';
         }
         request.noEtag = true;
         response.setHeader('Content-Type', 'text/html; charset=utf-8');
