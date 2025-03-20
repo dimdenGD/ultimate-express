@@ -2,6 +2,7 @@
 
 const express = require("express");
 const { PassThrough } = require("stream");
+const crypto = require("crypto");
 
 const app = express();
 
@@ -11,6 +12,7 @@ app.post("/test", (req, res) => {
     let i = 0;
     let total = 0;
     let data = '';
+    let firstNumber = '';
     body.on('data', (chunk) => {
         i++;
         total += chunk.length;
@@ -18,7 +20,7 @@ app.post("/test", (req, res) => {
     });
     body.on('finish', () => {
         console.log('finish', total, data.length, i);
-        console.log(data);
+        console.log(crypto.createHash('md5').update(data).digest('hex'));
         res.send('ok');
     });
 });
