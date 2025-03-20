@@ -72,6 +72,7 @@ module.exports = class Request extends Readable {
         this._stack = [];
         this._paramStack = [];
         this.receivedData = false;
+        this.doneReadingData = false;
         // reading ip is very slow in UWS, so its better to not do it unless truly needed
         if(this.app.needsIpAfterResponse || this.key < 100) {
             // if app needs ip after response, read it now because after response its not accessible
@@ -92,14 +93,14 @@ module.exports = class Request extends Readable {
             this._res.onData((ab, isLast) => {
                 // make stream actually readable
                 this.receivedData = true;
+                if(isLast) {
+                    this.doneReadingData = true;
+                }
                 // instead of pushing data immediately, buffer it
                 // because writable streams cant handle the amount of data uWS gives (usually 512kb+)
                 const chunk = Buffer.from(ab);
                 this.bufferedData = Buffer.concat([this.bufferedData, chunk]);
-                if(isLast) {
-                    // once its done start pushing data
-                    this._read();
-                }
+                this._read();
             });
         } else {
             this.receivedData = true;
@@ -115,7 +116,7 @@ module.exports = class Request extends Readable {
             const chunk = this.bufferedData.subarray(0, 1024 * 64);
             this.bufferedData = this.bufferedData.subarray(1024 * 64);
             this.push(chunk);
-        } else {
+        } else if(this.doneReadingData) {
             this.push(null);
         }
     }
