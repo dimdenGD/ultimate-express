@@ -78,6 +78,7 @@ module.exports = class Response extends Writable {
         this.finished = false;
         this.aborted = false;
         this.statusCode = 200;
+        this.statusText = undefined;
         this.chunkedTransfer = true;
         this.totalSize = 0;
         this.headers = {
@@ -132,7 +133,8 @@ module.exports = class Response extends Writable {
         this._res.cork(() => {
             if(!this.headersSent) {
                 this.writeHead(this.statusCode);
-                this._res.writeStatus(this.statusCode.toString());
+                const statusMessage = this.statusText ?? statuses.message[this.statusCode] ?? '';
+                this._res.writeStatus(`${this.statusCode} ${statusMessage}`.trim());
                 this.writeHeaders(typeof chunk === 'string');
             }
             if(!Buffer.isBuffer(chunk) && !(chunk instanceof ArrayBuffer)) {
@@ -181,6 +183,9 @@ module.exports = class Response extends Writable {
     }
     writeHead(statusCode, statusMessage, headers) {
         this.statusCode = statusCode;
+        if(typeof statusMessage === 'string') {
+            this.statusText = statusMessage;
+        }
         if(!headers) {
             if(!statusMessage) return;
             headers = statusMessage;
@@ -235,7 +240,8 @@ module.exports = class Response extends Writable {
                     this.headers['etag'] = etagFn(data);
                 }
                 const fresh = this.req.fresh;
-                this._res.writeStatus(fresh ? '304' : this.statusCode.toString());
+                const statusMessage = this.statusText ?? statuses.message[this.statusCode] ?? '';
+                this._res.writeStatus(fresh ? '304 Not Modified' : `${this.statusCode} ${statusMessage}`.trim());
                 this.writeHeaders(true);
                 if(fresh) {
                     this._res.end();
@@ -742,7 +748,8 @@ function pipeStreamOverResponse(res, readStream, totalSize, callback) {
         res._res.cork(() => {
             if(!res.headersSent) {
                 res.writeHead(res.statusCode);
-                res._res.writeStatus(res.statusCode.toString());
+                const statusMessage = res.statusText ?? statuses.message[res.statusCode] ?? '';
+                res._res.writeStatus(`${res.statusCode} ${statusMessage}`.trim());
                 res.writeHeaders(true);
             }
             const ab = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
