@@ -355,6 +355,9 @@ module.exports = class Router extends EventEmitter {
     }
 
     _extractParams(pattern, path) {
+        if(path.endsWith('/')) {
+            path = path.slice(0, -1);
+        }
         let match = pattern.exec(path);
         const obj = match?.groups ?? new NullObject();
         for(let i = 1; i < match.length; i++) {
