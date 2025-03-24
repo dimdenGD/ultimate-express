@@ -5,6 +5,7 @@ declare module "ultimate-express" {
   type Settings = {
     uwsOptions?: AppOptions;
     threads?: number;
+    http3?: boolean;
   };
 
   namespace express {
