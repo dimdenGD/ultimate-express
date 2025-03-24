@@ -53,6 +53,10 @@ For full table with other runtimes, check [here](https://github.com/dimdenGD/bun
 | koa                  | 24,045.08      | 28,202.12     | 24,590.84     | 19,342.28     |
 | express              | 10,411.313     | 11,245.57     | 10,598.74     | 9,389.63      |
 
+Other benchmark:
+ - [TechEmpower / FrameworkBenchmarks](https://www.techempower.com/benchmarks/)
+ - [the-benchmarker / web-frameworks](https://web-frameworks-benchmark.netlify.app/result)
+
 ### Performance on real-world application
 
 Also tested on a [real-world application](https://nekoweb.org) with templates, static files and dynamic pages with data from database, and showed 1.5-4X speedup in requests per second depending on the page.
