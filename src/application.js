@@ -55,13 +55,17 @@ class Application extends Router {
         if(typeof settings.threads !== 'number') {
             settings.threads = cpuCount > 1 ? 1 : 0;
         }
-        if(settings.uwsOptions.key_file_name && settings.uwsOptions.cert_file_name) {
+        if(settings.http3) {
+            if(!settings.uwsOptions.key_file_name || !settings.uwsOptions.cert_file_name) {
+                throw new Error('uwsOptions.key_file_name and uwsOptions.cert_file_name are required for HTTP/3');
+            }
+            this.uwsApp = uWS.H3App(settings.uwsOptions);
+        } else if(settings.uwsOptions.key_file_name && settings.uwsOptions.cert_file_name) {
             this.uwsApp = uWS.SSLApp(settings.uwsOptions);
-            this.ssl = true;
         } else {
             this.uwsApp = uWS.App(settings.uwsOptions);
-            this.ssl = false;
         }
+        this.ssl = settings.uwsOptions.key_file_name && settings.uwsOptions.cert_file_name;
         this.cache = new NullObject();
         this.engines = {};
         this.locals = {
