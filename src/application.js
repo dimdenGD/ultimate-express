@@ -55,7 +55,9 @@ class Application extends Router {
         if(typeof settings.threads !== 'number') {
             settings.threads = cpuCount > 1 ? 1 : 0;
         }
-        if(settings.http3) {
+        if(settings.uwsApp) {
+            this.uwsApp = settings.uwsApp;
+        } else if(settings.http3) {
             if(!settings.uwsOptions.key_file_name || !settings.uwsOptions.cert_file_name) {
                 throw new Error('uwsOptions.key_file_name and uwsOptions.cert_file_name are required for HTTP/3');
             }
