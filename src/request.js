@@ -233,7 +233,7 @@ module.exports = class Request extends Readable {
     }
 
     get parsedIp() {
-        if(this.#cachedParsedIp) {
+        if(this.#cachedParsedIp !== null) {
             return this.#cachedParsedIp;
         }
         const finished = !this.res.socket.writable;
@@ -252,7 +252,7 @@ module.exports = class Request extends Readable {
         if(this.rawIp.byteLength === 4) {
             // ipv4
             ip = this.rawIp.join('.');
-        } else {
+        } else if(this.rawIp.byteLength === 16) {
             // ipv6
             const dv = new DataView(this.rawIp);
             for(let i = 0; i < 8; i++) {
@@ -261,6 +261,8 @@ module.exports = class Request extends Readable {
                     ip += ':';
                 }
             }
+        } else {
+            this.#cachedParsedIp = undefined; // unix sockets dont have ip
         }
         this.#cachedParsedIp = ip;
         return ip;
@@ -270,7 +272,6 @@ module.exports = class Request extends Readable {
         return {
             remoteAddress: this.parsedIp,
             localPort: this.app.port,
-            remotePort: this.app.port,
             encrypted: this.app.ssl,
             end: (body) => this.res.end(body)
         };
