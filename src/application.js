@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const uWS = require("uWebSockets.js");
+const uWS = require("@uwsjs/core");
 const Router = require("./router.js");
 const { removeDuplicateSlashes, defaultSettings, compileTrust, createETagGenerator, fastQueryParse, NullObject } = require("./utils.js");
 const querystring = require("fast-querystring");

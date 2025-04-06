@@ -1,6 +1,6 @@
 const acorn = require("acorn");
 const { stringify } = require("./utils.js");
-const uWS = require("uWebSockets.js");
+const uWS = require("@uwsjs/core");
 
 const parser = acorn.Parser;
 
@@ -94,7 +94,7 @@ module.exports = function compileDeclarative(cb, app) {
         for(let expr of callExprs) {
             let calleeName, propertyName;
 
-            
+
             // get propertyName
             if(expr.type === 'MemberExpression') {
                 propertyName = expr.property.name;
@@ -151,11 +151,11 @@ module.exports = function compileDeclarative(cb, app) {
         if(identifiers[identifiers.length - 1] === '__cb') {
             identifiers.pop();
         }
-        if(!identifiers.every((id, i) => 
-            allowedIdentifiers.includes(id) || 
-            id === req || 
-            id === res || 
-            (identifiers[i - 2] === req && identifiers[i - 1] === 'params') || 
+        if(!identifiers.every((id, i) =>
+            allowedIdentifiers.includes(id) ||
+            id === req ||
+            id === res ||
+            (identifiers[i - 2] === req && identifiers[i - 1] === 'params') ||
             (identifiers[i - 2] === req && identifiers[i - 1] === 'query') ||
             id === queryName ||
             id === paramsName ||
@@ -165,7 +165,7 @@ module.exports = function compileDeclarative(cb, app) {
             return false;
         }
 
-        
+
         let statusCode = 200;
         const headers = [];
         const body = [];
@@ -303,11 +303,11 @@ module.exports = function compileDeclarative(cb, app) {
                         headers.push(['content-type', 'application/json; charset=utf-8']);
                         body.push({
                             type: 'text',
-                            value: 
+                            value:
                             stringify(
-                                JSON.parse(objCode.slice(arg.start, arg.end).replace(objKeyRegex, '"$1":')), 
-                                app.get('json replacer'), 
-                                app.get('json spaces'), 
+                                JSON.parse(objCode.slice(arg.start, arg.end).replace(objKeyRegex, '"$1":')),
+                                app.get('json replacer'),
+                                app.get('json spaces'),
                                 app.get('json escape')
                             )
                         });
@@ -409,7 +409,7 @@ function filterNodes(node, fn) {
     if(node.init) {
         filtered.push(...filterNodes(node.init, fn));
     }
-    
+
     if(node.left) {
         filtered.push(...filterNodes(node.left, fn));
     }

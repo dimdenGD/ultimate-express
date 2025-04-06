@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const uWS = require("uWebSockets.js");
+const uWS = require("@uwsjs/core");
 const Application = require("./application.js");
 const Router = require("./router.js");
 const middlewares = require("./middlewares.js");

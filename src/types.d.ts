@@ -1,6 +1,6 @@
 declare module "ultimate-express" {
   import e from "@types/express";
-  import { AppOptions } from "uWebSockets.js";
+  import { AppOptions } from "@uwsjs/core";
 
   type Settings = {
     uwsOptions?: AppOptions;
