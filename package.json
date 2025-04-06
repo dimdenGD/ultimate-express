@@ -41,7 +41,7 @@
   "homepage": "https://github.com/dimdenGD/ultimate-express#readme",
   "dependencies": {
     "@types/express": "^4.0.0",
-    "@uwsjs/core": "^20.51.3",
+    "@uwsjs/core": "^20.51.4",
     "accepts": "^1.3.8",
     "acorn": "^8.14.0",
     "bytes": "^3.1.2",
@@ -96,6 +96,9 @@
     "vhost": "^3.0.2"
   },
   "optionalDependencies": {
-    "@uwsjs/linux-x64-127": "^20.51.0"
+    "@uwsjs/linux-x64-18": "^20.51.4",
+    "@uwsjs/linux-x64-20": "^20.51.4",
+    "@uwsjs/linux-x64-22": "^20.51.4",
+    "@uwsjs/linux-x64-23": "^20.51.4"
   }
 }
