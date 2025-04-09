@@ -542,8 +542,9 @@ module.exports = class Response extends Writable {
             }
         } else {
             field = field.toLowerCase();
-            if(field === 'set-cookie' && Array.isArray(value)) {
-                value = value.join(', ');
+            if(Array.isArray(value)) {
+                this.headers[field] = value;
+                return this;
             } else if(field === 'content-type') {
                 if(!value.includes('charset=') && (value.startsWith('text/') || value === 'application/json' || value === 'application/javascript')) {
                     value += '; charset=utf-8';
