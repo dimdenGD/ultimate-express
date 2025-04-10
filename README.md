@@ -126,6 +126,21 @@ Since you don't create http server manually, you can't properly use http.on("upg
 
 - There's a sister library that implements `ws` compatible API: [Ultimate WS](https://github.com/dimdenGD/ultimate-ws). It's same concept as this library, but for WebSockets: fast drop-in replacement for `ws` module with support for Ultimate Express upgrades. There's a guide for how to upgrade http requests in the documentation.  
 - You can simply use `app.uwsApp` to access uWebSockets.js `App` instance and call its `ws()` method directly.
+- For socket.io server use `io.attachApp(app.uwsApp)`, see:
+```js
+const express = require("ultimate-express");
+const { Server } = require("socket.io");
+
+const app = express();
+
+const opt = { path: '/socket.io' };
+const io = new Server(opt);
+io.attachApp(app.uwsApp, opt);
+
+app.listen(13333, () => {
+ console.log(`Server is running on port http://localhost:13333`);
+})
+```
 
 ## HTTP/3
 
