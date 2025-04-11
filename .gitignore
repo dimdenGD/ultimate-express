@@ -2,3 +2,5 @@ node_modules/
 tmp/
 processed.txt
 /.idea/
+/.nyc_output
+/coverage
