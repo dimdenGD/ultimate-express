@@ -5,7 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "test": "node tests/index.js",
-    "dev": "node --inspect=9229 demo/index.js"
+    "dev": "node --inspect=9229 demo/index.js",
+    "test:coverage": "nyc node tests/index.js && nyc report --reporter html"
   },
   "engines": {
     "node": ">=18"
@@ -86,6 +87,7 @@
     "method-override": "^3.0.0",
     "multer": "^1.4.5-lts.1",
     "mustache-express": "^1.3.2",
+    "nyc": "^17.1.0",
     "pako": "^2.1.0",
     "pkg-pr-new": "^0.0.29",
     "pug": "^3.0.3",

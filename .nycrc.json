@@ -1,0 +1,15 @@
+{
+    "all": true,
+    "check-coverage": false,
+    "extension": [
+        ".js"
+    ],
+    "include": [
+        "src/*"
+    ],
+    "reporter": [
+        "text",
+        "lcov",
+        "html"
+    ]
+}
