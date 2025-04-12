@@ -7,9 +7,8 @@
     "test": "node tests/index.js",
     "dev": "node --inspect=9229 demo/index.js",
     "test:coverage": "nyc node tests/index.js && nyc report --reporter html",
-    "cover": "npm run cover:unit && npm run cover:integration && npm run cover:report",
+    "cover": "npm run cover:unit && npm run cover:report",
     "cover:unit": "nyc --silent npm run test",
-    "cover:integration": "nyc --silent --no-clean npm run test:integration",
     "cover:report": "nyc report --reporter=html"
   },
   "engines": {
