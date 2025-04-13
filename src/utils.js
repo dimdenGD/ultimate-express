@@ -44,9 +44,6 @@ function removeDuplicateSlashes(path) {
 }
 
 function patternToRegex(pattern, isPrefix = false) {
-    if(pattern instanceof RegExp) {
-        return pattern;
-    }
     if(isPrefix && pattern === '') {
         return EMPTY_REGEX;
     }
