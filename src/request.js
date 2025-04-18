@@ -202,8 +202,13 @@ module.exports = class Request extends Readable {
     }
 
     set query(query) {
+        if( !query.startsWith('?') ) {
+            query = '?' + query;
+        }
         this.#cachedQuery = null;
         this.urlQuery = query;
+        this.originalUrl = this._req.getUrl() + this.urlQuery;
+        this.url = this.originalUrl;
     }
     get query() {
         if(this.#cachedQuery) {
