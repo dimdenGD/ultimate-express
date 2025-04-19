@@ -82,6 +82,7 @@
     "express-dot-engine": "^1.0.8",
     "express-fileupload": "^1.5.1",
     "express-handlebars": "^8.0.1",
+    "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^7.4.1",
     "express-session": "^1.18.0",
     "express-subdomain": "^1.0.6",
