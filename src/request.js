@@ -201,6 +201,15 @@ module.exports = class Request extends Readable {
         return index !== -1 ? header.slice(0, index).trim() : header.trim();
     }
 
+    set query(query) {
+        if( !query.startsWith('?') ) {
+            query = '?' + query;
+        }
+        this.#cachedQuery = null;
+        this.urlQuery = query;
+        this.originalUrl = this._req.getUrl() + this.urlQuery;
+        this.url = this.originalUrl;
+    }
     get query() {
         if(this.#cachedQuery) {
             return this.#cachedQuery;
@@ -348,6 +357,10 @@ module.exports = class Request extends Readable {
         return parseRange(size, range, options);
     }
 
+    set headers(headers) {
+        this.#cachedHeaders = null;
+        this.#rawHeadersEntries = headers;
+    }
     get headers() {
         // https://nodejs.org/api/http.html#messageheaders
         if(this.#cachedHeaders) {
