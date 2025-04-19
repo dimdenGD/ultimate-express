@@ -202,13 +202,7 @@ module.exports = class Request extends Readable {
     }
 
     set query(query) {
-        if( !query.startsWith('?') ) {
-            query = '?' + query;
-        }
-        this.#cachedQuery = null;
-        this.urlQuery = query;
-        this.originalUrl = this._req.getUrl() + this.urlQuery;
-        this.url = this.originalUrl;
+        return this.#cachedQuery = query;
     }
     get query() {
         if(this.#cachedQuery) {
@@ -358,8 +352,7 @@ module.exports = class Request extends Readable {
     }
 
     set headers(headers) {
-        this.#cachedHeaders = null;
-        this.#rawHeadersEntries = headers;
+        this.#cachedHeaders = headers;
     }
     get headers() {
         // https://nodejs.org/api/http.html#messageheaders
