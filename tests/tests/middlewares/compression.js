@@ -14,6 +14,7 @@ async function sendRequest(method, url) {
             let request = `${method} ${path} HTTP/1.1\r\n`;
             request += `Host: ${host}:${port}\r\n`;
             request += `Accept-Encoding: gzip, deflate, br\r\n`;
+            request += `Connection: close\r\n`;
             
             request += '\r\n';
 
@@ -56,7 +57,11 @@ app.listen(13333, async () => {
     console.log(compressedResponse);
 
     console.log('2');
-    let uncompressedResponse = await fetch('http://localhost:13333/abc');
+    let uncompressedResponse = await fetch('http://localhost:13333/abc', {
+        headers: {
+            'Connection': 'close',
+        }
+    });
     console.log(await uncompressedResponse.text());
 
     // second run
@@ -65,7 +70,11 @@ app.listen(13333, async () => {
     console.log(compressedResponse);
 
     console.log('4');
-    uncompressedResponse = await fetch('http://localhost:13333/abc');
+    uncompressedResponse = await fetch('http://localhost:13333/abc', {
+        headers: {
+            'Connection': 'close',
+        }
+    });
     console.log(await uncompressedResponse.text());
 
     process.exit(0);

@@ -14,6 +14,7 @@ async function sendRequest(method, url) {
             let request = `${method} ${path} HTTP/1.1\r\n`;
             request += `Host: ${host}:${port}\r\n`;
             request += `Accept-Encoding: gzip, deflate, br\r\n`;
+            request += `Connection: close\r\n`;
             
             request += '\r\n';
 
@@ -56,7 +57,11 @@ app.listen(13333, async () => {
     let compressedResponse = await sendRequest('GET', 'http://localhost:13333/large-file.json');
     console.log('compressed', compressedResponse.slice(0, 100), compressedResponse.slice(-100), compressedResponse.length);
 
-    let uncompressedResponse = await fetch('http://localhost:13333/large-file.json');
+    let uncompressedResponse = await fetch('http://localhost:13333/large-file.json', {
+        headers: {
+            'Connection': 'close',
+        }
+    });
     let uncompressedResponseText = await uncompressedResponse.text();
     console.log('uncompressed', uncompressedResponseText.slice(0, 100), uncompressedResponseText.slice(-100), uncompressedResponseText.length);
 
