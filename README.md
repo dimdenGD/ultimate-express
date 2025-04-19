@@ -322,6 +322,7 @@ Almost all middlewares that are compatible with Express are compatible with µEx
 - ✅ [express-subdomain](https://npmjs.com/package/express-subdomain)
 - ✅ [vhost](https://npmjs.com/package/vhost)
 - ✅ [tsoa](https://github.com/lukeautry/tsoa)
+- ✅ [express-mongo-sanitize](https://www.npmjs.com/package/express-mongo-sanitize)
 
 Middlewares and modules that are confirmed to not work:
 
