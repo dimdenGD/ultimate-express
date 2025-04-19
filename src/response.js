@@ -497,6 +497,8 @@ module.exports = class Response extends Writable {
                 opts.start = offset;
                 opts.end = Math.max(offset, offset + len - 1);
             }
+            // disable compression for big files. see: https://github.com/dimdenGD/ultimate-express/issues/115
+            this._req.headers["accept-encoding"] = "identity";
             const file = fs.createReadStream(fullpath, opts);
             pipeStreamOverResponse(this, file, len, callback);
         }
