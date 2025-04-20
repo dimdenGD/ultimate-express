@@ -181,7 +181,7 @@ module.exports = class Router extends EventEmitter {
                         optimizedPathToRouter = optimizedPathToRouter.slice(0, -1); // remove last element, which is the router itself
                         if(optimizedPathToRouter) {
                             // wait for routes in router to be registered
-                            setTimeout(() => {
+                            process.nextTick(() => {
                                 if(!this.listenCalled) {
                                     return; // can only optimize router whos parent is listening
                                 }
@@ -208,7 +208,7 @@ module.exports = class Router extends EventEmitter {
                                         }
                                     }
                                 }
-                            }, 100);
+                            });
                         }
                         // only 1 router can be optimized per route
                         break;
