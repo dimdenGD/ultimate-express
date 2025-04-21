@@ -17,6 +17,10 @@ app.get('/test', (req, res) => {
         'application/json': function () {
           res.send(JSON.stringify({ message: 'hey' }))
         },
+
+        'application/json; charset=utf-8': function () {
+          res.send(JSON.stringify({ message: 'utf-8' }))
+        },
       
         default: function () {
           res.status(406).send('Not Acceptable')
@@ -50,6 +54,18 @@ app.listen(13333, async () => {
     response = await fetch('http://localhost:13333/test', {
         headers: {
             'Accept': 'text/html, application/json, text/plain, */*'
+        }
+    });
+    console.log(await response.text());
+    response = await fetch('http://localhost:13333/test', {
+        headers: {
+            'Accept': 'application/json; charset=utf-8'
+        }
+    });
+    console.log(await response.text());
+    response = await fetch('http://localhost:13333/test', {
+        headers: {
+            'Accept': 'application/xml'
         }
     });
     console.log(await response.text());
