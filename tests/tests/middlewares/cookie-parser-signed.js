@@ -9,6 +9,7 @@ app.use(cookieParser('secret'));
 
 app.get('/abc', (req, res) => {
     res.cookie('abc', '123', { signed: true });
+    res.cookie('def', { count: 345 }, { signed: true });
     res.send('ok');
 });
 
