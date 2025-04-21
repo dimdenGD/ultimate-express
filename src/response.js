@@ -131,7 +131,7 @@ module.exports = class Response extends Writable {
             const err = new Error('Response already finished');
             return this.destroy(err);
         }
-        
+
         this.writingChunk = true;
         this._res.cork(() => {
             if (!this.headersSent) {
@@ -505,9 +505,8 @@ module.exports = class Response extends Writable {
                 opts.end = Math.max(offset, offset + len - 1);
             }
             const file = fs.createReadStream(fullpath, opts);
-            pipeStreamOverResponse(this, file, len, callback);
-            // this.set('Content-Length', len);
-            // file.pipe(this);
+            this.set('Content-Length', len);
+            file.pipe(this);
         }
     }
     download(path, filename, options, callback) {
@@ -748,60 +747,4 @@ module.exports = class Response extends Writable {
     get writableFinished() {
         return this.finished;
     }
-}
-
-function pipeStreamOverResponse(res, readStream, totalSize, callback) {
-    readStream.on('data', (chunk) => {
-        if(res.finished) {
-            return readStream.destroy();
-        }
-        res._res.cork(() => {
-            if(!res.headersSent) {
-                res.writeHead(res.statusCode);
-                const statusMessage = res.statusText ?? statuses.message[res.statusCode] ?? '';
-                res._res.writeStatus(`${res.statusCode} ${statusMessage}`.trim());
-                res.writeHeaders(true);
-            }
-            const ab = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
-        
-            const lastOffset = res._res.getWriteOffset();
-            const [ok, done] = res._res.tryEnd(ab, totalSize);
-      
-            if (done) {
-                readStream.destroy();
-                res.finished = true;
-                if(res.socketExists) res.socket.emit('close');
-                if(callback) callback();
-            } else if (!ok) {
-                readStream.pause();
-        
-                res._res.ab = ab;
-                res._res.abOffset = lastOffset;
-        
-                res._res.onWritable((offset) => {
-                    if(res.finished) {
-                        return true;
-                    }
-                    const [ok, done] = res._res.tryEnd(res._res.ab.slice(offset - res._res.abOffset), totalSize);
-                    if (done) {
-                        readStream.destroy();
-                        res.finished = true;
-                        if(res.socketExists) res.socket.emit('close');
-                        if(callback) callback();
-                    } else if (ok) {
-                        readStream.resume();
-                    }
-            
-                    return ok;
-                });
-            }
-        });
-    }).on('error', e => {
-        if(callback) callback(e);
-        if(!res.finished) {
-            res._res.close();
-            res.finished = true;
-            if(res.socketExists) res.socket.emit('error', e);
-        }
-    });
 }
