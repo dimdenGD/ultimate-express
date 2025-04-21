@@ -4,7 +4,7 @@ const express = require("express");
 const app = express();
 
 app.get('/test', (req, res) => {
-    res.sendFile('tests/parts/huge.jpg', { root: "." });
+    res.sendFile('tests/parts/large-file.json', { root: "." });
 });
 
 app.listen(13333, async () => {
