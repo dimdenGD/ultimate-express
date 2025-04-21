@@ -81,6 +81,7 @@ module.exports = class Response extends Writable {
         this.statusText = undefined;
         this.chunkedTransfer = true;
         this.totalSize = 0;
+        this.writingChunk = false;
         this.headers = {
             'connection': 'keep-alive',
             'keep-alive': 'timeout=10'
@@ -121,62 +122,62 @@ module.exports = class Response extends Writable {
     }
 
     _write(chunk, encoding, callback) {
-        if(this.aborted) {
+        if (this.aborted) {
             const err = new Error('Request aborted');
             err.code = 'ECONNABORTED';
             return this.destroy(err);
         }
-        if(this.finished) {
+        if (this.finished) {
             const err = new Error('Response already finished');
             return this.destroy(err);
         }
+        
+        this.writingChunk = true;
         this._res.cork(() => {
-            if(!this.headersSent) {
+            if (!this.headersSent) {
                 this.writeHead(this.statusCode);
                 const statusMessage = this.statusText ?? statuses.message[this.statusCode] ?? '';
                 this._res.writeStatus(`${this.statusCode} ${statusMessage}`.trim());
                 this.writeHeaders(typeof chunk === 'string');
             }
-            if(!Buffer.isBuffer(chunk) && !(chunk instanceof ArrayBuffer)) {
+    
+            if (!Buffer.isBuffer(chunk) && !(chunk instanceof ArrayBuffer)) {
                 chunk = Buffer.from(chunk);
                 chunk = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
             }
-            if(this.chunkedTransfer) {
-                // chunked transfer encoding
+    
+            if (this.chunkedTransfer) {
                 this._res.write(chunk);
-                callback();
+                this.writingChunk = false;
+                callback(null);
             } else {
-                // fixed size transfer encoding
                 const lastOffset = this._res.getWriteOffset();
                 const [ok, done] = this._res.tryEnd(chunk, this.totalSize);
-                if(done) {
-                    this.destroy();
+                if (done) {
+                    super.end();
                     this.finished = true;
-                    if(this.socketExists) this.socket.emit('close');
-                    callback();
+                    this.writingChunk = false;
+                    if (this.socketExists) this.socket.emit('close');
+                    callback(null);
+                } else if (!ok) {
+                    this._res.ab = chunk;
+                    this._res.abOffset = lastOffset;
+                    this._res.onWritable((offset) => {
+                        if (this.finished) return true;
+                        const [ok, done] = this._res.tryEnd(this._res.ab.slice(offset - this._res.abOffset), this.totalSize);
+                        if (done) {
+                            this.finished = true;
+                            if (this.socketExists) this.socket.emit('close');
+                        }
+                        if (ok) {
+                            this.writingChunk = false;
+                            callback(null);
+                        }
+                        return ok;
+                    });
                 } else {
-                    // still writing
-                    if(!ok) {
-                        // wait until uWS is ready to accept more data
-                        this._res.onWritable((offset) => {
-                            if(this.finished) {
-                                return true;
-                            }
-                            const [ok, done] = this._res.tryEnd(chunk.slice(offset - lastOffset), this.totalSize);
-                            if(done) {
-                                this.destroy();
-                                this.finished = true;
-                                if(this.socketExists) this.socket.emit('close');
-                                callback();
-                            } else if(ok) {
-                                callback();
-                            }
-                            
-                            return ok;
-                        });
-                    } else {
-                        callback();
-                    }
+                    this.writingChunk = false;
+                    callback(null);
                 }
             }
         });
@@ -229,6 +230,12 @@ module.exports = class Response extends Writable {
         return this.status(code).send(statuses.message[+code] ?? code.toString());
     }
     end(data) {
+        if(this.writingChunk) {
+            this.once('drain', () => {
+                this.end(data);
+            });
+            return;
+        }
         if(this.finished) {
             return;
         }
@@ -497,10 +504,10 @@ module.exports = class Response extends Writable {
                 opts.start = offset;
                 opts.end = Math.max(offset, offset + len - 1);
             }
-            // disable compression for big files. see: https://github.com/dimdenGD/ultimate-express/issues/115
-            this._req.headers["accept-encoding"] = "identity";
             const file = fs.createReadStream(fullpath, opts);
             pipeStreamOverResponse(this, file, len, callback);
+            // this.set('Content-Length', len);
+            // file.pipe(this);
         }
     }
     download(path, filename, options, callback) {
