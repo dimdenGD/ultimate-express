@@ -8,10 +8,25 @@ app.get('/test', (req, res) => {
     res.sendFile('src/index.js', { root: "." });
 });
 
+app.get('/dot-file', (req, res) => {
+    res.sendFile('/.gitignore', { root: ".", dotfiles:'allow' });
+});
+
+app.get('/e-tag', (req, res) => {
+    res.sendFile('src/index.js', { root: ".", etag: () => 'xxx' });
+});
+
+
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    const response = await fetch('http://localhost:13333/test');
+    let response = await fetch('http://localhost:13333/test');
     console.log(await response.text(), response.headers.get('Content-Type').toLowerCase());
+
+    response = await fetch('http://localhost:13333/dot-file');
+    console.log(await response.text(), response.headers.get('Content-Type').toLowerCase());
+
+    response = await fetch('http://localhost:13333/e-tag');
+    console.log(await response.text(), response.headers.get('etag').toLowerCase());
     process.exit(0);
 });
