@@ -18,7 +18,7 @@ app.listen(13333, async () => {
     await Promise.all([
         fetch('http://localhost:13333/abc', {
             headers: {
-                'Cookie': 'abc=123; def=456'
+                'Cookie': `abc=123; def=456; ghi=j${encodeURIComponent(':' + JSON.stringify({n: 789}))};`
             }
         }).then(res => res.text())
     ]);
