@@ -323,6 +323,7 @@ Almost all middlewares that are compatible with Express are compatible with µEx
 - ✅ [vhost](https://npmjs.com/package/vhost)
 - ✅ [tsoa](https://github.com/lukeautry/tsoa)
 - ✅ [express-mongo-sanitize](https://www.npmjs.com/package/express-mongo-sanitize)
+- ✅ [helmet](https://www.npmjs.com/package/helmet)
 
 Middlewares and modules that are confirmed to not work:
 
