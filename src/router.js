@@ -570,9 +570,13 @@ module.exports = class Router extends EventEmitter {
 
     use(path, ...callbacks) {
         if(typeof path === 'function' || path instanceof Router || (Array.isArray(path) && path.every(p => typeof p === 'function' || p instanceof Router))) {
-            if(callbacks.length === 0 && typeof path === 'function' && path.length === 4) {
+            if(callbacks.length === 0 && path.length === 4) {
                 this.errorRoute = path;
                 return;
+            }
+            const indexErrorHandler = callbacks.findIndex(c => c.length === 4);
+            if(indexErrorHandler !== -1) {
+                this.errorRoute = callbacks.splice(indexErrorHandler, 1)[0];
             }
             callbacks.unshift(path);
             path = '';
