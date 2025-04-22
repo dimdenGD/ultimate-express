@@ -254,7 +254,7 @@ module.exports = class Request extends Readable {
         let ip = '';
         if(this.rawIp.byteLength === 4) {
             // ipv4
-            ip = this.rawIp.join('.');
+            ip = new Uint8Array(this.rawIp).join('.');
         } else if(this.rawIp.byteLength === 16) {
             // ipv6
             const dv = new DataView(this.rawIp);
@@ -265,7 +265,7 @@ module.exports = class Request extends Readable {
                 }
             }
         } else {
-            this.#cachedParsedIp = undefined; // unix sockets dont have ip
+            ip = undefined; // unix sockets dont have ip
         }
         this.#cachedParsedIp = ip;
         return ip;
