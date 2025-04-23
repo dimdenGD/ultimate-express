@@ -36,12 +36,16 @@ for (const testCategory of testCategories) {
             let testCode = fs.readFileSync(testPath, 'utf8').replace(`const express = require("../../../src/index.js");`, 'const express = require("express");');
             fs.writeFileSync(testPath, testCode);
             let testDescription = testCode.split('\n')[0].slice(2).trim();
-            if(testDescription.endsWith('OFF')) {
-                return true;
-            }
+
+            const skip = testDescription.endsWith('OFF')
 
             await new Promise(resolve => {
-                test(testDescription, async () => {
+                test(testDescription, async (t) => {
+                    if (skip) {
+                        t.skip();
+                        return resolve();
+                    }
+
                     let timeout;
                     let timeoutFunc = (module) => {
                         setTimeout(() => process.exit(1));
