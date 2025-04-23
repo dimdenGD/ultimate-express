@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Attach",
+            "name": "Attach demo",
             "port": 9229,
             "request": "attach",
             "skipFiles": [
@@ -16,12 +16,40 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch",
+            "name": "Launch demo",
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "args": ["--inspect=9229"],
+            "args": [
+                "--inspect=9229"
+            ],
             "program": "${workspaceFolder}\\demo\\index.js"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch current test",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "test",
+                "--",
+                "${file}"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch all test",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "test"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
         }
     ]
 }
