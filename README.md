@@ -341,3 +341,9 @@ Any Express view engine should work. Here's list of engines we include in our te
 - ✅ [express-art-template](https://npmjs.com/package/express-art-template)
 - ✅ [express-handlebars](https://npmjs.com/package/express-handlebars)
 - ✅ [swig](https://npmjs.com/package/swig)
+
+## Framework
+
+Here's list of third party wrapper for use ultimate-express in other Framework:
+
+- [NestJS](https://nestjs.com/) via [@stigma.io/nestjs-ultimate-express](https://www.npmjs.com/package/@stigma.io/nestjs-ultimate-express)
