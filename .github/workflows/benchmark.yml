@@ -1,6 +1,8 @@
 name: Benchmark Express Performance
 
 on:
+  push:
+    branches: [ "main" ]
   pull_request:
     branches:
       - main
@@ -8,9 +10,7 @@ on:
 jobs:
   benchmark:
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      pull-requests: write
+    permissions: write-all
 
     steps:
       - name: Checkout code
