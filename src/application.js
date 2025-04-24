@@ -188,6 +188,9 @@ class Application extends Router {
 
             const matchedRoute = await this._routeRequest(request, response);
             if(!matchedRoute && !response.headersSent && !response.aborted) {
+                if(request._error) {
+                    return this._handleError(request._error, null, request, response);
+                }
                 response.status(404);
                 this._sendErrorPage(request, response, `Cannot ${request.method} ${request.path}`, false);
             }

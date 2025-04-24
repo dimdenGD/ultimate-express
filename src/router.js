@@ -46,7 +46,6 @@ module.exports = class Router extends EventEmitter {
         this._paramCallbacks = new Map();
         this._mountpathCache = new Map();
         this._routes = [];
-        this.errorRoute = undefined;
         this.mountpath = '/';
         this.settings = settings;
         this._request = Request;
@@ -293,6 +292,9 @@ module.exports = class Router extends EventEmitter {
             }
             const matchedRoute = await this._routeRequest(request, response, 0, optimizedPath, true, route);
             if(!matchedRoute && !response.headersSent && !response.aborted) {
+                if(request._error) {
+                    return this._handleError(request._error, null, request, response);
+                }
                 response.status(404);
                 request.noEtag = true;
                 this._sendErrorPage(request, response, `Cannot ${request.method} ${request._originalPath}`, false);
@@ -332,20 +334,12 @@ module.exports = class Router extends EventEmitter {
         }
     }
 
-    _handleError(err, request, response) {
-        let errorRoute = this.errorRoute, parent = this.parent;
-        while(!errorRoute && parent) {
-            errorRoute = parent.errorRoute;
-            parent = parent.parent;
-        }
-        if(errorRoute) {
-            return errorRoute(err, request, response, () => {
-                if(!response.headersSent) {
-                    if(response.statusCode === 200) {
-                        response.statusCode = 500;
-                    }
-                    this._sendErrorPage(request, response, err, true);
-                }
+    _handleError(err, handler, request, response) {
+        if(handler) {
+            return handler(err, request, response, () => {
+                delete request._error;
+                delete request._errorKey;
+                return request.next();
             });
         }
         console.error(err);
@@ -405,8 +399,8 @@ module.exports = class Router extends EventEmitter {
                                         if(thingamabob === 'route') {
                                             return resolve('route');
                                         } else {
-                                            this._handleError(thingamabob, req, res);
-                                            return resolve(false);
+                                            req._error = thingamabob;
+                                            req._errorKey = route.routeKey;
                                         }
                                     }
                                     return resolveRoute();
@@ -460,7 +454,7 @@ module.exports = class Router extends EventEmitter {
         let callbackindex = 0;
 
         // avoid calling _preprocessRequest as async function as its slower
-        // but it seems like calling it as async has unintended consequence of resetting max call stack size
+        // but it seems like calling it as async has unintended, but useful consequence of resetting max call stack size
         // so call it as async when the request has been through every 300 routes to reset it
         const continueRoute = this._paramCallbacks.size === 0 && req.routeCount % 300 !== 0 ? 
             this._preprocessRequest(req, res, route) : await this._preprocessRequest(req, res, route);
@@ -513,8 +507,8 @@ module.exports = class Router extends EventEmitter {
                         req.routeCount++;
                         return resolve(this._routeRequest(req, res, routeIndex + 1, routes, skipCheck, skipUntil));
                     } else {
-                        this._handleError(thingamabob, req, res);
-                        return resolve(true);
+                        req._error = thingamabob;
+                        req._errorKey = route.routeKey;
                     }
                 }
                 const callback = route.callbacks[callbackindex++];
@@ -535,6 +529,15 @@ module.exports = class Router extends EventEmitter {
                     if(routed) return resolve(true);
                     next();
                 } else {
+                    // handle errors and error handlers
+                    if(req._error || callback.length === 4) {
+                        if(req._error && callback.length === 4 && route.routeKey >= req._errorKey) {
+                            return this._handleError(req._error, callback, req, res);
+                        } else {
+                            return next();
+                        }
+                    }
+                    
                     try {
                         // skipping routes we already went through via optimized path
                         if(!skipCheck && skipUntil && skipUntil.routeKey >= route.routeKey) {
@@ -544,16 +547,18 @@ module.exports = class Router extends EventEmitter {
                         if(out instanceof Promise) {
                             out.catch(err => {
                                 if(this.get("catch async errors")) {
-                                    this._handleError(err, req, res);
-                                    return resolve(true);
+                                    req._error = err;
+                                    req._errorKey = route.routeKey;
+                                    return next();
                                 } else {
                                     throw err;
                                 }
                             });
                         }
                     } catch(err) {
-                        this._handleError(err, req, res);
-                        return resolve(true);
+                        req._error = err;
+                        req._errorKey = route.routeKey;
+                        return next();
                     }
                 }
             }
@@ -570,10 +575,6 @@ module.exports = class Router extends EventEmitter {
 
     use(path, ...callbacks) {
         if(typeof path === 'function' || path instanceof Router || (Array.isArray(path) && path.every(p => typeof p === 'function' || p instanceof Router))) {
-            if(callbacks.length === 0 && typeof path === 'function' && path.length === 4) {
-                this.errorRoute = path;
-                return;
-            }
             callbacks.unshift(path);
             path = '';
         }
