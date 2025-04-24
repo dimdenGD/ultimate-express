@@ -128,3 +128,13 @@ jobs:
             ## Benchmark Results
             
             $(cat benchmark_summary.md)
+      - name: Comment on Commit
+        if: github.event_name == 'push'
+        continue-on-error: true
+        uses: peter-evans/commit-comment@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            ## Benchmark Results
+            
+            $(cat benchmark_summary.md)
