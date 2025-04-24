@@ -1,4 +1,4 @@
-name: Run tests and publish
+name: Run tests
 
 on:
   push:
@@ -35,22 +35,3 @@ jobs:
 
       - name: Run tests
         run: npm run test
-
-  publish:
-    runs-on: ubuntu-latest
-    needs: test
-    if: success()
-    steps:
-      - name: Checkout Source Tree
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        run: npm install --include=dev
-
-      - name: Publish dev package
-        run: npx pkg-pr-new publish
