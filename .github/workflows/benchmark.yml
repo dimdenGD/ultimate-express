@@ -7,10 +7,11 @@ on:
     branches:
       - main
 
+permissions: write-all
+
 jobs:
   benchmark:
     runs-on: ubuntu-latest
-    permissions: write-all
 
     steps:
       - name: Checkout code
