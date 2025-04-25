@@ -326,6 +326,7 @@ Almost all middlewares that are compatible with Express are compatible with µEx
 - ✅ [helmet](https://www.npmjs.com/package/helmet)
 - ✅ [passport](https://www.npmjs.com/package/passport)
 - ✅ [morgan](https://www.npmjs.com/package/morgan)
+- ✅ [swagger-ui-express](https://www.npmjs.com/package/swagger-ui-express)
 
 Middlewares and modules that are confirmed to not work:
 

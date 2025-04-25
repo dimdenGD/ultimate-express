@@ -100,6 +100,7 @@
     "response-time": "^2.3.3",
     "serve-index": "^1.9.1",
     "serve-static": "^1.16.2",
+    "swagger-ui-express": "^5.0.1",
     "swig": "^1.4.2",
     "vhost": "^3.0.2"
   }
