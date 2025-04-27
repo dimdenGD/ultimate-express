@@ -38,6 +38,7 @@ const etag = require("etag");
 const outgoingMessage = new http.OutgoingMessage();
 const symbols = Object.getOwnPropertySymbols(outgoingMessage);
 const kOutHeaders = symbols.find(s => s.toString() === 'Symbol(kOutHeaders)');
+const HIGH_WATERMARK = 256 * 1024;
 
 class Socket extends EventEmitter {
     constructor(response) {
@@ -68,6 +69,7 @@ class Socket extends EventEmitter {
 
 module.exports = class Response extends Writable {
     #socket = null;
+    #pendingChunks = [];
     constructor(res, req, app) {
         super();
         this._req = req;
@@ -120,7 +122,7 @@ module.exports = class Response extends Writable {
         }
         return this.#socket;
     }
-    #pendingChunks = [];
+
     _write(chunk, encoding, callback) {
         if (this.aborted) {
             const err = new Error('Request aborted');
@@ -149,7 +151,7 @@ module.exports = class Response extends Writable {
             if (this.chunkedTransfer) {
                 this.#pendingChunks.push(chunk);
                 const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-                if (size > 256 * 1024) {
+                if (size >= HIGH_WATERMARK) {
                     this._res.write(Buffer.concat(this.#pendingChunks));
                     this.#pendingChunks = [];
                 }
@@ -508,7 +510,7 @@ module.exports = class Response extends Writable {
         } else {
             // larger files or range requests are piped over response
             let opts = {
-                highWaterMark: 256 * 1024
+                highWaterMark: HIGH_WATERMARK
             };
             if(ranged) {
                 opts.start = offset;
