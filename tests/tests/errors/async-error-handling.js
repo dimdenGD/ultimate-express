@@ -7,11 +7,16 @@ const app = express();
 app.set('env', 'production');
 app.set('catch async errors', true);
 
-app.get('/test', async (req, res) => {
+const router = express.Router();
+router.get('/test', async (req, res) => {
     await new Promise((resolve, reject) => {
         reject(new Error('Ignore this error, its used in a test'));
     });
 });
+
+// app.use(router); // works
+// app.use(...[router]); // works
+app.use([router]); // not working
 
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
