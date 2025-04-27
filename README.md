@@ -308,7 +308,7 @@ Almost all middlewares that are compatible with Express are compatible with µEx
 - ✅ [body-parser](https://npmjs.com/package/body-parser) (use `express.text()` etc instead for better performance)
 - ✅ [cookie-parser](https://npmjs.com/package/cookie-parser)
 - ✅ [cookie-session](https://npmjs.com/package/cookie-session)
-- 🚧 [compression](https://npmjs.com/package/compression) - in some cases may send uncompressed files
+- ✅ [compression](https://npmjs.com/package/compression)
 - ✅ [serve-static](https://npmjs.com/package/serve-static) (use `express.static()` instead for better performance)
 - ✅ [serve-index](https://npmjs.com/package/serve-index)
 - ✅ [cors](https://npmjs.com/package/cors)
