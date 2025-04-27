@@ -120,7 +120,7 @@ module.exports = class Response extends Writable {
         }
         return this.#socket;
     }
-
+    #pendingChunks = [];
     _write(chunk, encoding, callback) {
         if (this.aborted) {
             const err = new Error('Request aborted');
@@ -147,7 +147,12 @@ module.exports = class Response extends Writable {
             }
     
             if (this.chunkedTransfer) {
-                this._res.write(chunk);
+                this.#pendingChunks.push(chunk);
+                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
+                if (size > 256 * 1024) {
+                    this._res.write(Buffer.concat(this.#pendingChunks));
+                    this.#pendingChunks = [];
+                }
                 this.writingChunk = false;
                 callback(null);
             } else {
@@ -261,6 +266,10 @@ module.exports = class Response extends Writable {
             if(!data && contentLength) {
                 this._res.endWithoutBody(contentLength.toString());
             } else {
+                if( this.#pendingChunks.length ) {
+                    this._res.write(Buffer.concat(this.#pendingChunks));
+                    this.#pendingChunks = [];
+                }
                 if(data instanceof Buffer) {
                     data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
                 }
@@ -271,6 +280,7 @@ module.exports = class Response extends Writable {
                     this._res.end(data);
                 }
             }
+            
             this.finished = true;
             if(this.socketExists) this.socket.emit('close');
         });
