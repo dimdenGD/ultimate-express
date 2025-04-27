@@ -4,6 +4,8 @@ const express = require("express");
 
 const app = express();
 
+app.set("etag fn", false);
+
 app.get('/test', (req, res) => {
     res.sendFile('src/index.js', { root: "." });
 });
