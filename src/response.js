@@ -70,6 +70,7 @@ class Socket extends EventEmitter {
 module.exports = class Response extends Writable {
     #socket = null;
     #pendingChunks = [];
+    #lastWriteChunkTime = 0;
     constructor(res, req, app) {
         super();
         this._req = req;
@@ -151,9 +152,10 @@ module.exports = class Response extends Writable {
             if (this.chunkedTransfer) {
                 this.#pendingChunks.push(chunk);
                 const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-                if (size >= HIGH_WATERMARK) {
+                if (size >= HIGH_WATERMARK || Date.now() - this.#lastWriteChunkTime > 100) {
                     this._res.write(Buffer.concat(this.#pendingChunks));
                     this.#pendingChunks = [];
+                    this.#lastWriteChunkTime = Date.now();
                 }
                 this.writingChunk = false;
                 callback(null);
