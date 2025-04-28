@@ -292,6 +292,7 @@ module.exports = class Response extends Writable {
             
             this.finished = true;
             if(this.socketExists) this.socket.emit('close');
+            this.emit('close');
         });
 
         this.emit('finish')
