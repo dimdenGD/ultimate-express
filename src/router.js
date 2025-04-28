@@ -39,7 +39,17 @@ const supportedUwsMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS',
 
 const regExParam = /:(\w+)/g;
 
+/**
+ * Router class for handling routes and middleware in an Express-like framework.
+ * Extends EventEmitter for event-driven functionality.
+ */
 module.exports = class Router extends EventEmitter {
+    /**
+     * Creates a new Router instance.
+     * @param {Object} [settings={}] - Configuration settings for the router.
+     * @param {boolean} [settings.caseSensitive] - Enable case-sensitive routing.
+     * @param {boolean} [settings.strict] - Enable strict routing.
+     */
     constructor(settings = {}) {
         super();
 
@@ -73,6 +83,12 @@ module.exports = class Router extends EventEmitter {
         };
     }
 
+    /**
+     * Defines a GET route or retrieves a setting.
+     * @param {string} path - The route path or setting key.
+     * @param {...Function} callbacks - Middleware or route handlers.
+     * @returns {Router|*} - The router instance or the setting value.
+     */
     get(path, ...callbacks) {
         if(typeof path === 'string' && callbacks.length === 0) {
             const key = path;
@@ -86,11 +102,22 @@ module.exports = class Router extends EventEmitter {
         return this.createRoute('GET', path, this, ...callbacks);
     }
 
+    /**
+     * Defines a DELETE route.
+     * @param {string} path - The route path.
+     * @param {...Function} callbacks - Middleware or route handlers.
+     * @returns {Router} - The router instance.
+     */
     del(path, ...callbacks) {
         deprecated('app.del', 'app.delete');
         return this.createRoute('DELETE', path, this, ...callbacks);
     }
 
+    /**
+     * Retrieves the full mount path for a request.
+     * @param {Object} req - The request object.
+     * @returns {RegExp|string} - The full mount path as a regex or string.
+     */
     getFullMountpath(req) {
         let fullStack = req._stack.join("");
         if(!fullStack){
@@ -104,6 +131,12 @@ module.exports = class Router extends EventEmitter {
         return fullMountpath;
     }
 
+    /**
+     * Checks if a route matches the request path.
+     * @param {Object} route - The route object.
+     * @param {Object} req - The request object.
+     * @returns {boolean} - True if the route matches, false otherwise.
+     */
     _pathMatches(route, req) {
         let path = req._opPath;
         let pattern = route.pattern;
@@ -131,6 +164,14 @@ module.exports = class Router extends EventEmitter {
         return pattern.test(path);
     }
 
+    /**
+     * Creates a new route.
+     * @param {string} method - The HTTP method (e.g., GET, POST).
+     * @param {string|string[]} path - The route path(s).
+     * @param {Router} parent - The parent router.
+     * @param {...Function} callbacks - Middleware or route handlers.
+     * @returns {Router} - The parent router instance.
+     */
     createRoute(method, path, parent = this, ...callbacks) {
         callbacks = callbacks.flat();
         const paths = Array.isArray(path) ? path : [path];
@@ -222,8 +263,12 @@ module.exports = class Router extends EventEmitter {
         return parent;
     }
 
-    // if route is a simple string, its possible to pre-calculate its path
-    // and then create a native uWS route for it, which is much faster
+    /**
+     * Optimizes a route for faster processing.
+     * @param {Object} route - The route object.
+     * @param {Object[]} routes - The list of existing routes.
+     * @returns {Object[]|false} - The optimized path or false if not optimizable.
+     */
     _optimizeRoute(route, routes) {
         const optimizedPath = [];
 
@@ -256,6 +301,12 @@ module.exports = class Router extends EventEmitter {
         return optimizedPath;
     }
 
+    /**
+     * Handles an incoming request.
+     * @param {Object} res - The response object.
+     * @param {Object} req - The request object.
+     * @returns {Object} - The processed request and response objects.
+     */
     handleRequest(res, req) {
         const request = new this._request(req, res, this);
         const response = new this._response(res, request, this);
@@ -272,6 +323,11 @@ module.exports = class Router extends EventEmitter {
         return { request, response };
     }
 
+    /**
+     * Registers a route with uWS for optimized handling.
+     * @param {Object} route - The route object.
+     * @param {Object[]} optimizedPath - The optimized path for the route.
+     */
     _registerUwsRoute(route, optimizedPath) {
         let method = route.method.toLowerCase();
         if(method === 'all') {
@@ -334,6 +390,13 @@ module.exports = class Router extends EventEmitter {
         }
     }
 
+    /**
+     * Handles errors during request processing.
+     * @param {Error} err - The error object.
+     * @param {Function|null} handler - The error handler function.
+     * @param {Object} request - The request object.
+     * @param {Object} response - The response object.
+     */
     _handleError(err, handler, request, response) {
         if(handler) {
             return handler(err, request, response, () => {
@@ -349,6 +412,12 @@ module.exports = class Router extends EventEmitter {
         this._sendErrorPage(request, response, err, true);
     }
 
+    /**
+     * Extracts parameters from a path based on a regex pattern.
+     * @param {RegExp} pattern - The regex pattern.
+     * @param {string} path - The request path.
+     * @returns {Object} - The extracted parameters.
+     */
     _extractParams(pattern, path) {
         if(path.endsWith('/')) {
             path = path.slice(0, -1);
@@ -361,6 +430,13 @@ module.exports = class Router extends EventEmitter {
         return obj;
     }
 
+    /**
+     * Preprocesses a request before routing.
+     * @param {Object} req - The request object.
+     * @param {Object} res - The response object.
+     * @param {Object} route - The route object.
+     * @returns {Promise<boolean|string>} - A promise resolving to true or 'route'.
+     */
     _preprocessRequest(req, res, route) {
         req.route = route;
         if(route.optimizedParams) {
@@ -418,6 +494,11 @@ module.exports = class Router extends EventEmitter {
         return true;
     }
 
+    /**
+     * Adds a parameter callback for a specific parameter name.
+     * @param {string|Function} name - The parameter name or a callback function.
+     * @param {Function} [fn] - The callback function.
+     */
     param(name, fn) {
         if(typeof name === 'function') {
             deprecated('app.param(callback)', 'app.param(name, callback)', true);
@@ -440,6 +521,16 @@ module.exports = class Router extends EventEmitter {
         }
     }
 
+    /**
+     * Routes a request to the appropriate handler.
+     * @param {Object} req - The request object.
+     * @param {Object} res - The response object.
+     * @param {number} [startIndex=0] - The starting index for routing.
+     * @param {Object[]} [routes=this._routes] - The list of routes.
+     * @param {boolean} [skipCheck=false] - Whether to skip route checks.
+     * @param {Object} [skipUntil] - Skip until this route is reached.
+     * @returns {Promise<boolean>} - A promise resolving to true if routed.
+     */
     async _routeRequest(req, res, startIndex = 0, routes = this._routes, skipCheck = false, skipUntil) {
         let routeIndex = skipCheck ? startIndex : findIndexStartingFrom(routes, r => (r.all || r.method === req.method || (r.gettable && req.method === 'HEAD')) && this._pathMatches(r, req), startIndex);
         const route = routes[routeIndex];
@@ -573,6 +664,12 @@ module.exports = class Router extends EventEmitter {
         });
     }
 
+    /**
+     * Adds middleware or a sub-router to the router.
+     * @param {string|Function|Router} path - The route path or middleware/router.
+     * @param {...Function|Router} callbacks - Middleware or sub-routers.
+     * @returns {Router} - The router instance.
+     */
     use(path, ...callbacks) {
         if(typeof path === 'function' || path instanceof Router || (Array.isArray(path) && path.every(p => typeof p === 'function' || p instanceof Router))) {
             callbacks.unshift(path);
@@ -592,6 +689,11 @@ module.exports = class Router extends EventEmitter {
         return this;
     }
     
+    /**
+     * Creates a route object for chaining route definitions.
+     * @param {string} path - The route path.
+     * @returns {Object} - An object with methods for defining routes.
+     */
     route(path) {
         let fns = new NullObject();
         for(let method of methods) {
@@ -605,6 +707,13 @@ module.exports = class Router extends EventEmitter {
         return fns;
     }
 
+    /**
+     * Sends an error page as a response.
+     * @param {Object} request - The request object.
+     * @param {Object} response - The response object.
+     * @param {Error|string} err - The error object or message.
+     * @param {boolean} [checkEnv=false] - Whether to check the environment.
+     */
     _sendErrorPage(request, response, err, checkEnv = false) {
         if(checkEnv && this.get('env') === 'production') {
             err = response.statusCode >= 400 ? (statuses.message[response.statusCode] ?? 'Internal Server Error') : 'Internal Server Error';

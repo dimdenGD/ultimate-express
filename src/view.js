@@ -18,7 +18,19 @@ const path = require("path");
 const fs = require("fs");
 const { NullObject } = require("./utils.js");
 
+/**
+ * Represents a view in the application.
+ * Handles rendering and resolving view files.
+ */
 module.exports = class View {
+    /**
+     * Creates a new View instance.
+     * @param {string} name - The name of the view file.
+     * @param {Object} options - Configuration options for the view.
+     * @param {string} [options.defaultEngine] - The default template engine to use.
+     * @param {string|string[]} [options.root] - The root directory or directories for views.
+     * @param {Object} [options.engines] - A map of file extensions to template engine functions.
+     */
     constructor(name, options) {
         this.name = name;
         this.options = options ? Object.assign({}, options) : new NullObject();
@@ -63,6 +75,11 @@ module.exports = class View {
         }
     }
 
+    /**
+     * Looks up the full path of a view file.
+     * @param {string} name - The name of the view file to look up.
+     * @returns {string|undefined} The resolved file path, or undefined if not found.
+     */
     lookup(name) {
         let path;
         let roots = [].concat(this.root);
@@ -81,7 +98,12 @@ module.exports = class View {
         return path;
     }
 
-    // ill be real idk what exactly this does but express implements it this way
+    /**
+     * Renders the view using the associated template engine.
+     * ill be real idk what exactly this does but express implements it this way
+     * @param {Object} options - The options to pass to the template engine.
+     * @param {Function} callback - The callback to execute after rendering.
+     */
     render(options, callback) {
         let sync = true;
         this.engine(this.path, options, function onRender() {
@@ -97,6 +119,12 @@ module.exports = class View {
         sync = false;
     }
 
+    /**
+     * Resolves the path of a view file, checking for the existence of the file.
+     * @param {string} dir - The directory to search in.
+     * @param {string} file - The name of the file to resolve.
+     * @returns {string|undefined} The resolved file path, or undefined if not found.
+     */
     resolve(dir, file) {
         const ext = this.ext;
 
@@ -118,6 +146,11 @@ module.exports = class View {
     }
 }
 
+/**
+ * Attempts to retrieve the file stats for a given path.
+ * @param {string} path - The file path to check.
+ * @returns {fs.Stats|undefined} The file stats if the file exists, or undefined otherwise.
+ */
 function tryStat(path) {  
     try {
         return fs.statSync(path);

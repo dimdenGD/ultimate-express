@@ -31,12 +31,23 @@ const discardedDuplicates = [
 
 let key = 0;
 
+/**
+ * Represents an HTTP request.
+ * @extends Readable
+ */
 module.exports = class Request extends Readable {
     #cachedQuery = null;
     #cachedHeaders = null;
     #cachedDistinctHeaders = null;
     #rawHeadersEntries = [];
     #cachedParsedIp = null;
+
+    /**
+     * Creates an instance of Request.
+     * @param {Object} req - The request object.
+     * @param {Object} res - The response object.
+     * @param {Object} app - The application object.
+     */
     constructor(req, res, app) {
         super();
         this._res = res;
@@ -107,6 +118,10 @@ module.exports = class Request extends Readable {
         }
     }
 
+    /**
+     * Reads data from the request.
+     * @private
+     */
     _read() {
         if(!this.receivedData || !this.bufferedData) {
             return;
@@ -121,11 +136,20 @@ module.exports = class Request extends Readable {
         }
     }
 
+    /**
+     * Gets the base URL.
+     * @returns {string} The base URL.
+     */
     get baseUrl() {
         let match = this._originalPath.match(patternToRegex(this._stack.join(""), true));
         return match ? match[0] : '';
     }
 
+    /**
+     * Gets the host.
+     * @private
+     * @returns {string} The host.
+     */
     get #host() {
         const trust = this.app.get('trust proxy fn');
         if(!trust) {
@@ -143,11 +167,20 @@ module.exports = class Request extends Readable {
         return val ? val.split(':')[0] : undefined;
     }
 
+    /**
+     * Gets the host.
+     * @deprecated Use req.hostname instead.
+     * @returns {string} The host.
+     */
     get host() {
         deprecated('req.host', 'req.hostname');
         return this.hostname;
     }
 
+    /**
+     * Gets the hostname.
+     * @returns {string} The hostname.
+     */
     get hostname() {
         const host = this.#host;
         if(!host) return this.headers['host'].split(':')[0];
@@ -156,18 +189,34 @@ module.exports = class Request extends Readable {
         return index !== -1 ? host.slice(0, index) : host;
     }
 
+    /**
+     * Gets the HTTP version.
+     * @returns {string} The HTTP version.
+     */
     get httpVersion() {
         return '1.1';
     }
 
+    /**
+     * Gets the major HTTP version.
+     * @returns {number} The major HTTP version.
+     */
     get httpVersionMajor() {
         return 1;
     }
 
+    /**
+     * Gets the minor HTTP version.
+     * @returns {number} The minor HTTP version.
+     */
     get httpVersionMinor() {
         return 1;
     }
 
+    /**
+     * Gets the IP address.
+     * @returns {string} The IP address.
+     */
     get ip() {
         const trust = this.app.get('trust proxy fn');
         if(!trust) {
@@ -176,6 +225,10 @@ module.exports = class Request extends Readable {
         return proxyaddr(this, trust);
     }
 
+    /**
+     * Gets the IP addresses.
+     * @returns {string[]} The IP addresses.
+     */
     get ips() {
         const trust = this.app.get('trust proxy fn');
         if(!trust) {
@@ -186,6 +239,10 @@ module.exports = class Request extends Readable {
         return addrs;
     }
 
+    /**
+     * Gets the protocol.
+     * @returns {string} The protocol.
+     */
     get protocol() {
         const proto = this.app.ssl ? 'https' : 'http';
         const trust = this.app.get('trust proxy fn');
@@ -201,9 +258,17 @@ module.exports = class Request extends Readable {
         return index !== -1 ? header.slice(0, index).trim() : header.trim();
     }
 
+    /**
+     * Sets the query parameters.
+     * @param {Object} query - The query parameters.
+     */
     set query(query) {
         return this.#cachedQuery = query;
     }
+    /**
+     * Gets the query parameters.
+     * @returns {Object} The query parameters.
+     */
     get query() {
         if(this.#cachedQuery) {
             return this.#cachedQuery;
@@ -217,10 +282,18 @@ module.exports = class Request extends Readable {
         return this.#cachedQuery;
     }
 
+    /**
+     * Checks if the request is secure.
+     * @returns {boolean} True if the request is secure, otherwise false.
+     */
     get secure() {
         return this.protocol === 'https';
     }
 
+    /**
+     * Gets the subdomains.
+     * @returns {string[]} The subdomains.
+     */
     get subdomains() {
         let host = this.hostname;
         let subdomains = host.split('.');
@@ -231,10 +304,18 @@ module.exports = class Request extends Readable {
         return subdomains.slice(0, -so).reverse();
     }
 
+    /**
+     * Checks if the request is an XMLHttpRequest.
+     * @returns {boolean} True if the request is an XMLHttpRequest, otherwise false.
+     */
     get xhr() {
         return this.headers['x-requested-with'] === 'XMLHttpRequest';
     }
 
+    /**
+     * Gets the parsed IP address.
+     * @returns {string} The parsed IP address.
+     */
     get parsedIp() {
         if(this.#cachedParsedIp !== null) {
             return this.#cachedParsedIp;
@@ -271,6 +352,10 @@ module.exports = class Request extends Readable {
         return ip;
     }
 
+    /**
+     * Gets the connection information.
+     * @returns {Object} The connection information.
+     */
     get connection() {
         return {
             remoteAddress: this.parsedIp,
@@ -280,10 +365,18 @@ module.exports = class Request extends Readable {
         };
     }
 
+    /**
+     * Gets the socket information.
+     * @returns {Object} The socket information.
+     */
     get socket() {
         return this.connection;
     }
 
+    /**
+     * Checks if the request is fresh.
+     * @returns {boolean} True if the request is fresh, otherwise false.
+     */
     get fresh() {
         if(this.method !== 'HEAD' && this.method !== 'GET') {
             return false;
@@ -297,10 +390,19 @@ module.exports = class Request extends Readable {
         return false;
     }
 
+    /**
+     * Checks if the request is stale.
+     * @returns {boolean} True if the request is stale, otherwise false.
+     */
     get stale() {
         return !this.fresh;
     }
 
+    /**
+     * Gets a header value.
+     * @param {string} field - The header field name.
+     * @returns {string} The header value.
+     */
     get(field) {
         field = field.toLowerCase();
         if(field === 'referrer' || field === 'referer') {
@@ -312,28 +414,64 @@ module.exports = class Request extends Readable {
         } 
         return this.headers[field];
     }
+    /**
+     * Gets a header value.
+     * @param {string} field - The header field name.
+     * @returns {string} The header value.
+     */
     header = this.get
 
+    /**
+     * Checks if the request accepts the specified types.
+     * @param {...string} types - The types to check.
+     * @returns {string|false} The best match or false.
+     */
     accepts(...types) {
         return accepts(this).types(...types);
     }
 
+    /**
+     * Checks if the request accepts the specified charsets.
+     * @param {...string} charsets - The charsets to check.
+     * @returns {string|false} The best match or false.
+     */
     acceptsCharsets(...charsets) {
         return accepts(this).charsets(...charsets);
     }
 
+    /**
+     * Checks if the request accepts the specified encodings.
+     * @param {...string} encodings - The encodings to check.
+     * @returns {string|false} The best match or false.
+     */
     acceptsEncodings(...encodings) {
         return accepts(this).encodings(...encodings);
     }
-    
+
+    /**
+     * Checks if the request accepts the specified languages.
+     * @param {...string} languages - The languages to check.
+     * @returns {string|false} The best match or false.
+     */
     acceptsLanguages(...languages) {
         return accepts(this).languages(...languages);
     }
 
+    /**
+     * Checks if the request is of the specified type.
+     * @param {string} type - The type to check.
+     * @returns {string|false} The best match or false.
+     */
     is(type) {
         return typeis(this, type);
     }
 
+    /**
+     * Gets a parameter value.
+     * @param {string} name - The parameter name.
+     * @param {*} [defaultValue] - The default value.
+     * @returns {*} The parameter value.
+     */
     param(name, defaultValue) {
         deprecated('req.param(name)', 'req.params, req.body, or req.query');
         if(this.params[name]) {
@@ -345,15 +483,29 @@ module.exports = class Request extends Readable {
         return this.query[name] ?? defaultValue;
     }
 
+    /**
+     * Parses the range header.
+     * @param {number} size - The size of the resource.
+     * @param {Object} [options] - The options.
+     * @returns {Object|undefined} The parsed range or undefined.
+     */
     range(size, options) {
         const range = this.headers['range'];
         if(!range) return;
         return parseRange(size, range, options);
     }
 
+    /**
+     * Sets the headers.
+     * @param {Object} headers - The headers to set.
+     */
     set headers(headers) {
         this.#cachedHeaders = headers;
     }
+    /**
+     * Gets the headers.
+     * @returns {Object} The headers.
+     */
     get headers() {
         // https://nodejs.org/api/http.html#messageheaders
         if(this.#cachedHeaders) {
@@ -385,6 +537,10 @@ module.exports = class Request extends Readable {
         return this.#cachedHeaders;
     }
 
+    /**
+     * Gets the distinct headers.
+     * @returns {Object} The distinct headers.
+     */
     get headersDistinct() {
         if(this.#cachedDistinctHeaders) {
             return this.#cachedDistinctHeaders;
@@ -401,6 +557,10 @@ module.exports = class Request extends Readable {
         return this.#cachedDistinctHeaders;
     }
 
+    /**
+     * Gets the raw headers.
+     * @returns {string[]} The raw headers.
+     */
     get rawHeaders() {
         const res = [];
         for (let index = 0, len = this.#rawHeadersEntries.length; index < len; index++) {

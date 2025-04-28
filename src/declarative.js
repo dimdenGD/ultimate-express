@@ -8,19 +8,31 @@ const allowedResMethods = ['set', 'header', 'setHeader', 'status', 'send', 'end'
 const allowedIdentifiers = ['query', 'params', ...allowedResMethods];
 const objKeyRegex = /[\s{\n]([A-Za-z-0-9_]+)(\s|\n)*?:/g;
 
+/**
+ * Replaces a single character in a string at the specified index.
+ * @param {string} str - The original string.
+ * @param {number} index - The index of the character to replace.
+ * @param {string} char - The character to insert.
+ * @returns {string} The modified string.
+ */
 function replaceSingleCharacter(str, index, char) {
     return str.slice(0, index) + char + str.slice(index + 1);
 }
 
-// generates a declarative response from a callback
-// uWS allows creating such responses and they are extremely fast
-// since you don't even have to call into Node.js at all
-// declarative response will only be created if callback is 'simple enough'
-// simple enough means:
-// - doesnt call external functions
-// - doesnt create variables
-// - only uses req.query and req.params
-// basically, its only simple, static responses
+/** 
+ * Generates a declarative response from a callback
+ * uWS allows creating such responses and they are extremely fast
+ * since you don't even have to call into Node.js at all
+ * declarative response will only be created if callback is 'simple enough'
+ * simple enough means:
+ *  - doesnt call external functions
+ *  - doesnt create variables
+ *  - only uses req.query and req.params
+ * basically, its only simple, static responses
+ * @param {Function} cb - The callback function to analyze and compile.
+ * @param {Object} app - The application instance for configuration.
+ * @returns {uWS.DeclarativeResponse|boolean} The compiled declarative response or false if not possible.
+*/
 module.exports = function compileDeclarative(cb, app) {
     try {
         let code = cb.toString();
@@ -360,6 +372,12 @@ module.exports = function compileDeclarative(cb, app) {
     }
 }
 
+/**
+ * Filters nodes in an abstract syntax tree (AST) based on a predicate function.
+ * @param {Object} node - The AST node to filter.
+ * @param {Function} fn - The predicate function to test each node.
+ * @returns {Object[]} An array of nodes that satisfy the predicate.
+ */
 function filterNodes(node, fn) {
     const filtered = [];
     if(fn(node)) {

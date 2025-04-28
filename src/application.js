@@ -29,6 +29,10 @@ let workers = [];
 let taskKey = 0;
 const workerTasks = new NullObject();
 
+/**
+ * Creates a new worker thread and sets up message handling.
+ * @returns {Worker} The created worker thread.
+ */
 function createWorker() {
     const worker = new Worker(path.join(__dirname, 'worker.js'));
     workers.push(worker);
@@ -46,7 +50,15 @@ function createWorker() {
     return worker;
 }
 
+/**
+ * Represents the main application class, extending the Router.
+ * Handles settings, workers, and request routing.
+ */
 class Application extends Router {
+    /**
+     * Initializes the application with the given settings.
+     * @param {Object} [settings={}] - Application settings.
+     */
     constructor(settings = new NullObject()) {
         super(settings);
         if(!settings?.uwsOptions) {
@@ -96,6 +108,12 @@ class Application extends Router {
         this.set('views', path.resolve('views'));
     }
 
+    /**
+     * Creates a task for a worker and returns its unique key.
+     * @param {Function} resolve - The resolve function for the task's promise.
+     * @param {Function} reject - The reject function for the task's promise.
+     * @returns {number} The unique key for the task.
+     */
     createWorkerTask(resolve, reject) {
         const key = taskKey++;
         workerTasks[key] = { resolve, reject };
@@ -105,6 +123,11 @@ class Application extends Router {
         return key;
     }
 
+    /**
+     * Reads a file using a worker thread.
+     * @param {string} path - The file path to read.
+     * @returns {Promise<string>} A promise that resolves with the file content.
+     */
     readFileWithWorker(path) {
         return new Promise((resolve, reject) => {
             const worker = this.workers[Math.floor(Math.random() * this.workers.length)];
@@ -113,6 +136,12 @@ class Application extends Router {
         });
     }
 
+    /**
+     * Sets a configuration setting for the application.
+     * @param {string} key - The setting key.
+     * @param {*} value - The setting value.
+     * @returns {Application} The application instance.
+     */
     set(key, value) {
         if(key === 'trust proxy') {
             if(!value) {
@@ -164,24 +193,49 @@ class Application extends Router {
         return this;
     }
 
+    /**
+     * Enables a configuration setting.
+     * @param {string} key - The setting key.
+     * @returns {Application} The application instance.
+     */
     enable(key) {
         this.set(key, true);
         return this;
     }
 
+    /**
+     * Disables a configuration setting.
+     * @param {string} key - The setting key.
+     * @returns {Application} The application instance.
+     */
     disable(key) {
         this.set(key, false);
         return this;
     }
 
+    /**
+     * Checks if a configuration setting is enabled.
+     * @param {string} key - The setting key.
+     * @returns {boolean} True if the setting is enabled, false otherwise.
+     */
     enabled(key) {
         return !!this.settings[key];
     }
 
+    /**
+     * Checks if a configuration setting is disabled.
+     * @param {string} key - The setting key.
+     * @returns {boolean} True if the setting is disabled, false otherwise.
+     */
     disabled(key) {
         return !this.settings[key];
     }
 
+    /**
+     * Creates the request handler for the application.
+     * Handles incoming requests and routes them to the appropriate handlers.
+     * @private
+     */
     #createRequestHandler() {
         this.uwsApp.any('/*', async (res, req) => {
             const { request, response } = this.handleRequest(res, req);
@@ -197,6 +251,13 @@ class Application extends Router {
         });
     }
 
+    /**
+     * Starts the application and listens on the specified port and host.
+     * @param {number|string} port - The port number or Unix socket path.
+     * @param {string} [host] - The host address.
+     * @param {Function} [callback] - The callback function to execute after starting.
+     * @returns {uWS.App} The uWS application instance.
+     */
     listen(port, host, callback) {
         this.#createRequestHandler();
         // support listen(callback)
@@ -241,10 +302,18 @@ class Application extends Router {
         return this.uwsApp;
     }
 
+    /**
+     * Returns the address information of the application.
+     * @returns {Object} An object containing the port number.
+     */
     address() {
         return { port: this.port };
     }
 
+    /**
+     * Returns the full path of the application, including parent mount paths.
+     * @returns {string} The full application path.
+     */
     path() {
         let paths = [this.mountpath];
         let parent = this.parent;
@@ -256,6 +325,13 @@ class Application extends Router {
         return path === '/' ? '' : path;
     }
 
+    /**
+     * Registers a template engine for rendering views.
+     * @param {string} ext - The file extension for the engine.
+     * @param {Function} fn - The engine function.
+     * @returns {Application} The application instance.
+     * @throws {Error} If the engine function is not provided.
+     */
     engine(ext, fn) {
         if (typeof fn !== 'function') {
             throw new Error('callback function required');
@@ -267,6 +343,12 @@ class Application extends Router {
         return this;
     }
 
+    /**
+     * Renders a view using the registered template engine.
+     * @param {string} name - The name of the view to render.
+     * @param {Object} [options] - The options for rendering the view.
+     * @param {Function} callback - The callback function to execute after rendering.
+     */
     render(name, options, callback) {
         if(typeof options === 'function') {
             callback = options;
@@ -326,6 +408,11 @@ class Application extends Router {
     }
 }
 
+/**
+ * Creates a new application instance with the given options.
+ * @param {Object} options - The application options.
+ * @returns {Application} The application instance.
+ */
 module.exports = function(options) {
     return new Application(options);
 }

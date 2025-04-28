@@ -22,6 +22,17 @@ const typeis = require('type-is');
 const querystring = require('fast-querystring');
 const { fastQueryParse, NullObject } = require('./utils.js');
 
+/**
+ * Middleware to serve static files.
+ * @param {string} root - The root directory to serve files from.
+ * @param {Object} [options] - Options for serving static files.
+ * @param {string} [options.index='index.html'] - Default file to serve for directories.
+ * @param {boolean} [options.redirect=true] - Whether to redirect to a trailing slash for directories.
+ * @param {boolean} [options.fallthrough=true] - Whether to continue to the next middleware on error.
+ * @param {string} [options.dotfiles='ignore_files'] - How to handle dotfiles.
+ * @param {string|string[]} [options.extensions] - Extensions to append to file paths.
+ * @returns {Function} Middleware function.
+ */
 function static(root, options) {
     if(!options) options = new NullObject();
     if(typeof options.index === 'undefined') options.index = 'index.html';
@@ -120,6 +131,11 @@ function static(root, options) {
     }
 }
 
+/**
+ * Creates a decompression stream based on the content encoding.
+ * @param {string} contentEncoding - The content encoding (e.g., gzip, deflate, br).
+ * @returns {zlib.Inflate|zlib.Gunzip|zlib.BrotliDecompress|undefined|false} The decompression stream or false if unsupported.
+ */
 function createInflate(contentEncoding) {
     const encoding = (contentEncoding || 'identity').toLowerCase();
     switch(encoding) {
@@ -136,6 +152,12 @@ function createInflate(contentEncoding) {
     }
 }
 
+/**
+ * Creates a body parser middleware.
+ * @param {string} defaultType - The default content type to parse.
+ * @param {Function} beforeReturn - Function to process the parsed body before returning.
+ * @returns {Function} Middleware function.
+ */
 function createBodyParser(defaultType, beforeReturn) {
     return function(options) {
         if(typeof options !== 'object') {
@@ -275,6 +297,10 @@ function createBodyParser(defaultType, beforeReturn) {
     }
 }
 
+/**
+ * Middleware to parse JSON request bodies.
+ * @type {Function}
+ */
 const json = createBodyParser('application/json', function(req, res, next, options, buf) {
     if(options.strict) {
         if(req.body && typeof req.body !== 'object') {
@@ -290,11 +316,19 @@ const json = createBodyParser('application/json', function(req, res, next, optio
     next();
 });
 
+/**
+ * Middleware to parse raw binary request bodies.
+ * @type {Function}
+ */
 const raw = createBodyParser('application/octet-stream', function(req, res, next, options, buf) {
     req.body = buf;
     next();
 });
 
+/**
+ * Middleware to parse plain text request bodies.
+ * @type {Function}
+ */
 const text = createBodyParser('text/plain', function(req, res, next, options, buf) {
     let contentType = req.headers['content-type'];
     let charsetIndex = contentType.indexOf('charset=');
@@ -319,6 +353,10 @@ const text = createBodyParser('text/plain', function(req, res, next, options, bu
     next();
 });
 
+/**
+ * Middleware to parse URL-encoded request bodies.
+ * @type {Function}
+ */
 const urlencoded = createBodyParser('application/x-www-form-urlencoded', function(req, res, next, options, buf) {
     try {
         if(options.extended) {

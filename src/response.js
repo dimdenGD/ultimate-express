@@ -66,8 +66,19 @@ class Socket extends EventEmitter {
     }
 }
 
+/**
+ * Represents an HTTP response.
+ * @extends Writable
+ */
 module.exports = class Response extends Writable {
     #socket = null;
+
+    /**
+     * Creates an instance of Response.
+     * @param {Object} res - The response object.
+     * @param {Object} req - The request object.
+     * @param {Object} app - The application object.
+     */
     constructor(res, req, app) {
         super();
         this._req = req;
@@ -113,6 +124,10 @@ module.exports = class Response extends Writable {
         });
     }
 
+    /**
+     * Gets the socket associated with the response.
+     * @returns {Socket} The socket object.
+     */
     get socket() {
         this.socketExists = true;
         if(!this.#socket) {
@@ -121,6 +136,12 @@ module.exports = class Response extends Writable {
         return this.#socket;
     }
 
+    /**
+     * Writes a chunk of data to the response.
+     * @param {Buffer|string} chunk - The data to write.
+     * @param {string} encoding - The encoding of the data.
+     * @param {Function} callback - The callback function.
+     */
     _write(chunk, encoding, callback) {
         if (this.aborted) {
             const err = new Error('Request aborted');
@@ -182,6 +203,13 @@ module.exports = class Response extends Writable {
             }
         });
     }
+
+    /**
+     * Writes the response headers.
+     * @param {number} statusCode - The HTTP status code.
+     * @param {string|Object} [statusMessage] - The status message or headers.
+     * @param {Object} [headers] - The headers to write.
+     */
     writeHead(statusCode, statusMessage, headers) {
         this.statusCode = statusCode;
         if(typeof statusMessage === 'string') {
@@ -195,6 +223,11 @@ module.exports = class Response extends Writable {
             this.set(header, headers[header]);
         }
     }
+
+    /**
+     * Writes the response headers.
+     * @param {boolean} utf8 - Whether the content is UTF-8 encoded.
+     */
     writeHeaders(utf8) {
         for(const header in this.headers) {
             const value = this.headers[header];
@@ -217,18 +250,45 @@ module.exports = class Response extends Writable {
         }
         this.headersSent = true;
     }
+
+    /**
+     * A compatibility function that is used to send headers.
+     * In this implementation, it invokes the `writeHead` method with the current status code.
+     * This function is retained for compatibility purposes but may not perform any meaningful action.
+     *
+     * @private
+     */
     _implicitHeader() {
         // compatibility function
         // usually should send headers but this is useless for us
         this.writeHead(this.statusCode);
     }
+
+    /**
+     * Sets the HTTP status code for the response.
+     *
+     * @param {number|string} code - The HTTP status code to set. Can be a number or a string that can be parsed into a number.
+     * @returns {this} The current response object, allowing for method chaining.
+     */
     status(code) {
         this.statusCode = parseInt(code);
         return this;
     }
+
+    /**
+     * Sends the HTTP status code as the response.
+     * @param {number} code - The HTTP status code.
+     * @returns {Response} The response object.
+     */
     sendStatus(code) {
         return this.status(code).send(statuses.message[+code] ?? code.toString());
     }
+
+    /**
+     * Ends the response.
+     * @param {Buffer|string} [data] - The data to send.
+     * @returns {Response} The response object.
+     */
     end(data) {
         if(this.writingChunk) {
             this.once('drain', () => {
@@ -279,6 +339,11 @@ module.exports = class Response extends Writable {
         return this;
     }
 
+    /**
+     * Sends a response.
+     * @param {Buffer|string|Object|number} body - The response body.
+     * @returns {Response} The response object.
+     */
     send(body) {
         if(this.headersSent) {
             throw new Error('Can\'t write body: Response was already sent');
@@ -310,6 +375,12 @@ module.exports = class Response extends Writable {
         return this.end(body);
     }
 
+    /**
+     * Sends a file as the response.
+     * @param {string} path - The file path.
+     * @param {Object} [options] - The options for sending the file.
+     * @param {Function} [callback] - The callback function.
+     */
     sendFile(path, options = new NullObject(), callback) {
         if(typeof path !== 'string') {
             throw new TypeError('path argument is required to res.sendFile');
@@ -509,6 +580,14 @@ module.exports = class Response extends Writable {
             file.pipe(this);
         }
     }
+
+    /**
+     * Sends a file as a download.
+     * @param {string} path - The file path.
+     * @param {string} [filename] - The filename for the download.
+     * @param {Object} [options] - The options for sending the file.
+     * @param {Function} [callback] - The callback function.
+     */
     download(path, filename, options, callback) {
         let done = callback;
         let name = filename;
@@ -540,6 +619,13 @@ module.exports = class Response extends Writable {
         this.attachment(name);
         this.sendFile(path, opts, done);
     }
+
+    /**
+     * Sets a header.
+     * @param {string|Object} field - The header field name or an object of headers.
+     * @param {string} [value] - The header value.
+     * @returns {Response} The response object.
+     */
     set(field, value) {
         if(this.headersSent) {
             throw new Error('Cannot set headers after they are sent to the client');
@@ -562,22 +648,71 @@ module.exports = class Response extends Writable {
         }
         return this;
     }
+
+    /**
+     * Sets a response header field to the specified value.
+     *
+     * @param {string} field - The name of the header field to set.
+     * @param {string} value - The value to assign to the header field.
+     * @returns {Object} The current response object for method chaining.
+     */
     header(field, value) {
         return this.set(field, value);
     }
+
+    /**
+     * Sets a response header field to the specified value.
+     *
+     * @param {string} field - The name of the header field to set.
+     * @param {string} value - The value to assign to the header field.
+     * @returns {Object} The current response object for method chaining.
+     */
     setHeader(field, value) {
         return this.set(field, value);
     }
+
+    /**
+     * Gets a request header field.
+     *
+     * @param {string} field - The name of the header field to get.
+     * @returns {string} The current request header.
+     */
     get(field) {
         return this.headers[field.toLowerCase()];
     }
+
+    /**
+     * Get a request header field.
+     *
+     * @param {string} field - The name of the header field to get.
+     * @returns {string} The current request header.
+     */
     getHeader(field) {
         return this.get(field);
     }
+
+    /**
+     * Remove a response header field.
+     *
+     * @param {string} field - The name of the header field to remove.
+     * @returns {Object} The current response object for method chaining.
+     */
     removeHeader(field) {
         delete this.headers[field.toLowerCase()];
         return this;
     }
+
+    /**
+     * Appends a value to the specified header field. If the field already exists, 
+     * the new value is added to the existing value(s). If the field does not exist, 
+     * it is created with the provided value.
+     *
+     * @param {string} field - The name of the header field to append to. 
+     *                         The field name is case-insensitive and will be converted to lowercase.
+     * @param {string|string[]} value - The value(s) to append to the header field. 
+     *                                  Can be a single string or an array of strings.
+     * @returns {this} The current instance for method chaining.
+     */
     append(field, value) {
         field = field.toLowerCase();
         const old = this.headers[field];
@@ -599,6 +734,13 @@ module.exports = class Response extends Writable {
         }
         return this;
     }
+
+    /**
+     * Renders a view.
+     * @param {string} view - The view name.
+     * @param {Object} [options] - The options for rendering the view.
+     * @param {Function} [callback] - The callback function.
+     */
     render(view, options, callback) {
         if(typeof options === 'function') {
             callback = options;
@@ -617,6 +759,14 @@ module.exports = class Response extends Writable {
 
         this.app.render(view, options, done);
     }
+
+    /**
+     * Sets a cookie.
+     * @param {string} name - The cookie name.
+     * @param {string|Object} value - The cookie value.
+     * @param {Object} [options] - The cookie options.
+     * @returns {Response} The response object.
+     */
     cookie(name, value, options) {
         const opt = {...(options ?? {})}; // create a new ref because we change original object (https://github.com/dimdenGD/ultimate-express/issues/68)
         let val = typeof value === 'object' ? "j:"+JSON.stringify(value) : String(value);
@@ -638,16 +788,35 @@ module.exports = class Response extends Writable {
         this.append('Set-Cookie', cookie.serialize(name, val, opt));
         return this;
     }
+
+    /**
+     * Clears a cookie.
+     * @param {string} name - The cookie name.
+     * @param {Object} [options] - The cookie options.
+     * @returns {Response} The response object.
+     */
     clearCookie(name, options) {
         const opts = { path: '/', ...options, expires: new Date(1) };
         delete opts.maxAge;
         return this.cookie(name, '', opts);
     }
+
+    /**
+     * Sets the Content-Disposition header to attachment.
+     * @param {string} filename - The filename for the attachment.
+     * @returns {Response} The response object.
+     */
     attachment(filename) {
         this.headers['Content-Disposition'] = `attachment; filename="${filename}"`;
         this.type(filename.split('.').pop());
         return this;
     }
+
+    /**
+     * Formats the response based on the Accept header.
+     * @param {Object} object - The object containing format functions.
+     * @returns {Response} The response object.
+     */
     format(object) {
         const keys = Object.keys(object).filter(v => v !== 'default');
         const key = keys.length > 0 ? this.req.accepts(keys) : false;
@@ -665,6 +834,12 @@ module.exports = class Response extends Writable {
 
         return this;
     }
+
+    /**
+     * Sends a JSON response.
+     * @param {Object} body - The JSON object to send.
+     * @returns {Response} The response object.
+     */
     json(body) {
         if(!this.headers['content-type']) {
             this.headers['content-type'] = 'application/json; charset=utf-8';
@@ -674,6 +849,12 @@ module.exports = class Response extends Writable {
         const spaces = this.app.get('json spaces');
         this.send(stringify(body, replacer, spaces, escape));
     }
+
+    /**
+     * Sends a JSONP response.
+     * @param {Object} object - The JSON object.
+     * @returns {Response} The response object.
+     */
     jsonp(object) {
         let callback = this.req.query[this.app.get('jsonp callback name')];
         let body = stringify(object, this.app.get('json replacer'), this.app.get('json spaces'), this.app.get('json escape'));
@@ -703,10 +884,22 @@ module.exports = class Response extends Writable {
 
         return this.send(body);
     }
+
+    /**
+     * Sets the Link header.
+     * @param {Object} links - The links to set.
+     * @returns {Response} The response object.
+     */
     links(links) {
         this.headers['link'] = Object.entries(links).map(([rel, url]) => `<${url}>; rel="${rel}"`).join(', ');
         return this;
     }
+
+    /**
+     * Sets the Location header.
+     * @param {string} path - The location path.
+     * @returns {Response} The response object.
+     */
     location(path) {
         if(path === 'back') {
             path = this.req.get('Referrer');
@@ -715,6 +908,13 @@ module.exports = class Response extends Writable {
         }
         return this.headers['location'] = encodeUrl(path);
     }
+
+    /**
+     * Redirects the response to a specified URL.
+     * @param {number|string} status - The HTTP status code or URL.
+     * @param {string} [url] - The URL to redirect to.              
+     * @returns {Response} The response object.
+     */
     redirect(status, url) {
         if(typeof status !== 'number' && !url) {
             url = status;
@@ -726,6 +926,11 @@ module.exports = class Response extends Writable {
         return this.send(`${statuses.message[status] ?? status}. Redirecting to ${url}`);
     }
 
+    /**
+     * Sets the Content-Type header.
+     * @param {string} type - The MIME type.
+     * @returns {Response} The response object.
+     */
     type(type) {
         let ct = type.indexOf('/') === -1
             ? (mime.contentType(type) || 'application/octet-stream')
@@ -733,17 +938,35 @@ module.exports = class Response extends Writable {
 
         return this.set('content-type', ct);
     }
+    /**
+     * Sets the Content-Type header.
+     * @param {string} type - The MIME type.
+     * @returns {Response} The response object.
+     */
     contentType = this.type;
 
+    /**
+     * Varies the response based on a field.
+     * @param {string} field - The field to vary by.
+     * @returns {Response} The response object.
+     */
     vary(field) {
         vary(this, field);
         return this;
     }
 
+    /**
+     * Gets the connection information.
+     * @returns {Socket} The socket object.
+     */
     get connection() {
         return this.socket;
     }
 
+    /**
+     * Checks if the response is finished.
+     * @returns {boolean} True if the response is finished, otherwise false.
+     */
     get writableFinished() {
         return this.finished;
     }

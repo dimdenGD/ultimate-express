@@ -24,6 +24,12 @@ const { Stats } = require("fs");
 
 const EMPTY_REGEX = new RegExp(``);
 
+/**
+ * Parses a query string into an object.
+ * @param {string} query - The query string to parse.
+ * @param {Object} [options] - Options for parsing.
+ * @returns {Object} - The parsed query object.
+ */
 function fastQueryParse(query, options) {
     const len = query.length;
     if(len === 0){
@@ -39,10 +45,21 @@ function fastQueryParse(query, options) {
     return {...qs.parse(query, options)};
 }
 
+/**
+ * Removes duplicate slashes from a given path.
+ * @param {string} path - The input path.
+ * @returns {string} - The normalized path with duplicate slashes removed.
+ */
 function removeDuplicateSlashes(path) {
     return path.replace(/\/{2,}/g, '/');
 }
 
+/**
+ * Converts a pattern string into a regular expression.
+ * @param {string|RegExp} pattern - The pattern to convert.
+ * @param {boolean} [isPrefix=false] - Whether the pattern is a prefix.
+ * @returns {RegExp} - The resulting regular expression.
+ */
 function patternToRegex(pattern, isPrefix = false) {
     if(pattern instanceof RegExp) {
         return pattern;
@@ -63,6 +80,11 @@ function patternToRegex(pattern, isPrefix = false) {
     return new RegExp(`^${regexPattern}${isPrefix ? '(?=$|\/)' : '$'}`);
 }
 
+/**
+ * Determines if a pattern needs to be converted to a regular expression.
+ * @param {string|RegExp} pattern - The pattern to check.
+ * @returns {boolean} - True if conversion is needed, false otherwise.
+ */
 function needsConversionToRegex(pattern) {
     if(pattern instanceof RegExp) {
         return false;
@@ -83,6 +105,11 @@ function needsConversionToRegex(pattern) {
         pattern.includes(']');
 }
 
+/**
+ * Determines whether a given pattern can be optimized.
+ * @param {string|RegExp} pattern - The pattern to evaluate.
+ * @returns {boolean} Returns `true` if the pattern can be optimized, otherwise `false`.
+ */
 function canBeOptimized(pattern) {
     if(pattern === '/*') {
         return false;
@@ -139,12 +166,25 @@ function acceptParams(str) {
     return ret;
 }
 
+/**
+ * Normalizes a MIME type string.
+ * @param {string} type - The MIME type or file extension.
+ * @returns {Object} - An object containing the normalized MIME type and parameters.
+ */
 function normalizeType(type) {
     return ~type.indexOf('/') ?
         acceptParams(type) :
         { value: (mime.lookup(type) || 'application/octet-stream'), params: {} };
 }
 
+/**
+ * Converts a value to a JSON string with optional escaping.
+ * @param {*} value - The value to stringify.
+ * @param {Function} [replacer] - A function to transform the result.
+ * @param {number|string} [spaces] - The number of spaces for indentation.
+ * @param {boolean} [escape=false] - Whether to escape special characters.
+ * @returns {string} - The JSON string representation of the value.
+ */
 function stringify(value, replacer, spaces, escape) {
     let json = replacer || spaces
         ? JSON.stringify(value, replacer, spaces)
@@ -184,6 +224,11 @@ const defaultSettings = {
     'declarative responses': true
 };
 
+/**
+ * Compiles a trust proxy function based on the given value.
+ * @param {boolean|number|string|Function} val - The trust proxy setting.
+ * @returns {Function} - A function to determine if a proxy is trusted.
+ */
 function compileTrust(val) {
     if (typeof val === 'function') return val;
   
@@ -207,6 +252,12 @@ function compileTrust(val) {
 }
 
 const shownWarnings = new Set();
+/**
+ * Logs a deprecation warning for a method.
+ * @param {string} oldMethod - The deprecated method name.
+ * @param {string} newMethod - The replacement method name.
+ * @param {boolean} [full=false] - Whether to include the full stack trace.
+ */
 function deprecated(oldMethod, newMethod, full = false) {
     const err = new Error();
     const pos = full ? err.stack.split('\n').slice(1).join('\n') : err.stack.split('\n')[3].trim().split('(').slice(1).join('(').split(')').slice(0, -1).join(')');
@@ -225,6 +276,13 @@ function deprecated(oldMethod, newMethod, full = false) {
     })} u-express deprecated ${oldMethod}: Use ${newMethod} instead at ${pos}`);
 }
 
+/**
+ * Finds the index of the first element in an array that satisfies a condition, starting from a given index.
+ * @param {Array} arr - The array to search.
+ * @param {Function} fn - The condition function.
+ * @param {number} [index=0] - The starting index.
+ * @returns {number} - The index of the first matching element, or -1 if none found.
+ */
 function findIndexStartingFrom(arr, fn, index = 0) {
     for(let i = index, end = arr.length; i < end; i++) {
         if(fn(arr[i], i, arr)) {
@@ -234,6 +292,11 @@ function findIndexStartingFrom(arr, fn, index = 0) {
     return -1;
 };
 
+/**
+ * Decodes a URI component safely.
+ * @param {string} path - The URI component to decode.
+ * @returns {string|number} - The decoded string, or -1 if decoding fails.
+ */
 function decode (path) {
     try {
         return decodeURIComponent(path)
@@ -244,6 +307,11 @@ function decode (path) {
 
 const UP_PATH_REGEXP = /(?:^|[\\/])\.\.(?:[\\/]|$)/;
 
+/**
+ * Checks if an array of path parts contains a dotfile.
+ * @param {string[]} parts - The array of path parts.
+ * @returns {boolean} - True if a dotfile is found, false otherwise.
+ */
 function containsDotFile(parts) {
     for(let i = 0, len = parts.length; i < len; i++) {
         const part = parts[i];
@@ -255,6 +323,11 @@ function containsDotFile(parts) {
     return false;
 }
 
+/**
+ * Parses a comma-separated token list from a string.
+ * @param {string} str - The input string.
+ * @returns {string[]} - An array of tokens.
+ */
 function parseTokenList(str) {
     let end = 0;
     const list = [];
@@ -288,12 +361,22 @@ function parseTokenList(str) {
     return list;
 }
 
-
+/**
+ * Parses an HTTP date string into a timestamp.
+ * @param {string} date - The HTTP date string.
+ * @returns {number} - The timestamp, or NaN if parsing fails.
+ */
 function parseHttpDate(date) {
     const timestamp = date && Date.parse(date);
     return typeof timestamp === 'number' ? timestamp : NaN;
 }
 
+/**
+ * Checks if a request fails precondition headers.
+ * @param {Object} req - The HTTP request object.
+ * @param {Object} res - The HTTP response object.
+ * @returns {boolean} - True if preconditions fail, false otherwise.
+ */
 function isPreconditionFailure(req, res) {
     const match = req.headers['if-match'];
 
@@ -315,6 +398,11 @@ function isPreconditionFailure(req, res) {
     return false;
 }
 
+/**
+ * Creates an ETag generator function.
+ * @param {Object} options - Options for ETag generation.
+ * @returns {Function} - The ETag generator function.
+ */
 function createETagGenerator(options) {
     return function generateETag (body, encoding) {
         if(body instanceof Stats) {
@@ -325,6 +413,12 @@ function createETagGenerator(options) {
     }
 }
 
+/**
+ * Checks if a range request is fresh based on the If-Range header.
+ * @param {Object} req - The HTTP request object.
+ * @param {Object} res - The HTTP response object.
+ * @returns {boolean} - True if the range is fresh, false otherwise.
+ */
 function isRangeFresh(req, res) {
     const ifRange = req.headers['if-range'];
     if(!ifRange) {
