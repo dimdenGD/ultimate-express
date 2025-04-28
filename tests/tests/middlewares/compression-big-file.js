@@ -1,6 +1,6 @@
 // must support compression middleware with big file
 
-const express = require("../../../src/index.js");
+const express = require("express");
 const compression = require("compression");
 
 const app = express();
