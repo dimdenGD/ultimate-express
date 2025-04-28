@@ -115,21 +115,11 @@ jobs:
 
           # Display the summary in the Actions log
           cat benchmark_summary.md
-      
-
-      - name: Comment on Pull Request
-        if: github.event_name == 'pull_request'
-        continue-on-error: true
-        uses: peter-evans/create-or-update-comment@v3
-        with:
-          token: ${{ secrets.PR_SECRET }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body-path: benchmark_summary.md
         
       - name: Comment on Commit
         if: github.event_name == 'push'
         continue-on-error: true
         uses: peter-evans/commit-comment@v3
         with:
-          token: ${{ secrets.PR_SECRET }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           body-path: benchmark_summary.md
