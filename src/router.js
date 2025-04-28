@@ -441,6 +441,9 @@ module.exports = class Router extends EventEmitter {
     }
 
     async _routeRequest(req, res, startIndex = 0, routes = this._routes, skipCheck = false, skipUntil) {
+        const strictRouting = this.get('strict routing');
+        const catchAsyncErrors = this.get("catch async errors");
+        
         let routeIndex = skipCheck ? startIndex : findIndexStartingFrom(routes, r => (r.all || r.method === req.method || (r.gettable && req.method === 'HEAD')) && this._pathMatches(r, req), startIndex);
         const route = routes[routeIndex];
         if(!route) {
@@ -459,8 +462,6 @@ module.exports = class Router extends EventEmitter {
         const continueRoute = this._paramCallbacks.size === 0 && req.routeCount % 300 !== 0 ? 
             this._preprocessRequest(req, res, route) : await this._preprocessRequest(req, res, route);
         
-        const strictRouting = this.get('strict routing');
-        const catchAsyncErrors = this.get("catch async errors")
         if(route.use) {
             req._stack.push(route.path);
             const fullMountpath = this.getFullMountpath(req);
