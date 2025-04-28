@@ -38,6 +38,7 @@ const etag = require("etag");
 const outgoingMessage = new http.OutgoingMessage();
 const symbols = Object.getOwnPropertySymbols(outgoingMessage);
 const kOutHeaders = symbols.find(s => s.toString() === 'Symbol(kOutHeaders)');
+const HIGH_WATERMARK = 256 * 1024;
 
 class Socket extends EventEmitter {
     constructor(response) {
@@ -68,6 +69,8 @@ class Socket extends EventEmitter {
 
 module.exports = class Response extends Writable {
     #socket = null;
+    #pendingChunks = [];
+    #lastWriteChunkTime = 0;
     constructor(res, req, app) {
         super();
         this._req = req;
@@ -147,7 +150,17 @@ module.exports = class Response extends Writable {
             }
     
             if (this.chunkedTransfer) {
-                this._res.write(chunk);
+                this.#pendingChunks.push(chunk);
+                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
+                const now = Date.now();
+                // the first chunk is set immediately (!this.#lastWriteChunkTime)
+                // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
+                // or if elapsed 100ms of last send (now - this.#lastWriteChunkTime > 100)
+                if (!this.#lastWriteChunkTime || size >= HIGH_WATERMARK || now - this.#lastWriteChunkTime > 100) {
+                    this._res.write(Buffer.concat(this.#pendingChunks, size));
+                    this.#pendingChunks = [];
+                    this.#lastWriteChunkTime = now;
+                }
                 this.writingChunk = false;
                 callback(null);
             } else {
@@ -261,6 +274,11 @@ module.exports = class Response extends Writable {
             if(!data && contentLength) {
                 this._res.endWithoutBody(contentLength.toString());
             } else {
+                if(this.#pendingChunks.length) {
+                    this._res.write(Buffer.concat(this.#pendingChunks));
+                    this.#pendingChunks = [];
+                    this.lastWriteChunkTime = 0;
+                }
                 if(data instanceof Buffer) {
                     data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
                 }
@@ -271,6 +289,7 @@ module.exports = class Response extends Writable {
                     this._res.end(data);
                 }
             }
+            
             this.finished = true;
             if(this.socketExists) this.socket.emit('close');
         });
@@ -498,7 +517,7 @@ module.exports = class Response extends Writable {
         } else {
             // larger files or range requests are piped over response
             let opts = {
-                highWaterMark: 256 * 1024
+                highWaterMark: HIGH_WATERMARK
             };
             if(ranged) {
                 opts.start = offset;

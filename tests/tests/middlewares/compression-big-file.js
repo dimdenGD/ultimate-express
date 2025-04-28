@@ -1,43 +1,7 @@
-// must support compression middleware with big file OFF
+// must support compression middleware with big file
 
 const express = require("express");
 const compression = require("compression");
-const net = require("net");
-
-async function sendRequest(method, url) {
-    return new Promise((resolve, reject) => {
-        const client = new net.Socket();
-        const [host, port] = url.split('://')[1].split('/')[0].split(':');
-        const path = '/' + url.split('/').slice(3).join('/');
-
-        client.connect(parseInt(port), host, () => {
-            let request = `${method} ${path} HTTP/1.1\r\n`;
-            request += `Host: ${host}:${port}\r\n`;
-            request += `Accept-Encoding: gzip, deflate, br\r\n`;
-            request += `Connection: close\r\n`;
-            
-            request += '\r\n';
-
-            let fullData = '';
-
-            client.on('data', data => {
-                fullData += data.toString('utf-8');
-            });
-
-            client.on('end', () => {
-                const rawHttpMessage = fullData;
-                const parts = rawHttpMessage.split(/\r?\n\r?\n/);
-                const headersPart = parts[0];
-                const bodyPart = parts.slice(1).join('\n\n');
-                const headersEndIndex = rawHttpMessage.indexOf('\r\n\r\n') + 4; 
-                const bodyBuffer = fullData.slice(headersEndIndex);
-                resolve(bodyBuffer);
-            });
-            
-            client.write(request);
-        });
-    });
-}
 
 const app = express();
 
@@ -47,6 +11,10 @@ app.use(compression({
 
 app.use(express.static('tests/parts'));
 
+app.get('/test', (req, res) => {
+    res.sendFile('tests/parts/large-file.json', { root: "." });
+});
+
 app.get('/abc', (req, res) => {
     res.send('Hello World');
 });
@@ -54,16 +22,61 @@ app.get('/abc', (req, res) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    let compressedResponse = await sendRequest('GET', 'http://localhost:13333/large-file.json');
-    console.log('compressed', compressedResponse.slice(0, 100), compressedResponse.slice(-100), compressedResponse.length);
-
-    let uncompressedResponse = await fetch('http://localhost:13333/large-file.json', {
+    // sent with pipe
+    let response = await fetch('http://localhost:13333/large-file.json', {
+        method: 'GET',
         headers: {
-            'Connection': 'close',
-        }
+            'Accept-Encoding': 'gzip',
+        },
     });
-    let uncompressedResponseText = await uncompressedResponse.text();
-    console.log('uncompressed', uncompressedResponseText.slice(0, 100), uncompressedResponseText.slice(-100), uncompressedResponseText.length);
+    
+    console.log(response.headers.get('content-encoding'), response.headers.get('content-encoding') === 'gzip');
+    console.log(response.headers.get('transfer-encoding'));
+    console.log(response.headers.get('Etag'));
+    console.log(response.headers.get('content-type').toLowerCase());
+    console.log(await response.json());
+
+    // sent with pipe
+    response = await fetch('http://localhost:13333/medium-file.json', {
+        method: 'GET',
+        headers: {
+            'Accept-Encoding': 'gzip',
+        },
+    });
+    
+    console.log(response.headers.get('content-encoding'), response.headers.get('content-encoding') === 'gzip');
+    console.log(response.headers.get('transfer-encoding'));
+    console.log(response.headers.get('Etag'));
+    console.log(response.headers.get('content-type').toLowerCase());
+    console.log(await response.json());
+
+    // sent with worker
+    response = await fetch('http://localhost:13333/small-file.json', {
+        method: 'GET',
+        headers: {
+            'Accept-Encoding': 'gzip',
+        },
+    });
+    
+    console.log(response.headers.get('content-encoding'), response.headers.get('content-encoding') === 'gzip');
+    console.log(response.headers.get('transfer-encoding'));
+    console.log(response.headers.get('Etag'));
+    console.log(response.headers.get('content-type').toLowerCase());
+    console.log(await response.json());
+
+    // sent with res.sendFile
+    response = await fetch('http://localhost:13333/test', {
+        method: 'GET',
+        headers: {
+            'Accept-Encoding': 'gzip',
+        },
+    });
+    
+    console.log(response.headers.get('content-encoding'), response.headers.get('content-encoding') === 'gzip');
+    console.log(response.headers.get('transfer-encoding'));
+    console.log(response.headers.get('Etag'));
+    console.log(response.headers.get('content-type').toLowerCase());
+    console.log(await response.json());
 
     process.exit(0);
 
