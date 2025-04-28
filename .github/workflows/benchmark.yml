@@ -122,7 +122,7 @@ jobs:
         continue-on-error: true
         uses: peter-evans/create-or-update-comment@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PR_SECRET }}
           issue-number: ${{ github.event.pull_request.number }}
           body-path: benchmark_summary.md
         
@@ -131,5 +131,5 @@ jobs:
         continue-on-error: true
         uses: peter-evans/commit-comment@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PR_SECRET }}
           body-path: benchmark_summary.md
