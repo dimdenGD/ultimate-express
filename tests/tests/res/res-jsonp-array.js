@@ -3,7 +3,7 @@
 const express = require("express");
 
 const app = express();
-app.set('jsonp callback name', ['callback2', 'callback3']);
+app.set('jsonp callback name', 'callback2');
 
 app.get('/test', (req, res) => {
     res.jsonp({ test: 'test' });
@@ -12,7 +12,7 @@ app.get('/test', (req, res) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    const response = await fetch('http://localhost:13333/test?callback2=test');
+    const response = await fetch('http://localhost:13333/test?callback2=test&callback2=test2');
     console.log(await response.text());
 
     const response2 = await fetch('http://localhost:13333/test');
