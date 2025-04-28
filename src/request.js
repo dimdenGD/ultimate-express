@@ -33,6 +33,7 @@ let key = 0;
 
 /**
  * Represents an HTTP request.
+ * 
  * @extends Readable
  */
 module.exports = class Request extends Readable {
@@ -44,6 +45,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Creates an instance of Request.
+     * 
      * @param {Object} req - The request object.
      * @param {Object} res - The response object.
      * @param {Object} app - The application object.
@@ -120,6 +122,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Reads data from the request.
+     * 
      * @private
      */
     _read() {
@@ -138,6 +141,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Gets the base URL.
+     * 
      * @returns {string} The base URL.
      */
     get baseUrl() {
@@ -147,6 +151,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Gets the host.
+     * 
      * @private
      * @returns {string} The host.
      */
@@ -169,6 +174,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Gets the host.
+     * 
      * @deprecated Use req.hostname instead.
      * @returns {string} The host.
      */
@@ -179,6 +185,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Gets the hostname.
+     * 
      * @returns {string} The hostname.
      */
     get hostname() {
@@ -191,6 +198,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Gets the HTTP version.
+     * 
      * @returns {string} The HTTP version.
      */
     get httpVersion() {
@@ -199,6 +207,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Gets the major HTTP version.
+     * 
      * @returns {number} The major HTTP version.
      */
     get httpVersionMajor() {
@@ -207,6 +216,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Gets the minor HTTP version.
+     * 
      * @returns {number} The minor HTTP version.
      */
     get httpVersionMinor() {
@@ -215,6 +225,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Gets the IP address.
+     * 
      * @returns {string} The IP address.
      */
     get ip() {
@@ -227,6 +238,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Gets the IP addresses.
+     * 
      * @returns {string[]} The IP addresses.
      */
     get ips() {
@@ -241,6 +253,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Gets the protocol.
+     * 
      * @returns {string} The protocol.
      */
     get protocol() {
@@ -260,13 +273,16 @@ module.exports = class Request extends Readable {
 
     /**
      * Sets the query parameters.
+     * 
      * @param {Object} query - The query parameters.
      */
     set query(query) {
         return this.#cachedQuery = query;
     }
+
     /**
      * Gets the query parameters.
+     * 
      * @returns {Object} The query parameters.
      */
     get query() {
@@ -284,6 +300,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Checks if the request is secure.
+     * 
      * @returns {boolean} True if the request is secure, otherwise false.
      */
     get secure() {
@@ -292,6 +309,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Gets the subdomains.
+     * 
      * @returns {string[]} The subdomains.
      */
     get subdomains() {
@@ -306,6 +324,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Checks if the request is an XMLHttpRequest.
+     * 
      * @returns {boolean} True if the request is an XMLHttpRequest, otherwise false.
      */
     get xhr() {
@@ -314,6 +333,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Gets the parsed IP address.
+     * 
      * @returns {string} The parsed IP address.
      */
     get parsedIp() {
@@ -354,6 +374,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Gets the connection information.
+     * 
      * @returns {Object} The connection information.
      */
     get connection() {
@@ -367,6 +388,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Gets the socket information.
+     * 
      * @returns {Object} The socket information.
      */
     get socket() {
@@ -375,6 +397,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Checks if the request is fresh.
+     * 
      * @returns {boolean} True if the request is fresh, otherwise false.
      */
     get fresh() {
@@ -392,6 +415,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Checks if the request is stale.
+     * 
      * @returns {boolean} True if the request is stale, otherwise false.
      */
     get stale() {
@@ -400,6 +424,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Gets a header value.
+     * 
      * @param {string} field - The header field name.
      * @returns {string} The header value.
      */
@@ -414,8 +439,10 @@ module.exports = class Request extends Readable {
         } 
         return this.headers[field];
     }
+
     /**
      * Gets a header value.
+     * 
      * @param {string} field - The header field name.
      * @returns {string} The header value.
      */
@@ -423,6 +450,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Checks if the request accepts the specified types.
+     * 
      * @param {...string} types - The types to check.
      * @returns {string|false} The best match or false.
      */
@@ -432,6 +460,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Checks if the request accepts the specified charsets.
+     * 
      * @param {...string} charsets - The charsets to check.
      * @returns {string|false} The best match or false.
      */
@@ -441,6 +470,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Checks if the request accepts the specified encodings.
+     * 
      * @param {...string} encodings - The encodings to check.
      * @returns {string|false} The best match or false.
      */
@@ -450,6 +480,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Checks if the request accepts the specified languages.
+     * 
      * @param {...string} languages - The languages to check.
      * @returns {string|false} The best match or false.
      */
@@ -459,6 +490,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Checks if the request is of the specified type.
+     * 
      * @param {string} type - The type to check.
      * @returns {string|false} The best match or false.
      */
@@ -468,6 +500,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Gets a parameter value.
+     * 
      * @param {string} name - The parameter name.
      * @param {*} [defaultValue] - The default value.
      * @returns {*} The parameter value.
@@ -485,6 +518,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Parses the range header.
+     * 
      * @param {number} size - The size of the resource.
      * @param {Object} [options] - The options.
      * @returns {Object|undefined} The parsed range or undefined.
@@ -497,13 +531,16 @@ module.exports = class Request extends Readable {
 
     /**
      * Sets the headers.
+     * 
      * @param {Object} headers - The headers to set.
      */
     set headers(headers) {
         this.#cachedHeaders = headers;
     }
+
     /**
      * Gets the headers.
+     * 
      * @returns {Object} The headers.
      */
     get headers() {
@@ -539,6 +576,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Gets the distinct headers.
+     * 
      * @returns {Object} The distinct headers.
      */
     get headersDistinct() {
@@ -559,6 +597,7 @@ module.exports = class Request extends Readable {
 
     /**
      * Gets the raw headers.
+     * 
      * @returns {string[]} The raw headers.
      */
     get rawHeaders() {
