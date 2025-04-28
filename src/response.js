@@ -68,6 +68,7 @@ class Socket extends EventEmitter {
 
 /**
  * Represents an HTTP response.
+ * 
  * @extends Writable
  */
 module.exports = class Response extends Writable {
@@ -75,6 +76,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Creates an instance of Response.
+     * 
      * @param {Object} res - The response object.
      * @param {Object} req - The request object.
      * @param {Object} app - The application object.
@@ -126,6 +128,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Gets the socket associated with the response.
+     * 
      * @returns {Socket} The socket object.
      */
     get socket() {
@@ -138,6 +141,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Writes a chunk of data to the response.
+     * 
      * @param {Buffer|string} chunk - The data to write.
      * @param {string} encoding - The encoding of the data.
      * @param {Function} callback - The callback function.
@@ -206,6 +210,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Writes the response headers.
+     * 
      * @param {number} statusCode - The HTTP status code.
      * @param {string|Object} [statusMessage] - The status message or headers.
      * @param {Object} [headers] - The headers to write.
@@ -226,6 +231,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Writes the response headers.
+     * 
      * @param {boolean} utf8 - Whether the content is UTF-8 encoded.
      */
     writeHeaders(utf8) {
@@ -268,7 +274,7 @@ module.exports = class Response extends Writable {
      * Sets the HTTP status code for the response.
      *
      * @param {number|string} code - The HTTP status code to set. Can be a number or a string that can be parsed into a number.
-     * @returns {this} The current response object, allowing for method chaining.
+     * @returns {Response} The response object.
      */
     status(code) {
         this.statusCode = parseInt(code);
@@ -277,6 +283,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Sends the HTTP status code as the response.
+     * 
      * @param {number} code - The HTTP status code.
      * @returns {Response} The response object.
      */
@@ -286,6 +293,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Ends the response.
+     * 
      * @param {Buffer|string} [data] - The data to send.
      * @returns {Response} The response object.
      */
@@ -341,6 +349,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Sends a response.
+     * 
      * @param {Buffer|string|Object|number} body - The response body.
      * @returns {Response} The response object.
      */
@@ -377,6 +386,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Sends a file as the response.
+     * 
      * @param {string} path - The file path.
      * @param {Object} [options] - The options for sending the file.
      * @param {Function} [callback] - The callback function.
@@ -583,6 +593,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Sends a file as a download.
+     * 
      * @param {string} path - The file path.
      * @param {string} [filename] - The filename for the download.
      * @param {Object} [options] - The options for sending the file.
@@ -622,6 +633,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Sets a header.
+     * 
      * @param {string|Object} field - The header field name or an object of headers.
      * @param {string} [value] - The header value.
      * @returns {Response} The response object.
@@ -654,7 +666,7 @@ module.exports = class Response extends Writable {
      *
      * @param {string} field - The name of the header field to set.
      * @param {string} value - The value to assign to the header field.
-     * @returns {Object} The current response object for method chaining.
+     * @returns {Response} The response object.
      */
     header(field, value) {
         return this.set(field, value);
@@ -662,10 +674,10 @@ module.exports = class Response extends Writable {
 
     /**
      * Sets a response header field to the specified value.
-     *
+     * 
      * @param {string} field - The name of the header field to set.
      * @param {string} value - The value to assign to the header field.
-     * @returns {Object} The current response object for method chaining.
+     * @returns {Response} The response object.
      */
     setHeader(field, value) {
         return this.set(field, value);
@@ -673,7 +685,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Gets a request header field.
-     *
+     * 
      * @param {string} field - The name of the header field to get.
      * @returns {string} The current request header.
      */
@@ -683,7 +695,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Get a request header field.
-     *
+     * 
      * @param {string} field - The name of the header field to get.
      * @returns {string} The current request header.
      */
@@ -693,9 +705,9 @@ module.exports = class Response extends Writable {
 
     /**
      * Remove a response header field.
-     *
+     * 
      * @param {string} field - The name of the header field to remove.
-     * @returns {Object} The current response object for method chaining.
+     * @returns {Response} The response object.
      */
     removeHeader(field) {
         delete this.headers[field.toLowerCase()];
@@ -706,12 +718,10 @@ module.exports = class Response extends Writable {
      * Appends a value to the specified header field. If the field already exists, 
      * the new value is added to the existing value(s). If the field does not exist, 
      * it is created with the provided value.
-     *
+     * 
      * @param {string} field - The name of the header field to append to. 
-     *                         The field name is case-insensitive and will be converted to lowercase.
      * @param {string|string[]} value - The value(s) to append to the header field. 
-     *                                  Can be a single string or an array of strings.
-     * @returns {this} The current instance for method chaining.
+     * @returns {Response} The response object.
      */
     append(field, value) {
         field = field.toLowerCase();
@@ -737,6 +747,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Renders a view.
+     * 
      * @param {string} view - The view name.
      * @param {Object} [options] - The options for rendering the view.
      * @param {Function} [callback] - The callback function.
@@ -762,6 +773,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Sets a cookie.
+     * 
      * @param {string} name - The cookie name.
      * @param {string|Object} value - The cookie value.
      * @param {Object} [options] - The cookie options.
@@ -791,6 +803,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Clears a cookie.
+     * 
      * @param {string} name - The cookie name.
      * @param {Object} [options] - The cookie options.
      * @returns {Response} The response object.
@@ -803,6 +816,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Sets the Content-Disposition header to attachment.
+     * 
      * @param {string} filename - The filename for the attachment.
      * @returns {Response} The response object.
      */
@@ -814,6 +828,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Formats the response based on the Accept header.
+     * 
      * @param {Object} object - The object containing format functions.
      * @returns {Response} The response object.
      */
@@ -837,6 +852,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Sends a JSON response.
+     * 
      * @param {Object} body - The JSON object to send.
      * @returns {Response} The response object.
      */
@@ -852,6 +868,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Sends a JSONP response.
+     * 
      * @param {Object} object - The JSON object.
      * @returns {Response} The response object.
      */
@@ -887,6 +904,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Sets the Link header.
+     * 
      * @param {Object} links - The links to set.
      * @returns {Response} The response object.
      */
@@ -897,6 +915,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Sets the Location header.
+     * 
      * @param {string} path - The location path.
      * @returns {Response} The response object.
      */
@@ -911,6 +930,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Redirects the response to a specified URL.
+     * 
      * @param {number|string} status - The HTTP status code or URL.
      * @param {string} [url] - The URL to redirect to.              
      * @returns {Response} The response object.
@@ -928,6 +948,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Sets the Content-Type header.
+     * 
      * @param {string} type - The MIME type.
      * @returns {Response} The response object.
      */
@@ -940,6 +961,7 @@ module.exports = class Response extends Writable {
     }
     /**
      * Sets the Content-Type header.
+     * 
      * @param {string} type - The MIME type.
      * @returns {Response} The response object.
      */
@@ -947,6 +969,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Varies the response based on a field.
+     * 
      * @param {string} field - The field to vary by.
      * @returns {Response} The response object.
      */
@@ -956,7 +979,8 @@ module.exports = class Response extends Writable {
     }
 
     /**
-     * Gets the connection information.
+     * Gets the connection socket.
+     * 
      * @returns {Socket} The socket object.
      */
     get connection() {
@@ -965,6 +989,7 @@ module.exports = class Response extends Writable {
 
     /**
      * Checks if the response is finished.
+     * 
      * @returns {boolean} True if the response is finished, otherwise false.
      */
     get writableFinished() {
