@@ -521,6 +521,7 @@ module.exports = class Router extends EventEmitter {
                     if(callback.constructor.name === 'Application') {
                         req.app = callback;
                     }
+                    callback.settings = {...this.settings, ...callback.settings};
                     if(callback.settings.mergeParams) {
                         req._paramStack.push(req.params);
                     }
