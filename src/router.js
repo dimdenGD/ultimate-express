@@ -581,6 +581,8 @@ module.exports = class Router extends EventEmitter {
         if(path === '/') {
             path = '';
         }
+        callbacks = callbacks.flat();
+        
         for(let callback of callbacks) {
             if(callback instanceof Router) {
                 callback.mountpath = path;
