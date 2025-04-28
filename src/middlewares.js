@@ -206,7 +206,7 @@ function createBodyParser(defaultType, beforeReturn) {
 
             // skip reading body for non-POST requests
             // this makes it +10k req/sec faster
-            if( additionalMethods === undefined ) additionalMethods = req.app.get('body methods') ?? null;
+            if(additionalMethods === undefined) additionalMethods = req.app.get('body methods') ?? null;
             if(
                 req.method !== 'POST' &&
                 req.method !== 'PUT' &&

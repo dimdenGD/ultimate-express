@@ -37,7 +37,6 @@ module.exports = class Request extends Readable {
     #cachedDistinctHeaders = null;
     #rawHeadersEntries = [];
     #cachedParsedIp = null;
-    #receivedData = false;
     #needsData = false;
     #doneReadingData = false;
     #bufferedData = null;
@@ -75,6 +74,7 @@ module.exports = class Request extends Readable {
         this._gotParams = new Set();
         this._stack = [];
         this._paramStack = [];
+        this.receivedData = false;
         // reading ip is very slow in UWS, so its better to not do it unless truly needed
         if(this.app.needsIpAfterResponse || this.key < 100) {
             // if app needs ip after response, read it now because after response its not accessible
@@ -94,7 +94,7 @@ module.exports = class Request extends Readable {
             this.#bufferedData = Buffer.allocUnsafe(0);
             this._res.onData((ab, isLast) => {
                 // make stream actually readable
-                this.#receivedData = true;
+                this.receivedData = true;
                 if(isLast) {
                     this.#doneReadingData = true;
                 }
@@ -109,12 +109,12 @@ module.exports = class Request extends Readable {
                 }
             });
         } else {
-            this.#receivedData = true;
+            this.receivedData = true;
         }
     }
 
     _read() {
-        if(!this.#receivedData || !this.#bufferedData) {
+        if(!this.receivedData || !this.#bufferedData) {
             this.#needsData = true;
             return;
         }
