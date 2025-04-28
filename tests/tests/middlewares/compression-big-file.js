@@ -18,7 +18,30 @@ app.get('/abc', (req, res) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    const response = await fetch('http://localhost:13333/large-file.json', {
+    // sended with pipe
+    let response = await fetch('http://localhost:13333/large-file.json', {
+        method: 'GET',
+        headers: {
+            'Accept-Encoding': 'gzip',
+        },
+    });
+    
+    console.log(response.headers.get('content-encoding'), response.headers.get('content-encoding') === 'gzip');
+    console.log(await response.json());
+
+    // sended with pipe
+    response = await fetch('http://localhost:13333/medium-file.json', {
+        method: 'GET',
+        headers: {
+            'Accept-Encoding': 'gzip',
+        },
+    });
+    
+    console.log(response.headers.get('content-encoding'), response.headers.get('content-encoding') === 'gzip');
+    console.log(await response.json());
+
+    // sended with worker
+    response = await fetch('http://localhost:13333/small-file.json', {
         method: 'GET',
         headers: {
             'Accept-Encoding': 'gzip',
