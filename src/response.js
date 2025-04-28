@@ -153,11 +153,11 @@ module.exports = class Response extends Writable {
                 this.#pendingChunks.push(chunk);
                 const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
                 const now = Date.now();
-                // the first chunk is send immediately (!this.#lastWriteChunkTime)
-                // the other chunks are sended when reach watermark (size >= HIGH_WATERMARK) 
+                // the first chunk is set immediately (!this.#lastWriteChunkTime)
+                // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
                 // or if elapsed 100ms of last send (now - this.#lastWriteChunkTime > 100)
                 if (!this.#lastWriteChunkTime || size >= HIGH_WATERMARK || now - this.#lastWriteChunkTime > 100) {
-                    this._res.write(Buffer.concat(this.#pendingChunks));
+                    this._res.write(Buffer.concat(this.#pendingChunks, size));
                     this.#pendingChunks = [];
                     this.#lastWriteChunkTime = now;
                 }
@@ -274,7 +274,7 @@ module.exports = class Response extends Writable {
             if(!data && contentLength) {
                 this._res.endWithoutBody(contentLength.toString());
             } else {
-                if( this.#pendingChunks.length ) {
+                if(this.#pendingChunks.length) {
                     this._res.write(Buffer.concat(this.#pendingChunks));
                     this.#pendingChunks = [];
                     this.lastWriteChunkTime = 0;

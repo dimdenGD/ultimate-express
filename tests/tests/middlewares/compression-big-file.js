@@ -1,6 +1,6 @@
 // must support compression middleware with big file
 
-const express = require("express");
+const express = require("../../../src/index.js");
 const compression = require("compression");
 
 const app = express();
@@ -22,7 +22,7 @@ app.get('/abc', (req, res) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    // sended with pipe
+    // sent with pipe
     let response = await fetch('http://localhost:13333/large-file.json', {
         method: 'GET',
         headers: {
@@ -36,7 +36,7 @@ app.listen(13333, async () => {
     console.log(response.headers.get('content-type').toLowerCase());
     console.log(await response.json());
 
-    // sended with pipe
+    // sent with pipe
     response = await fetch('http://localhost:13333/medium-file.json', {
         method: 'GET',
         headers: {
@@ -50,7 +50,7 @@ app.listen(13333, async () => {
     console.log(response.headers.get('content-type').toLowerCase());
     console.log(await response.json());
 
-    // sended with worker
+    // sent with worker
     response = await fetch('http://localhost:13333/small-file.json', {
         method: 'GET',
         headers: {
@@ -64,7 +64,7 @@ app.listen(13333, async () => {
     console.log(response.headers.get('content-type').toLowerCase());
     console.log(await response.json());
 
-    // sended with res.sendFile
+    // sent with res.sendFile
     response = await fetch('http://localhost:13333/test', {
         method: 'GET',
         headers: {
