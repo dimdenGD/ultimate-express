@@ -11,6 +11,10 @@ app.use(compression({
 
 app.use(express.static('tests/parts'));
 
+app.get('/test', (req, res) => {
+    res.sendFile('tests/parts/large-file.json', { root: "." });
+});
+
 app.get('/abc', (req, res) => {
     res.send('Hello World');
 });
@@ -48,6 +52,20 @@ app.listen(13333, async () => {
 
     // sended with worker
     response = await fetch('http://localhost:13333/small-file.json', {
+        method: 'GET',
+        headers: {
+            'Accept-Encoding': 'gzip',
+        },
+    });
+    
+    console.log(response.headers.get('content-encoding'), response.headers.get('content-encoding') === 'gzip');
+    console.log(response.headers.get('transfer-encoding'));
+    console.log(response.headers.get('Etag'));
+    console.log(response.headers.get('content-type').toLowerCase());
+    console.log(await response.json());
+
+    // sended with res.sendFile
+    response = await fetch('http://localhost:13333/test', {
         method: 'GET',
         headers: {
             'Accept-Encoding': 'gzip',
