@@ -7,7 +7,7 @@ const app = express();
 app.set('env', 'production');
 app.set('catch async errors', true);
 
-const router = express.Router();
+const router = express.Router(app.settings);
 router.get('/test', async (req, res) => {
     await new Promise((resolve, reject) => {
         reject(new Error('Ignore this error, its used in a test'));
