@@ -28,6 +28,7 @@ app.listen(13333, async () => {
     
     console.log(response.headers.get('content-encoding'), response.headers.get('content-encoding') === 'gzip');
     console.log(response.headers.get('transfer-encoding'));
+    console.log(response.headers.get('Etag'));
     console.log(response.headers.get('content-type').toLowerCase());
     console.log(await response.json());
 
@@ -41,6 +42,7 @@ app.listen(13333, async () => {
     
     console.log(response.headers.get('content-encoding'), response.headers.get('content-encoding') === 'gzip');
     console.log(response.headers.get('transfer-encoding'));
+    console.log(response.headers.get('Etag'));
     console.log(response.headers.get('content-type').toLowerCase());
     console.log(await response.json());
 
@@ -54,6 +56,7 @@ app.listen(13333, async () => {
     
     console.log(response.headers.get('content-encoding'), response.headers.get('content-encoding') === 'gzip');
     console.log(response.headers.get('transfer-encoding'));
+    console.log(response.headers.get('Etag'));
     console.log(response.headers.get('content-type').toLowerCase());
     console.log(await response.json());
 
