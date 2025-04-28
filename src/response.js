@@ -274,6 +274,7 @@ module.exports = class Response extends Writable {
                 if( this.#pendingChunks.length ) {
                     this._res.write(Buffer.concat(this.#pendingChunks));
                     this.#pendingChunks = [];
+                    this.lastWriteChunkTime = 0;
                 }
                 if(data instanceof Buffer) {
                     data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
