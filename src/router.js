@@ -460,6 +460,7 @@ module.exports = class Router extends EventEmitter {
             this._preprocessRequest(req, res, route) : await this._preprocessRequest(req, res, route);
         
         const strictRouting = this.get('strict routing');
+        const catchAsyncErrors = this.get("catch async errors")
         if(route.use) {
             req._stack.push(route.path);
             const fullMountpath = this.getFullMountpath(req);
@@ -546,7 +547,7 @@ module.exports = class Router extends EventEmitter {
                         const out = callback(req, res, next);
                         if(out instanceof Promise) {
                             out.catch(err => {
-                                if(this.get("catch async errors")) {
+                                if(catchAsyncErrors) {
                                     req._error = err;
                                     req._errorKey = route.routeKey;
                                     return next();
