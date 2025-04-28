@@ -37,6 +37,10 @@ module.exports = class Request extends Readable {
     #cachedDistinctHeaders = null;
     #rawHeadersEntries = [];
     #cachedParsedIp = null;
+    #receivedData = false;
+    #needsData = false;
+    #doneReadingData = false;
+    #bufferedData = null;
     constructor(req, res, app) {
         super();
         this._res = res;
@@ -71,8 +75,6 @@ module.exports = class Request extends Readable {
         this._gotParams = new Set();
         this._stack = [];
         this._paramStack = [];
-        this.receivedData = false;
-        this.doneReadingData = false;
         // reading ip is very slow in UWS, so its better to not do it unless truly needed
         if(this.app.needsIpAfterResponse || this.key < 100) {
             // if app needs ip after response, read it now because after response its not accessible
@@ -89,35 +91,42 @@ module.exports = class Request extends Readable {
             this.method === 'PATCH' || 
             (additionalMethods && additionalMethods.includes(this.method))
         ) {
-            this.bufferedData = Buffer.allocUnsafe(0);
+            this.#bufferedData = Buffer.allocUnsafe(0);
             this._res.onData((ab, isLast) => {
                 // make stream actually readable
-                this.receivedData = true;
+                this.#receivedData = true;
                 if(isLast) {
-                    this.doneReadingData = true;
+                    this.#doneReadingData = true;
                 }
                 // instead of pushing data immediately, buffer it
                 // because writable streams cant handle the amount of data uWS gives (usually 512kb+)
                 const chunk = Buffer.from(ab);
-                this.bufferedData = Buffer.concat([this.bufferedData, chunk]);
-                this._read();
+                this.#bufferedData = Buffer.concat([this.#bufferedData, chunk]);
+                
+                if(this.#needsData) {
+                    this.#needsData = false;
+                    this._read();
+                }
             });
         } else {
-            this.receivedData = true;
+            this.#receivedData = true;
         }
     }
 
     _read() {
-        if(!this.receivedData || !this.bufferedData) {
+        if(!this.#receivedData || !this.#bufferedData) {
+            this.#needsData = true;
             return;
         }
-        if(this.bufferedData.length > 0) {
+        if(this.#bufferedData.length > 0) {
             // push 128kb chunks
-            const chunk = this.bufferedData.subarray(0, 1024 * 128);
-            this.bufferedData = this.bufferedData.subarray(1024 * 128);
+            const chunk = this.#bufferedData.subarray(0, 1024 * 128);
+            this.#bufferedData = this.#bufferedData.subarray(1024 * 128);
             this.push(chunk);
-        } else if(this.doneReadingData) {
+        } else if(this.#doneReadingData) {
             this.push(null);
+        } else {
+            this.#needsData = true;
         }
     }
 
