@@ -500,7 +500,7 @@ module.exports = class Router extends EventEmitter {
                             if(!strictRouting && req.endsWithSlash && req._originalPath !== '/' && req._opPath[req._opPath.length - 1] === '/') {
                                 req._opPath = req._opPath.slice(0, -1);
                             }
-                            if(req.app.parent && route.callback.constructor.name === 'Application') {
+                            if(req.app.parent && route.callback.constructor === req.app) {
                                 req.app = req.app.parent;
                             }
                         }
@@ -515,8 +515,9 @@ module.exports = class Router extends EventEmitter {
                 if(!callback) {
                     return next('route');
                 }
-                if(callback instanceof Router) {
-                    if(callback.constructor.name === 'Application') {
+                // check if callback is a router (has _paramCallbacks property!)
+                if(callback?._paramCallbacks) {
+                    if(callback.constructor === req.app) {
                         req.app = callback;
                     }
                     if(callback.settings.mergeParams) {
@@ -544,7 +545,8 @@ module.exports = class Router extends EventEmitter {
                             return next();
                         }
                         const out = callback(req, res, next);
-                        if(out instanceof Promise) {
+                        // check if out is promise (has catch method!)
+                        if(out?.catch) {
                             out.catch(err => {
                                 if(this.get("catch async errors")) {
                                     req._error = err;
