@@ -381,6 +381,8 @@ module.exports = class Router extends EventEmitter {
                 for(let params of req._paramStack) {
                     req.params = {...params, ...req.params};
                 }
+            } else {
+                req.params = {};
             }
         }
 
