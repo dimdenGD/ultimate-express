@@ -6,24 +6,34 @@ const app = express();
 
 const router = express.Router();
 
+// all request property to check
+const reqKeys = ['httpVersionMajor', 'httpVersionMinor', 'httpVersion', 'rawHeaders', 'url', 'method', 'baseUrl', 'originalUrl', 'params', 'query', 'body'];
+const checkReq = (req) => {
+  const _req = {};
+  for(const key of reqKeys) {
+    _req[key] = req[key];
+  } 
+  return _req;
+}
+
 // This route path will match acd and abcd.
 router.get("/ab?cd", (req, res) => {
-  res.json({ test: "ab?cd", url: req.originalUrl });
+  res.json({ test: "ab?cd", checkReq: checkReq(req) });
 });
 
 // This route path will match abcd, abbcd, abbbcd, and so on.
 router.get("/ab+cd", (req, res) => {
-  res.json({ test: "ab+cd", url: req.originalUrl, param: req.params });
+  res.json({ test: "ab+cd", checkReq: checkReq(req) });
 });
 
 // This route path will match abcd, abxcd, abRANDOMcd, ab123cd, and so on.
 router.get("/ab*cd", (req, res) => {
-  res.json({ test: "ab*cd", url: req.originalUrl, param: req.params });
+  res.json({ test: "ab*cd", checkReq: checkReq(req) });
 });
 
 // This route path will match /abe and /abcde.
 router.get("/ab(cd)?e", (req, res) => {
-  res.json({ test: "ab(cd)?e", url: req.originalUrl, param: req.params });
+  res.json({ test: "ab(cd)?e", checkReq: checkReq(req) });
 });
 
 app.use(router);
@@ -44,22 +54,24 @@ app.listen(13333, async () => {
   ];
   const responses1 = await Promise.all(
     parts.map((part) =>
-      fetch(`http://localhost:13333/${part}`).then((res) => res.json())
+      fetch(`http://localhost:13333/${part}?a=1&a=2&b=3`).then((res) => res.json())
     )
   );
+  console.log(JSON.stringify(responses1, null, 2));
+
   const responses2 = await Promise.all(
     parts.map((part) =>
-      fetch(`http://localhost:13333/sub/${part}`).then((res) => res.json())
+      fetch(`http://localhost:13333/sub/${part}/?c=4#foo`).then((res) => res.json())
     )
   );
+  console.log(JSON.stringify(responses2, null, 2));
+
   const responses3 = await Promise.all(
     parts.map((part) =>
       fetch(`http://localhost:13333/sub/123/${part}`).then((res) => res.json())
     )
   );
-  console.log(responses1);
-  console.log(responses2);
-  console.log(responses3);
+  console.log(JSON.stringify(responses3, null, 2));
 
   process.exit(0);
 });
