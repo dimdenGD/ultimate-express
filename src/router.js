@@ -500,7 +500,8 @@ module.exports = class Router extends EventEmitter {
                             if(!strictRouting && req.endsWithSlash && req._originalPath !== '/' && req._opPath[req._opPath.length - 1] === '/') {
                                 req._opPath = req._opPath.slice(0, -1);
                             }
-                            if(req.app.parent && route.callback.constructor === req.app) {
+                            // check if callback is a Application (has engines property!)
+                            if(req.app.parent && route.callback?.engines) {
                                 req.app = req.app.parent;
                             }
                         }
@@ -517,7 +518,8 @@ module.exports = class Router extends EventEmitter {
                 }
                 // check if callback is a router (has _paramCallbacks property!)
                 if(callback?._paramCallbacks) {
-                    if(callback.constructor === req.app) {
+                    // check if callback is a Application (has engines property!)
+                    if(callback?.engines) {
                         req.app = callback;
                     }
                     if(callback.settings.mergeParams) {
