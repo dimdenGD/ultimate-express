@@ -8,22 +8,22 @@ const router = express.Router();
 
 // This route path will match acd and abcd.
 router.get("/ab?cd", (req, res) => {
-  res.json({ test: "ab?cd", path: req.path });
+  res.json({ test: "ab?cd", url: req.originalUrl });
 });
 
 // This route path will match abcd, abbcd, abbbcd, and so on.
 router.get("/ab+cd", (req, res) => {
-  res.json({ test: "ab+cd", path: req.path, param: req.params });
+  res.json({ test: "ab+cd", url: req.originalUrl, param: req.params });
 });
 
 // This route path will match abcd, abxcd, abRANDOMcd, ab123cd, and so on.
 router.get("/ab*cd", (req, res) => {
-  res.json({ test: "ab*cd", path: req.path, param: req.params });
+  res.json({ test: "ab*cd", url: req.originalUrl, param: req.params });
 });
 
 // This route path will match /abe and /abcde.
 router.get("/ab(cd)?e", (req, res) => {
-  res.json({ test: "ab(cd)?e", path: req.path, param: req.params });
+  res.json({ test: "ab(cd)?e", url: req.originalUrl, param: req.params });
 });
 
 app.use(router);
