@@ -57,7 +57,7 @@ function patternToRegex(pattern, isPrefix = false) {
         .replaceAll('*', '(.*)') // Convert * to .*
         .replace(/\/:(\w+)(\(.+?\))?\??/g, (match, param, regex) => {
             const optional = match.endsWith('?');
-            return `\\/${optional ? '?' : ''}?(?<${param}>${regex ? regex + '($|\\/)' : '[^/]+'})${optional ? '?' : ''}`;
+            return `\\/${optional ? '?' : ''}(?<${param}>${regex ? regex + '($|\\/)' : '[^/]+'})${optional ? '?' : ''}`;
         }); // Convert :param to capture group
 
     return new RegExp(`^${regexPattern}${isPrefix ? '(?=$|\/)' : '$'}`);
