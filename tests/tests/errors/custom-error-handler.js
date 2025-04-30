@@ -63,7 +63,7 @@ app.listen(13333, async() => {
     let output2 = await fetch('http://localhost:13333/test2').then(res => res.json());
     let output3 = await fetch('http://localhost:13333/test3').then(res => res.json());
     let output4 = await fetch('http://localhost:13333/test4').then(res => res.json());
-    let output5 = await fetch('http://localhost:13333/test4').then(res => res.json());
+    let output5 = await fetch('http://localhost:13333/test5').then(res => res.json());
 
     console.log(output1);
     console.log(output2);
