@@ -526,6 +526,9 @@ module.exports = class Router extends EventEmitter {
                         req._opPath += '/';
                     }
                     const routed = await callback._routeRequest(req, res, 0);
+                    if (req._error) {
+                        req._errorKey = route.routeKey;
+                    }
                     if(routed) return resolve(true);
                     next();
                 } else {
