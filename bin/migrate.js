@@ -34,8 +34,6 @@ function detectPackageManager() {
 }
 
 function installUltimateExpress() {
-  const pm = detectPackageManager();
-  console.log(`📦 Detected package manager: ${pm}`);
 
   let installCommand = '';
   if (pm === 'yarn') {
@@ -51,15 +49,14 @@ function installUltimateExpress() {
 }
 
 function uninstallExpress() {
-  const pm = detectPackageManager();
-
+  
   let uninstallCommand = '';
   if (pm === 'yarn') {
-    uninstallCommand = 'yarn remove express';
+    uninstallCommand = 'yarn remove express @types/express';
   } else if (pm === 'pnpm') {
-    uninstallCommand = 'pnpm remove express';
+    uninstallCommand = 'pnpm remove express @types/express';
   } else {
-    uninstallCommand = 'npm uninstall express';
+    uninstallCommand = 'npm uninstall express @types/express';
   }
 
   console.log(`🔧 Running: ${uninstallCommand}`);
@@ -67,6 +64,9 @@ function uninstallExpress() {
 }
 
 console.log('🚀 Starting migration to ultimate-express...');
+
+const pm = detectPackageManager();
+console.log(`📦 Detected package manager: ${pm}`);
 
 // Step 1: Install ultimate-express
 console.log('📦 Installing ultimate-express...');
