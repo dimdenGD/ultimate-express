@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 const { execSync } = require('child_process');
-const glob = require('glob');
 const fs = require('fs');
 
 function detectPackageManager() {
@@ -54,6 +53,7 @@ console.log('📦 Installing ultimate-express...');
 installUltimateExpress()
 
 // Step 2: Find all .js and .ts files
+const glob = require('glob'); // require after the installing ultimate-express
 const files = glob.sync('**/*.{js,cjs,.mjs,.ts,.mts,.cts}', { ignore: 'node_modules/**' });
 
 console.log(`🔎 ${files.length} files found`);
