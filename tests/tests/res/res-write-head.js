@@ -5,8 +5,7 @@ const express = require("express");
 const app = express();
 
 app.get('/test-1', (req, res) => {
-    res.writeHead(201);
-    res.end();
+    res.writeHead(201).end();
 });
 
 app.get('/test-2', (req, res) => {
