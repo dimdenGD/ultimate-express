@@ -54,7 +54,7 @@ console.log('📦 Installing ultimate-express...');
 installUltimateExpress()
 
 // Step 2: Find all .js and .ts files
-const files = glob.sync('**/*.{js,cjs,.mjs,ts,.mts,.cts}', { ignore: 'node_modules/**' });
+const files = glob.sync('**/*.{js,cjs,.mjs,.ts,.mts,.cts}', { ignore: 'node_modules/**' });
 
 console.log(`🔎 ${files.length} files found`);
 let replacedCount = 0;
