@@ -1,4 +1,6 @@
-const express = require('express'); // yarn add express
+// must support graphql-http
+
+const express = require('express');
 const { createHandler } = require('graphql-http/lib/use/express');
 const { GraphQLSchema, GraphQLObjectType, GraphQLString } = require('graphql');
 
