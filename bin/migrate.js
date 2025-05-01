@@ -3,6 +3,7 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const glob = require('glob');
 
 function detectPackageManager() {
   if (fs.existsSync('yarn.lock')) {
@@ -53,8 +54,7 @@ console.log('🚀 Starting migration to ultimate-express...');
 console.log('📦 Installing ultimate-express...');
 installUltimateExpress();
 
-// Step 2: Find all .js and .ts files
-const glob = require('glob'); // require after the installing ultimate-express
+// Step 2: Find all js and ts files
 const targetDir = process.argv[2] || '.';
 const searchPattern = path.join(targetDir, '**/*.{js,cjs,mjs,ts,mts,cts}');
 const files = glob.sync(searchPattern, { ignore: 'node_modules/**' });
