@@ -9,7 +9,7 @@ app.get('/test', (req, res) => {
     console.log(res.connection.writable);
     res.end();
     console.log(res.writableFinished);
-    // console.log(res.connection.writable); on express is false on ultimate true (is correct true!)
+    // console.log(res.connection.writable); on express is false on ultimate true
 });
 
 app.listen(13333, async () => {
