@@ -87,6 +87,7 @@ const files = glob.sync(searchPattern, { ignore: 'node_modules/**' });
 
 console.log(`🔎 ${files.length} files under "${targetDir}"`);
 let replacedCount = 0;
+const toDiagnostic = [];
 files.forEach((file) => {
   let content = fs.readFileSync(file, 'utf8');
   let originalContent = content;
@@ -100,6 +101,12 @@ files.forEach((file) => {
     replacedCount++;
     console.log(`✅ Updated: ${file}`);
   }
+  if( content.includes('require("https")') || content.includes('from "https"') || content.includes("require('https')") || content.includes("from 'https'") ){
+    toDiagnostic.push(`⚠️ ${file} uses node "https" module, this could be a problem.`);
+  }
+  if( content.includes('require("http")') || content.includes('from "http"') || content.includes("require('http')") || content.includes("from 'http'") ){
+    toDiagnostic.push(`⚠️ ${file} uses node "http" module, this could be a problem.`);
+  }
 });
 console.log(`🔎 ${replacedCount} files migrated`);
 console.log('📦 Uninstalling express...');
@@ -110,10 +117,16 @@ if( pk.dependencies ){
   if( pk.dependencies['express-async-errors'] ){
     console.log(`🚨 dependency "express-async-errors" doesn't work, use app.set('catch async errors', true) instead.`);
   }
+  if( pk.dependencies['http-proxy-middleware'] ){
+    console.log(`🚨 dependency "http-proxy-middleware" doesn't work.`);
+  }
   if( pk.dependencies['body-parser'] ){
-    console.log(`⚠️ Instead of "body-parser" use express.text() for better performance`);
+    console.log(`⚠️ Instead of "body-parser" use express.text() for better performance.`);
   }
   if( pk.dependencies['serve-static'] ){
-    console.log(`⚠️ Instead of "serve-static" use express.static() for better performance`);
+    console.log(`⚠️ Instead of "serve-static" use express.static() for better performance.`);
   }
+}
+for (const message of toDiagnostic) {
+  console.log(message);
 }
