@@ -66,8 +66,8 @@ files.forEach((file) => {
   let originalContent = content;
 
   // Replace require/import statements
-  content = content.replace(/require\(['"]express['"]\)/g, `require('ultimate-express')`);
-  content = content.replace(/from ['"]express['"]/g, `from 'ultimate-express'`);
+  content = content.replace(/require\((['"])express\1\)/g, (match, quote) => `require(${quote}ultimate-express${quote})`);
+  content = content.replace(/from (['"])express\1/g, (match, quote) => `from ${quote}ultimate-express${quote}`);
 
   if (content !== originalContent) {
     fs.writeFileSync(file, content, 'utf8');
