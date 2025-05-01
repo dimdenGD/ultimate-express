@@ -207,6 +207,7 @@ module.exports = class Response extends Writable {
         for(let header in headers) {
             this.set(header, headers[header]);
         }
+        return this;
     }
     writeHeaders(utf8) {
         for(const header in this.headers) {
