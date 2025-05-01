@@ -201,8 +201,12 @@ module.exports = function compileDeclarative(cb, app) {
         }
 
         // get body
+        let sendUsed = false;
         for(let call of callExprs) {
             if(call.obj.propertyName === 'send' || call.obj.propertyName === 'end') {
+                if(sendUsed) {
+                    return false;
+                }
                 const arg = call.arguments[0];
                 if(arg) {
                     if(arg.type === 'Literal') {
@@ -315,6 +319,7 @@ module.exports = function compileDeclarative(cb, app) {
                         return false;
                     }
                 }
+                sendUsed = true;
             }
         }
 
