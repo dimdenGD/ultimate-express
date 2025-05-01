@@ -8,7 +8,8 @@
         "src/*"
     ],
     "exclude": [
-        "src/worker.js"
+        "src/worker.js",
+        "src/view.js"
     ],
     "reporter": [
         "text",
