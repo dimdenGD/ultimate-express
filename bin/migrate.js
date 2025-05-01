@@ -30,4 +30,6 @@ files.forEach(file => {
     }
 });
 console.log(`🔎 ${replacedCount} files migrated`);
+console.log('📦 Uninstall express...');
+execSync('npm uninstall express', { stdio: 'inherit' });
 console.log('🎉 Migration complete!');
