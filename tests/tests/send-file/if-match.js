@@ -27,5 +27,19 @@ app.listen(13333, async () => {
         }
     });
     console.log((await response2.text()).slice(0, 50), response2.status);
+
+    const response3 = await fetch('http://localhost:13333/test', {
+        headers: {
+            'If-Match': '*'
+        }
+    });
+    console.log((await response3.text()).slice(0, 50), response3.status);
+
+    const response4 = await fetch('http://localhost:13333/test', {
+        headers: {
+            'If-Match': '"' + response.headers.get('ETag') + '", "' + response2.headers.get('ETag') + '",'
+        }
+    });
+    console.log((await response4.text()).slice(0, 50), response4.status);
     process.exit(0);
 });
