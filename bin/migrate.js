@@ -6,7 +6,7 @@ const path = require('path');
 const glob = require('glob');
 
 if (process.argv.includes('--help')) {
-    console.log(`
+  console.log(`
 🚀 ultimate-express migrate
 
 Usage:
@@ -20,7 +20,7 @@ Examples:
   ultimate-express migrate ./src
   ultimate-express migrate
     `);
-    process.exit(0);
+  process.exit(0);
 }
 
 function detectPackageManager() {
@@ -34,7 +34,6 @@ function detectPackageManager() {
 }
 
 function installUltimateExpress() {
-
   let installCommand = '';
   if (pm === 'yarn') {
     installCommand = 'yarn add ultimate-express';
@@ -49,7 +48,6 @@ function installUltimateExpress() {
 }
 
 function uninstallExpress() {
-  
   let uninstallCommand = '';
   if (pm === 'yarn') {
     uninstallCommand = 'yarn remove express @types/express';
@@ -73,15 +71,20 @@ try {
   process.exit(1);
 }
 
+const args = process.argv.slice(2); // ['migrate', './src']
+const command = args?.[0] || 'migrate';
+const targetDir = args?.[1] || '.';
+
 const pm = detectPackageManager();
 console.log(`📦 Detected package manager: ${pm}`);
 
 // Step 1: Install ultimate-express
-console.log('📦 Installing ultimate-express...');
-installUltimateExpress();
+if (command === 'migrate') {
+  console.log('📦 Installing ultimate-express...');
+  installUltimateExpress();
+}
 
 // Step 2: Find all js and ts files
-const targetDir = process.argv[2] || '.';
 const searchPattern = path.join(targetDir, '**/*.{js,cjs,mjs,ts,mts,cts}');
 const files = glob.sync(searchPattern, { ignore: 'node_modules/**' });
 
@@ -96,48 +99,51 @@ files.forEach((file) => {
   content = content.replace(/require\((['"])express\1\)/g, (match, quote) => `require(${quote}ultimate-express${quote})`);
   content = content.replace(/from (['"])express\1/g, (match, quote) => `from ${quote}ultimate-express${quote}`);
 
-  if (content !== originalContent) {
+  if (content !== originalContent && command === 'migrate') {
     fs.writeFileSync(file, content, 'utf8');
     replacedCount++;
     console.log(`✅ Updated: ${file}`);
   }
-  if( content.includes('require("https")') || content.includes('from "https"') || content.includes("require('https')") || content.includes("from 'https'") ){
+  if (content.includes('require("https")') || content.includes('from "https"') || content.includes("require('https')") || content.includes("from 'https'")) {
     toDiagnostic.push(`⚠️ ${file} uses node "https" module, this could be a problem.`);
   }
-  if( content.includes('require("http")') || content.includes('from "http"') || content.includes("require('http')") || content.includes("from 'http'") ){
+  if (content.includes('require("http")') || content.includes('from "http"') || content.includes("require('http')") || content.includes("from 'http'")) {
     toDiagnostic.push(`⚠️ ${file} uses node "http" module, this could be a problem.`);
   }
 });
-console.log(`🔎 ${replacedCount} files migrated`);
-console.log('📦 Uninstalling express...');
-uninstallExpress();
-console.log('🎉 Migration complete!');
+
+if (command === 'migrate') {
+  console.log(`🔎 ${replacedCount} files migrated`);
+  console.log('📦 Uninstalling express...');
+  uninstallExpress();
+  console.log('🎉 Migration complete!');
+}
 
 let hasIssue = false;
-if( pk.dependencies ){
-  if( pk.dependencies['express-async-errors'] ){
+if (pk.dependencies) {
+  if (pk.dependencies['express-async-errors']) {
     hasIssue = true;
     console.log(`🚨 dependency "express-async-errors" doesn't work, use app.set('catch async errors', true) instead.`);
   }
-  if( pk.dependencies['http-proxy-middleware'] ){
+  if (pk.dependencies['http-proxy-middleware']) {
     hasIssue = true;
     console.log(`🚨 dependency "http-proxy-middleware" doesn't work.`);
   }
-  if( pk.dependencies['body-parser'] ){
+  if (pk.dependencies['body-parser']) {
     hasIssue = true;
     console.log(`⚠️ Instead of "body-parser" use express.text() for better performance.`);
   }
-  if( pk.dependencies['serve-static'] ){
+  if (pk.dependencies['serve-static']) {
     hasIssue = true;
     console.log(`⚠️ Instead of "serve-static" use express.static() for better performance.`);
   }
 }
-if(toDiagnostic.length > 0){
+if (toDiagnostic.length > 0) {
   hasIssue = true;
   for (const message of toDiagnostic) {
     console.log(message);
   }
 }
-if( hasIssue ){
+if (hasIssue) {
   console.log(`🚨 Some issues were detected, please check https://github.com/dimdenGD/ultimate-express`);
 }
