@@ -65,6 +65,14 @@ function uninstallExpress() {
 
 console.log('🚀 Starting migration to ultimate-express...');
 
+let pk = {};
+try {
+  pk = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+} catch (error) {
+  console.log(`🚨 package.json not found`);
+  process.exit(1);
+}
+
 const pm = detectPackageManager();
 console.log(`📦 Detected package manager: ${pm}`);
 
@@ -97,3 +105,15 @@ console.log(`🔎 ${replacedCount} files migrated`);
 console.log('📦 Uninstalling express...');
 uninstallExpress();
 console.log('🎉 Migration complete!');
+
+if( pk.dependencies ){
+  if( pk.dependencies['express-async-errors'] ){
+    console.log(`🚨 dependency "express-async-errors" doesn't work, use app.set('catch async errors', true) instead.`);
+  }
+  if( pk.dependencies['body-parser'] ){
+    console.log(`⚠️ Instead of "body-parser" use express.text() for better performance`);
+  }
+  if( pk.dependencies['serve-static'] ){
+    console.log(`⚠️ Instead of "serve-static" use express.static() for better performance`);
+  }
+}
