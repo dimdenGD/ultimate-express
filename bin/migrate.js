@@ -113,20 +113,31 @@ console.log('📦 Uninstalling express...');
 uninstallExpress();
 console.log('🎉 Migration complete!');
 
+let hasIssue = false;
 if( pk.dependencies ){
   if( pk.dependencies['express-async-errors'] ){
+    hasIssue = true;
     console.log(`🚨 dependency "express-async-errors" doesn't work, use app.set('catch async errors', true) instead.`);
   }
   if( pk.dependencies['http-proxy-middleware'] ){
+    hasIssue = true;
     console.log(`🚨 dependency "http-proxy-middleware" doesn't work.`);
   }
   if( pk.dependencies['body-parser'] ){
+    hasIssue = true;
     console.log(`⚠️ Instead of "body-parser" use express.text() for better performance.`);
   }
   if( pk.dependencies['serve-static'] ){
+    hasIssue = true;
     console.log(`⚠️ Instead of "serve-static" use express.static() for better performance.`);
   }
 }
-for (const message of toDiagnostic) {
-  console.log(message);
+if(toDiagnostic.length > 0){
+  hasIssue = true;
+  for (const message of toDiagnostic) {
+    console.log(message);
+  }
+}
+if( hasIssue ){
+  console.log(`🚨 Some issues were detected, please check https://github.com/dimdenGD/ultimate-express`);
 }
