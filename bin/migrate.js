@@ -5,6 +5,24 @@ const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
 
+if (process.argv.includes('--help')) {
+    console.log(`
+🚀 ultimate-express migrate
+
+Usage:
+  ultimate-express migrate [directory]
+
+Arguments:
+  [directory]    Optional. Base folder to start searching.
+                 Default: current directory (.)
+
+Examples:
+  ultimate-express migrate ./src
+  ultimate-express migrate
+    `);
+    process.exit(0);
+}
+
 function detectPackageManager() {
   if (fs.existsSync('yarn.lock')) {
     return 'yarn';
