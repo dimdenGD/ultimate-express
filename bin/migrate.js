@@ -25,6 +25,8 @@ Examples:
     `);
 } else if (command === "migrate" || command === "m") {
   let pm; // package manager
+  const toDiagnostic = []; // for diagnostic messages
+  let pk = {}; // package.json
 
   function detectPackageManager() {
     if (fs.existsSync("yarn.lock")) {
@@ -64,17 +66,37 @@ Examples:
     execSync(uninstallCommand, { stdio: "inherit" });
   }
 
+  function checkIfHasModule(file, content, moduleName) {
+    if (
+      content.includes(`require("${moduleName}")`) ||
+      content.includes(`from "${moduleName}"`) ||
+      content.includes(`require('${moduleName}')`) ||
+      content.includes(`from '${moduleName}'`)
+    )
+      toDiagnostic.push(
+        `⚠️ ${file} uses NodeJS "${moduleName}" module, this could be a problem.`
+      );
+  }
+
   console.log("🚀 Starting migration to ultimate-express...");
 
-  let pk = {};
+  if (fs.existsSync(".git")) {
+    console.log("🔧 Checking for uncommitted changes...");
+    const status = execSync("git status --porcelain", { encoding: "utf8" });
+    if (status) {
+      console.log(
+        "🚨 Uncommitted changes detected. Please commit or stash them before running this script."
+      );
+      process.exit(1);
+    }
+  }
+
   try {
     pk = JSON.parse(fs.readFileSync("package.json", "utf8"));
   } catch (error) {
     console.log(`🚨 package.json not found`);
     process.exit(1);
   }
-
-  const targetDir = args?.[1] || ".";
 
   pm = detectPackageManager();
   console.log(`📦 Detected package manager: ${pm}`);
@@ -84,12 +106,12 @@ Examples:
   installUltimateExpress();
 
   // Step 2: Find all js and ts files
+  const targetDir = args?.[1] || "."; // current directory
   const searchPattern = path.join(targetDir, "**/*.{js,cjs,mjs,ts,mts,cts}");
   const files = glob.sync(searchPattern, { ignore: "node_modules/**" });
 
   console.log(`🔎 ${files.length} files under "${targetDir}"`);
   let replacedCount = 0;
-  const toDiagnostic = [];
   files.forEach((file) => {
     let content = fs.readFileSync(file, "utf8");
     let originalContent = content;
@@ -109,26 +131,9 @@ Examples:
       replacedCount++;
       console.log(`✅ Updated: ${file}`);
     }
-    if (
-      content.includes('require("https")') ||
-      content.includes('from "https"') ||
-      content.includes("require('https')") ||
-      content.includes("from 'https'")
-    ) {
-      toDiagnostic.push(
-        `⚠️ ${file} uses node "https" module, this could be a problem.`
-      );
-    }
-    if (
-      content.includes('require("http")') ||
-      content.includes('from "http"') ||
-      content.includes("require('http')") ||
-      content.includes("from 'http'")
-    ) {
-      toDiagnostic.push(
-        `⚠️ ${file} uses node "http" module, this could be a problem.`
-      );
-    }
+
+    checkIfHasModule(file, content, "https");
+    checkIfHasModule(file, content, "http");
   });
 
   console.log(`🔎 ${replacedCount} files migrated`);
