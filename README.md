@@ -101,7 +101,7 @@ app.listen(3000, () => {
 ```
 
 - This also applies to non-SSL HTTP too. Do not create http server manually, use `app.listen()` instead.
-- NodeJS max header size is 16384 byte, uWebSockets 4096 byte, if you need long headers set the env variable `UWS_HTTP_MAX_HEADERS_SIZE`
+- Node.JS max header size is 16384 bytes, while uWebSockets by default is 4096 bytes, so if you need longer headers set the env variable `UWS_HTTP_MAX_HEADERS_SIZE` to max byte count you need.
 
 ## Performance tips
 
