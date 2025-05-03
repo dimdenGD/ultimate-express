@@ -108,7 +108,7 @@ module.exports = class View {
         }
 
         // <path>/index.<ext>
-        _path = path.join(dir, path.basename(file, ext) + ext);
+        _path = path.join(dir, path.basename(file, ext), 'index' + ext);
         stat = tryStat(_path);
 
         if(stat && stat.isFile()) {
