@@ -28,10 +28,10 @@ if (!app.uwsApp) {
   );
 }
 
-server.listen(443, async () => {
-  console.log("Server is running on port 443");
+server.listen(13333, async () => {
+  console.log("Server is running on port 13333");
 
-  const outputs = await fetch("https://localhost/asdf", {
+  const outputs = await fetch("https://localhost:13333/asdf", {
     agent: new https.Agent({
       rejectUnauthorized: false,
     }),
