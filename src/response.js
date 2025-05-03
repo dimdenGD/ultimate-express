@@ -39,6 +39,7 @@ const outgoingMessage = new http.OutgoingMessage();
 const symbols = Object.getOwnPropertySymbols(outgoingMessage);
 const kOutHeaders = symbols.find(s => s.toString() === 'Symbol(kOutHeaders)');
 const HIGH_WATERMARK = 256 * 1024;
+const isWin = process.platform === "win32"; 
 
 class Socket extends EventEmitter {
     constructor(response) {
@@ -150,16 +151,20 @@ module.exports = class Response extends Writable {
             }
     
             if (this.chunkedTransfer) {
-                this.#pendingChunks.push(chunk);
-                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-                const now = Date.now();
-                // the first chunk is sent immediately (!this.#lastWriteChunkTime)
-                // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
-                // or if elapsed 100ms of last send (now - this.#lastWriteChunkTime > 100)
-                if (!this.#lastWriteChunkTime || size >= HIGH_WATERMARK || now - this.#lastWriteChunkTime > 100) {
-                    this._res.write(Buffer.concat(this.#pendingChunks, size));
-                    this.#pendingChunks = [];
-                    this.#lastWriteChunkTime = now;
+                if(isWin){
+                    this.#pendingChunks.push(chunk);
+                    const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
+                    const now = Date.now();
+                    // the first chunk is sent immediately (!this.#lastWriteChunkTime)
+                    // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
+                    // or if elapsed 100ms of last send (now - this.#lastWriteChunkTime > 100)
+                    if (!this.#lastWriteChunkTime || size >= HIGH_WATERMARK || now - this.#lastWriteChunkTime > 100) {
+                        this._res.write(Buffer.concat(this.#pendingChunks, size));
+                        this.#pendingChunks = [];
+                        this.#lastWriteChunkTime = now;
+                    }
+                } else {
+                    this._res.write(chunk);
                 }
                 this.writingChunk = false;
                 callback(null);
