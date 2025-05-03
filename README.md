@@ -4,7 +4,7 @@ The *Ultimate* Express. Fastest http server with **full** Express compatibility,
 
 This library is a very fast re-implementation of Express.js 4.
 It is designed to be a drop-in replacement for Express.js, with the same API and functionality, while being much faster. It is not a fork of Express.js.  
-To make sure µExpress matches behavior of Express in all cases, we run all tests with Express first, and then with µExpress and compare results to make sure they match.  
+To make sure µExpress matches behavior of Express in all cases, we run all tests with Express first, and then with µExpress and compare results to make sure they match (+90% covered).  
 
 `npm install ultimate-express` -> replace `express` with `ultimate-express` -> done[*](https://github.com/dimdenGD/ultimate-express?tab=readme-ov-file#differences-from-express)  
 
