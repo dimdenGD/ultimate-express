@@ -59,26 +59,25 @@ module.exports = class View {
                 this.path += this.ext;
             }
         } else {
-            this.path = path.join(this.root, fileName);
+            this.path = this.lookup(fileName);
         }
     }
 
     lookup(name) {
-        let path;
+        let _path;
         let roots = [].concat(this.root);
-        for (let i = 0; i < roots.length && !path; i++) {
+        for (let i = 0; i < roots.length && !_path; i++) {
             const root = roots[i];
         
             // resolve the path
             const loc = path.resolve(root, name);
             const dir = path.dirname(loc);
             const file = path.basename(loc);
-        
+            
             // resolve the file
-            path = this.resolve(dir, file);
+            _path = this.resolve(dir, file);
         }
-        
-        return path;
+        return _path;
     }
 
     // ill be real idk what exactly this does but express implements it this way
@@ -101,19 +100,19 @@ module.exports = class View {
         const ext = this.ext;
 
         // <path>.<ext>
-        let path = path.join(dir, file);
-        let stat = tryStat(path);
+        let _path = path.join(dir, file);
+        let stat = tryStat(_path);
 
         if(stat && stat.isFile()) {
-            return path;
+            return _path;
         }
 
         // <path>/index.<ext>
-        path = path.join(dir, path.basename(file, ext) + ext);
-        stat = tryStat(path);
+        _path = path.join(dir, path.basename(file, ext), 'index' + ext);
+        stat = tryStat(_path);
 
         if(stat && stat.isFile()) {
-            return path;
+            return _path;
         }
     }
 }

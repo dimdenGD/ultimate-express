@@ -12,6 +12,11 @@ app.get('/test', (req, res) => {
     res.render('index', { title: 'Hey', message: 'Hello there!' });
 });
 
+app.get('/test2', (req, res) => {
+    res.locals.asdf = 'locals test';
+    res.render('sub-template/', { title: 'Hey', message: 'Hi!' });
+});
+
 app.use((err, req, res, next) => {
     console.log(err);
     res.status(500).send(`whoops!`);
@@ -22,5 +27,8 @@ app.listen(13333, async () => {
 
     const response = await fetch('http://localhost:13333/test').then(res => res.text());
     console.log(response);
+
+    const response2 = await fetch('http://localhost:13333/test2').then(res => res.text());
+    console.log(response2);
     process.exit(0);
 });
