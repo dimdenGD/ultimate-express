@@ -64,6 +64,7 @@ module.exports = class View {
     }
 
     lookup(name) {
+        let _path;
         let roots = [].concat(this.root);
         for (let i = 0; i < roots.length; i++) {
             const root = roots[i];
@@ -72,10 +73,11 @@ module.exports = class View {
             const loc = path.resolve(root, name);
             const dir = path.dirname(loc);
             const file = path.basename(loc);
-        
+            
             // resolve the file
-            return this.resolve(dir, file);
+            _path = this.resolve(dir, file);
         }
+        return _path;
     }
 
     // ill be real idk what exactly this does but express implements it this way
