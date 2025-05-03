@@ -201,7 +201,7 @@ module.exports = class Response extends Writable {
             this.statusText = statusMessage;
         }
         if(!headers) {
-            if(!statusMessage) return;
+            if(!statusMessage) return this;
             headers = statusMessage;
         }
         for(let header in headers) {
