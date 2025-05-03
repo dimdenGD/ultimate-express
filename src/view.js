@@ -59,7 +59,7 @@ module.exports = class View {
                 this.path += this.ext;
             }
         } else {
-            this.path = this.lookup(path.join(this.root, fileName));
+            this.path = this.lookup(fileName);
         }
     }
 
