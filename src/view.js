@@ -66,7 +66,7 @@ module.exports = class View {
     lookup(name) {
         let _path;
         let roots = [].concat(this.root);
-        for (let i = 0; i < roots.length; i++) {
+        for (let i = 0; i < roots.length && !_path; i++) {
             const root = roots[i];
         
             // resolve the path
