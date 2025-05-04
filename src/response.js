@@ -71,6 +71,7 @@ module.exports = class Response extends Writable {
     #socket = null;
     #pendingChunks = [];
     #lastWriteChunkTime = 0;
+    #writeTimeout = null;
     constructor(res, req, app) {
         super();
         this._req = req;
@@ -155,11 +156,27 @@ module.exports = class Response extends Writable {
                 const now = Date.now();
                 // the first chunk is sent immediately (!this.#lastWriteChunkTime)
                 // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
-                // or if elapsed 100ms of last send (now - this.#lastWriteChunkTime > 100)
-                if (!this.#lastWriteChunkTime || size >= HIGH_WATERMARK || now - this.#lastWriteChunkTime > 100) {
+                // or if elapsed 50ms of last send (now - this.#lastWriteChunkTime > 50)
+                if (!this.#lastWriteChunkTime || size >= HIGH_WATERMARK || now - this.#lastWriteChunkTime > 50) {
                     this._res.write(Buffer.concat(this.#pendingChunks, size));
                     this.#pendingChunks = [];
                     this.#lastWriteChunkTime = now;
+                    if(this.#writeTimeout) {
+                        clearTimeout(this.#writeTimeout);
+                        this.#writeTimeout = null;
+                    }
+                } else if(!this.#writeTimeout) {
+                    this.#writeTimeout = setTimeout(() => {
+                        this.#writeTimeout = null;
+                        if(!this.finished && !this.aborted) this._res.cork(() => {
+                            if(this.#pendingChunks.length) {
+                                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
+                                this._res.write(Buffer.concat(this.#pendingChunks, size));
+                                this.#pendingChunks = [];
+                                this.#lastWriteChunkTime = now;
+                            }
+                        });
+                    }, 50);
                 }
                 this.writingChunk = false;
                 callback(null);
