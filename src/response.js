@@ -39,6 +39,7 @@ const outgoingMessage = new http.OutgoingMessage();
 const symbols = Object.getOwnPropertySymbols(outgoingMessage);
 const kOutHeaders = symbols.find(s => s.toString() === 'Symbol(kOutHeaders)');
 const HIGH_WATERMARK = 256 * 1024;
+const MAX_PENDING_SIZE = 16 * 1024 * 1024;
 
 class Socket extends EventEmitter {
     constructor(response) {
@@ -70,8 +71,6 @@ class Socket extends EventEmitter {
 module.exports = class Response extends Writable {
     #socket = null;
     #pendingChunks = [];
-    #lastWriteChunkTime = 0;
-    #lastWriteResult = false;
     constructor(res, req, app) {
         super();
         this._req = req;
@@ -135,68 +134,97 @@ module.exports = class Response extends Writable {
             const err = new Error('Response already finished');
             return this.destroy(err);
         }
-
+    
+        if (!this.headersSent) {
+            this.writeHead(this.statusCode);
+            const statusMessage = this.statusText ?? statuses.message[this.statusCode] ?? '';
+            this._res.writeStatus(`${this.statusCode} ${statusMessage}`.trim());
+            this.writeHeaders(typeof chunk === 'string');
+        }
+    
+        if (!Buffer.isBuffer(chunk) && !(chunk instanceof ArrayBuffer)) {
+            chunk = Buffer.from(chunk);
+            chunk = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
+        }
+    
+        if (this.chunkedTransfer) {
+            const pendingSize = this.#pendingChunks.reduce((acc, c) => acc + c.chunk.byteLength, 0);
+            if (pendingSize + chunk.byteLength > MAX_PENDING_SIZE) {
+                const err = new Error('Pending buffer overflow');
+                err.code = 'EOVERFLOW';
+                return callback(err);
+            }
+    
+            this.#pendingChunks.push({ chunk, callback });
+            if (!this.writingChunk) {
+                this.#flushChunks();
+            }
+        } else {
+            this._handleNonChunked(chunk, callback);
+        }
+    }
+    
+    #flushChunks() {
+        if (this.#pendingChunks.length === 0) {
+            this.writingChunk = false;
+            return;
+        }
+    
         this.writingChunk = true;
+    
         this._res.cork(() => {
-            if (!this.headersSent) {
-                this.writeHead(this.statusCode);
-                const statusMessage = this.statusText ?? statuses.message[this.statusCode] ?? '';
-                this._res.writeStatus(`${this.statusCode} ${statusMessage}`.trim());
-                this.writeHeaders(typeof chunk === 'string');
-            }
+            const allChunks = this.#pendingChunks.map(c => c.chunk);
+            const callbacks = this.#pendingChunks.map(c => c.callback);
+            const combinedBuffer = Buffer.concat(allChunks);
     
-            if (!Buffer.isBuffer(chunk) && !(chunk instanceof ArrayBuffer)) {
-                chunk = Buffer.from(chunk);
-                chunk = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
-            }
+            const writeResult = this._res.write(combinedBuffer);
     
-            if (this.chunkedTransfer) {
-                this.#pendingChunks.push(chunk);
-                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-                const now = Date.now();
-                // if the last write result is not finished, we need to wait for it (this.#lastWriteResult)
-                // the first chunk is sent immediately (!this.#lastWriteChunkTime)
-                // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
-                // or if elapsed 100ms of last send (now - this.#lastWriteChunkTime > 100)
-                if (this.#lastWriteResult || !this.#lastWriteChunkTime || size >= HIGH_WATERMARK || now - this.#lastWriteChunkTime > 100) {
-                    this.#lastWriteResult = this._res.write(Buffer.concat(this.#pendingChunks, size));
-                    this.#pendingChunks = [];
-                    this.#lastWriteChunkTime = now;
-                }
-                this.writingChunk = false;
-                callback(null);
+            if (writeResult) {
+                // Success, svuoto coda e chiamo i callback
+                this.#pendingChunks = [];
+                callbacks.forEach(cb => cb(null));
+                this.#flushChunks();
             } else {
-                const lastOffset = this._res.getWriteOffset();
-                const [ok, done] = this._res.tryEnd(chunk, this.totalSize);
-                if (done) {
-                    super.end();
-                    this.finished = true;
-                    this.writingChunk = false;
-                    if (this.socketExists) this.socket.emit('close');
-                    callback(null);
-                } else if (!ok) {
-                    this._res.ab = chunk;
-                    this._res.abOffset = lastOffset;
-                    this._res.onWritable((offset) => {
-                        if (this.finished) return true;
-                        const [ok, done] = this._res.tryEnd(this._res.ab.slice(offset - this._res.abOffset), this.totalSize);
-                        if (done) {
-                            this.finished = true;
-                            if (this.socketExists) this.socket.emit('close');
-                        }
-                        if (ok) {
-                            this.writingChunk = false;
-                            callback(null);
-                        }
-                        return ok;
-                    });
-                } else {
-                    this.writingChunk = false;
-                    callback(null);
-                }
+                // Buffer pieno, aspetta drain prima di riprovare
+                this._res.once('drain', () => {
+                    this.#flushChunks();
+                });
             }
         });
     }
+    
+    _handleNonChunked(chunk, callback) {
+        const lastOffset = this._res.getWriteOffset();
+        const [ok, done] = this._res.tryEnd(chunk, this.totalSize);
+    
+        if (done) {
+            super.end();
+            this.finished = true;
+            this.writingChunk = false;
+            if (this.socketExists) this.socket.emit('close');
+            callback(null);
+        } else if (!ok) {
+            this._res.ab = chunk;
+            this._res.abOffset = lastOffset;
+            this._res.onWritable((offset) => {
+                if (this.finished) return true;
+                const [ok, done] = this._res.tryEnd(this._res.ab.slice(offset - this._res.abOffset), this.totalSize);
+                if (done) {
+                    this.finished = true;
+                    if (this.socketExists) this.socket.emit('close');
+                }
+                if (ok) {
+                    this.writingChunk = false;
+                    callback(null);
+                }
+                return ok;
+            });
+        } else {
+            this.writingChunk = false;
+            callback(null);
+        }
+    }
+
     writeHead(statusCode, statusMessage, headers) {
         this.statusCode = statusCode;
         if(typeof statusMessage === 'string') {
@@ -277,12 +305,6 @@ module.exports = class Response extends Writable {
             if(!data && contentLength) {
                 this._res.endWithoutBody(contentLength.toString());
             } else {
-                if(this.#pendingChunks.length) {
-                    this._res.write(Buffer.concat(this.#pendingChunks));
-                    this.#pendingChunks = [];
-                    this.lastWriteChunkTime = 0;
-                    this.#lastWriteResult = false;
-                }
                 if(data instanceof Buffer) {
                     data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
                 }
