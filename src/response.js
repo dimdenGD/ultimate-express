@@ -71,6 +71,7 @@ module.exports = class Response extends Writable {
     #socket = null;
     #pendingChunks = [];
     #lastWriteChunkTime = 0;
+    #lastWriteResult = false;
     constructor(res, req, app) {
         super();
         this._req = req;
@@ -153,11 +154,12 @@ module.exports = class Response extends Writable {
                 this.#pendingChunks.push(chunk);
                 const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
                 const now = Date.now();
+                // if the last write result is not finished, we need to wait for it (this.#lastWriteResult)
                 // the first chunk is sent immediately (!this.#lastWriteChunkTime)
                 // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
                 // or if elapsed 100ms of last send (now - this.#lastWriteChunkTime > 100)
-                if (!this.#lastWriteChunkTime || size >= HIGH_WATERMARK || now - this.#lastWriteChunkTime > 100) {
-                    this._res.write(Buffer.concat(this.#pendingChunks, size));
+                if (this.#lastWriteResult || !this.#lastWriteChunkTime || size >= HIGH_WATERMARK || now - this.#lastWriteChunkTime > 100) {
+                    this.#lastWriteResult = this._res.write(Buffer.concat(this.#pendingChunks, size));
                     this.#pendingChunks = [];
                     this.#lastWriteChunkTime = now;
                 }
@@ -279,6 +281,7 @@ module.exports = class Response extends Writable {
                     this._res.write(Buffer.concat(this.#pendingChunks));
                     this.#pendingChunks = [];
                     this.lastWriteChunkTime = 0;
+                    this.#lastWriteResult = false;
                 }
                 if(data instanceof Buffer) {
                     data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
