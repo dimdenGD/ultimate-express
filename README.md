@@ -35,7 +35,7 @@ Tested using [wrk](https://github.com/wg/wrk) (`-d 60 -t 1 -c 200`). Tested on U
 | middlewares/express-static (/static/index.js) | 6.58k           | 32.45k           | 10.15 MB/sec       | 49.43 MB/sec        | **4.87X**        |
 | engines/ejs (/test)                           | 5.50k           | 40.82k           | 2.45 MB/sec        | 18.38 MB/sec        | **7.42X**        |
 | middlewares/body-urlencoded (/abc)            | 8.07k           | 50.52k           | 1.68 MB/sec        | 10.78 MB/sec        | **6.26X**        |
-| middlewares/compression-file (/small-file)    | 4.81k           | 14.92k           | 386.91 MB/sec      | 1.17 GB/sec         | **3.10X**        |
+| middlewares/compression-file (/small-file)    | 4.81k           | 14.92k           | 386 MB/sec         | 1.17 GB/sec         | **3.10X**        |
 
 ### Performance against other frameworks
 
