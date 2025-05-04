@@ -180,12 +180,10 @@ module.exports = class Response extends Writable {
             const writeResult = this._res.write(combinedBuffer);
     
             if (writeResult) {
-                // Success, svuoto coda e chiamo i callback
                 this.#pendingChunks = [];
                 callbacks.forEach(cb => cb(null));
                 this.#flushChunks();
             } else {
-                // Buffer pieno, aspetta drain prima di riprovare
                 this._res.once('drain', () => {
                     this.#flushChunks();
                 });
