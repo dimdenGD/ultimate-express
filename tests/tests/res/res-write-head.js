@@ -33,7 +33,7 @@ app.listen(13333, async () => {
     for (const res of response) {
         console.log({
             status: res.status,
-            header: res.headers['x-test'],
+            header: res.headers.get('x-test'),
             statusText: res.statusText,
             body: await res.text()
         });
