@@ -1,4 +1,4 @@
-// must support compression middleware with big file
+// must support compression middleware with files
 
 const express = require("express");
 const compression = require("compression");
