@@ -72,6 +72,7 @@ module.exports = class Response extends Writable {
     #pendingChunks = [];
     #lastWriteChunkTime = 0;
     #writeTimeout = null;
+    #uwsWritableHandler = null;
     constructor(res, req, app) {
         super();
         this._req = req;
@@ -133,6 +134,22 @@ module.exports = class Response extends Writable {
         }
     }
 
+    /**
+     * Registers a handler for writable events.
+     * This is used to handle backpressure from uws.
+     *
+     * @param {function(number):boolean} handler MUST return true for success, false for failure
+     */
+    #onResWritable(handler){
+        // can register to uws only once
+        if (this.#uwsWritableHandler) return;
+
+        this.#uwsWritableHandler = handler;
+        this._res.onWritable((offset) => {
+            return this.#uwsWritableHandler(offset);
+        });
+    }
+
     _write(chunk, encoding, callback) {
         if (this.aborted) {
             const err = new Error('Request aborted');
@@ -173,7 +190,8 @@ module.exports = class Response extends Writable {
             } else {
                 // !ok, backpressure was added
                 // waiting the drain event from uws
-                this._res.onWritable((offset) => {
+                // this._res.onWritable((offset) => {
+                this.#onResWritable((offset) => {
                     if (this.finished || this.aborted) {
                         callback();
                         return true;
