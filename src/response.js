@@ -174,7 +174,7 @@ module.exports = class Response extends Writable {
                 // !ok, backpressure was added
                 // waiting the drain event from uws
                 this._res.onWritable((offset) => {
-                    if (this.finished) {
+                    if (this.finished || this.aborted) {
                         callback();
                         return true;
                     }
