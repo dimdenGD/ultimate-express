@@ -125,6 +125,17 @@ module.exports = class Response extends Writable {
         return this.#socket;
     }
 
+    #backpressure_write(chunk, totalSize) {
+        if (totalSize) {
+            return this._res.tryEnd(chunk, totalSize);
+        } else {
+            if (Array.isArray(chunk)) {
+                chunk = Buffer.concat(chunk)
+            }
+            return [this._res.write(chunk), false]
+        }
+    }
+
     _write(chunk, encoding, callback) {
         if (this.aborted) {
             const err = new Error('Request aborted');
@@ -152,34 +163,21 @@ module.exports = class Response extends Writable {
     
             if (this.chunkedTransfer) {
                 this.#pendingChunks.push(chunk);
-                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-                const now = Date.now();
-                // the first chunk is sent immediately (!this.#lastWriteChunkTime)
-                // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
-                // or if elapsed 50ms of last send (now - this.#lastWriteChunkTime > 50)
-                if (!this.#lastWriteChunkTime || size >= HIGH_WATERMARK || now - this.#lastWriteChunkTime > 50) {
-                    this._res.write(Buffer.concat(this.#pendingChunks, size));
+                const [ok] = this.#backpressure_write(this.#pendingChunks);
+                if (ok) {
                     this.#pendingChunks = [];
-                    this.#lastWriteChunkTime = now;
-                    if(this.#writeTimeout) {
-                        clearTimeout(this.#writeTimeout);
-                        this.#writeTimeout = null;
-                    }
-                } else if(!this.#writeTimeout) {
-                    this.#writeTimeout = setTimeout(() => {
-                        this.#writeTimeout = null;
-                        if(!this.finished && !this.aborted) this._res.cork(() => {
-                            if(this.#pendingChunks.length) {
-                                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-                                this._res.write(Buffer.concat(this.#pendingChunks, size));
-                                this.#pendingChunks = [];
-                                this.#lastWriteChunkTime = now;
-                            }
-                        });
-                    }, 50);
+                    this.writingChunk = false;
+                    callback();
+                } else {
+                    this._res.onWritable((offset) => {
+                        if (this.finished) return true
+
+                        this.writingChunk = false;
+                        this.#pendingChunks = [];
+                        callback();
+                        return true;
+                    })
                 }
-                this.writingChunk = false;
-                callback(null);
             } else {
                 const lastOffset = this._res.getWriteOffset();
                 const [ok, done] = this._res.tryEnd(chunk, this.totalSize);
