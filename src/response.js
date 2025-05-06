@@ -129,9 +129,6 @@ module.exports = class Response extends Writable {
         if (totalSize) {
             return this._res.tryEnd(chunk, totalSize);
         } else {
-            if (Array.isArray(chunk)) {
-                chunk = Buffer.concat(chunk)
-            }
             return [this._res.write(chunk), false]
         }
     }
@@ -160,53 +157,47 @@ module.exports = class Response extends Writable {
                 chunk = Buffer.from(chunk);
                 chunk = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
             }
-    
-            if (this.chunkedTransfer) {
-                this.#pendingChunks.push(chunk);
-                const [ok] = this.#backpressure_write(this.#pendingChunks);
-                if (ok) {
-                    this.#pendingChunks = [];
-                    this.writingChunk = false;
-                    callback();
-                } else {
-                    this._res.onWritable((offset) => {
-                        if (this.finished) return true
 
-                        this.writingChunk = false;
-                        this.#pendingChunks = [];
+            const lastOffset = this._res.getWriteOffset();
+            const [ok, done] = this.#backpressure_write(chunk, this.totalSize);
+            if (done) {
+                super.end();
+                this.finished = true;
+                this.writingChunk = false;
+                if (this.socketExists) this.socket.emit('close');
+                callback();
+            } else if (ok) {
+                // no backpressure, writing the next chunk
+                this.writingChunk = false;
+                callback();
+            } else {
+                // !ok, backpressure was added
+                // waiting the drain event from uws
+                this._res.onWritable((offset) => {
+                    if (this.finished) {
                         callback();
                         return true;
-                    })
-                }
-            } else {
-                const lastOffset = this._res.getWriteOffset();
-                const [ok, done] = this._res.tryEnd(chunk, this.totalSize);
-                if (done) {
-                    super.end();
-                    this.finished = true;
-                    this.writingChunk = false;
-                    if (this.socketExists) this.socket.emit('close');
-                    callback(null);
-                } else if (!ok) {
-                    this._res.ab = chunk;
-                    this._res.abOffset = lastOffset;
-                    this._res.onWritable((offset) => {
-                        if (this.finished) return true;
-                        const [ok, done] = this._res.tryEnd(this._res.ab.slice(offset - this._res.abOffset), this.totalSize);
-                        if (done) {
-                            this.finished = true;
-                            if (this.socketExists) this.socket.emit('close');
-                        }
-                        if (ok) {
-                            this.writingChunk = false;
-                            callback(null);
-                        }
-                        return ok;
-                    });
-                } else {
-                    this.writingChunk = false;
-                    callback(null);
-                }
+                    }
+                    if (this.chunkedTransfer) {
+                        // keep writing the next chunk, since the size is unknown
+                        this.writingChunk = false;
+                        callback();
+                        return true;
+                    }
+
+                    // write the remaining chunk to the client
+                    const [ok, done] = this.#backpressure_write(chunk.slice(offset - lastOffset), this.totalSize);
+                    if (done) {
+                        this.finished = true;
+                        if (this.socketExists) this.socket.emit('close');
+                    }
+                    if (ok) {
+                        this.writingChunk = false;
+                        callback();
+                    }
+                    // if !ok, wait for the next writable event from uws
+                    return ok;
+                })
             }
         });
     }
