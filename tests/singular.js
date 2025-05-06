@@ -18,7 +18,13 @@ if (!path) {
 if (u) {
     console.log('Running as µExpress');
     let code = fs.readFileSync(path, 'utf8');
-    fs.writeFileSync(path, code.replace('const express = require("express");', 'const express = require("../../../src/index.js");'));
+    fs.writeFileSync(
+        path,
+        code
+            .replace('const express = require("express");', 'const express = require("../../../src/index.js");')
+            .replace(`const express = require('express');`, 'const express = require("../../../src/index.js");')
+    );
+
 } else {
     let code = fs.readFileSync(path, 'utf8');
     fs.writeFileSync(path, code.replace(`const express = require("../../../src/index.js");`, `const express = require("express");`));

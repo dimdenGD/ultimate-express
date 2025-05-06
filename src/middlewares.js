@@ -169,7 +169,7 @@ function createBodyParser(defaultType, beforeReturn) {
 
             req.body = new NullObject();
 
-            // skip reading body for non-json content type
+            // skip reading body for no content type
             if(!type) {
                 return next();
             }
@@ -280,6 +280,10 @@ const json = createBodyParser('application/json', function(req, res, next, optio
         if(req.body && typeof req.body !== 'object') {
             return next(new Error('Invalid body'));
         }
+    }
+    if(buf.length === 0) {
+        req.body = {};
+        return next();
     }
     try {
         req.body = JSON.parse(buf.toString(), options.reviver);
