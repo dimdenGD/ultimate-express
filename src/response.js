@@ -177,6 +177,9 @@ module.exports = class Response extends Writable {
                             }
                         });
                     }, 50);
+                    if( typeof this.#writeTimeout.unref === 'function') {
+                        this.#writeTimeout.unref();
+                    }
                 }
                 this.writingChunk = false;
                 callback(null);
