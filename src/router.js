@@ -208,9 +208,7 @@ module.exports = class Router extends EventEmitter {
                                     }
                                 }
                             }, 100);
-                            if( typeof t.unref === 'function') {
-                                t.unref();
-                            }
+                            t.unref();
                         }
                         // only 1 router can be optimized per route
                         break;
