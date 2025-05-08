@@ -17,10 +17,10 @@ app.del('/del', (req, res) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    const outputs = await Promise.all([
-        fetch('http://localhost:13333/delete', {method: 'DELETE'}).then(res => res.text()),
-        fetch('http://localhost:13333/del', {method: 'DELETE'}).then(res => res.text()),
-    ]);
+    const outputs = [
+        await fetch('http://localhost:13333/delete', {method: 'DELETE'}).then(res => res.text()),
+        await fetch('http://localhost:13333/del', {method: 'DELETE'}).then(res => res.text()),
+    ];
 
     console.log(outputs);
     process.exit(0);
