@@ -5,6 +5,8 @@ const methodOverride = require("method-override");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.use(methodOverride('X-HTTP-Method-Override'));
 
 app.post('/abc', (req, res) => {

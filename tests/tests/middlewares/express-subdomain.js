@@ -28,6 +28,9 @@ async function sendRequest(method, url, fakeHost) {
 }
 
 const app = express();
+
+app.use(require("../../middleware"));
+
 const router = express.Router();
 
 console.log(typeof router);

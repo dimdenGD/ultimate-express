@@ -4,6 +4,8 @@ const express = require("express");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.get('/asdf', (req, res) => {
     res.send('asdf');
 });

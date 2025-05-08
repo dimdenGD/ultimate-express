@@ -3,6 +3,9 @@
 const express = require("express");
 
 const app = express();
+
+app.use(require("../../middleware"));
+
 const app2 = express();
 app.set('subdomain offset', 0);
 app2.set('subdomain offset', 1);

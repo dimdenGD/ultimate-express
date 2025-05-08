@@ -5,6 +5,8 @@ const compression = require("compression");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.use(compression({
     threshold: 1,
 }));

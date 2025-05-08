@@ -4,6 +4,8 @@ const express = require("express");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.post('/abc', (req, res) => {
     res.send('ok');
 });

@@ -5,6 +5,8 @@ const bodyParser = require("body-parser");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.use(bodyParser.json());
 
 app.post('/abc', (req, res) => {

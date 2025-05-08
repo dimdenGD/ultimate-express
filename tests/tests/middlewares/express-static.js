@@ -3,6 +3,9 @@
 const express = require("express");
 
 const app = express();
+
+app.use(require("../../middleware"));
+
 app.set("etag", false);
 
 app.post('/abc', (req, res) => {

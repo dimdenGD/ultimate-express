@@ -41,6 +41,8 @@ async function sendRequest(method, url) {
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.use(compression({
     threshold: 1,
 }));

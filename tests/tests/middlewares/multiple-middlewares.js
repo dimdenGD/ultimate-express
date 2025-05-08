@@ -8,6 +8,8 @@ const fileUpload = require("express-fileupload");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 
 app.post('/abc', bodyParser.raw(), fileUpload(), (req, res) => {
     console.log(req.body, req.files);

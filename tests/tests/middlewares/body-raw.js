@@ -6,6 +6,8 @@ const app = express();
 
 app.use(express.raw());
 
+app.use(require("../../middleware"));
+
 app.post('/abc', (req, res) => {
     res.send(req.body);
 });

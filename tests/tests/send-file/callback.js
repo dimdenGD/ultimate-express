@@ -4,6 +4,8 @@ const express = require("express");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.get('/test', (req, res) => {
     res.sendFile('src/asdf.js', { root: '.' }, (err) => {
         res.status(500).send(err?.message ? `caught error: ${err.message}` : 'no error');

@@ -18,6 +18,9 @@ const schema = new GraphQLSchema({
 
 
 const app = express();
+
+app.use(require("../../middleware"));
+
 app.all('/graphql', createHandler({ schema }));
 
 app.listen(13333, async () => {

@@ -6,6 +6,8 @@ const crypto = require("crypto");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.post("/test", (req, res) => {
     const body = new PassThrough();
     req.pipe(body);

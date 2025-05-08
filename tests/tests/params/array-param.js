@@ -4,6 +4,8 @@ const express = require("express");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.param(['id', 'id2'], (req, res, next, value, key) => {
     console.log('CALLED ONLY ONCE', value, key);
     next();

@@ -5,6 +5,9 @@ const { createSession } = require("better-sse");
 const { EventSource } = require("eventsource");
 
 const app = express();
+
+app.use(require("../../middleware"));
+
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 app.get('/sse', async (req, res) => {

@@ -4,6 +4,8 @@ const express = require("express");
 
 const app = express();
 
+app.use(require("../../middleware")); 
+
 app.delete('/delete', (req, res) => {
     res.send('delete');
 });

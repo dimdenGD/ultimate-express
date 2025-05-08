@@ -3,6 +3,9 @@
 const express = require("express");
 
 const app = express();
+
+app.use(require("../../middleware"));
+
 const app2 = express();
 const app3 = express();
 app.set('etag', false);

@@ -3,6 +3,9 @@
 const express = require("express");
 
 const app = express();
+
+app.use(require("../../middleware"));
+
 app.set('view engine', 'ejs');
 app.set('views', 'tests/parts');
 app.set('env', 'production');

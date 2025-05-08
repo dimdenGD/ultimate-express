@@ -6,6 +6,9 @@ const express = require("express");
 const multer = require("multer");
 
 const app = express();
+
+app.use(require("../../middleware"));
+
 const upload = multer();
 
 app.post('/abc', upload.none(), (req, res) => {

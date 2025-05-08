@@ -5,6 +5,8 @@ const mustacheExpress = require("mustache-express");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.engine('mustache', mustacheExpress());
 app.set('view engine', 'mustache');
 app.set('views', 'tests/parts');

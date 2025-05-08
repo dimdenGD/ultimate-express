@@ -5,6 +5,8 @@ const serveStatic = require("serve-static");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.post('/abc', (req, res) => {
     res.send('ok');
 });

@@ -3,6 +3,9 @@
 const express = require("express");
 
 const app = express();
+
+app.use(require("../../middleware"));
+
 const app2 = express();
 app.set('json escape', false);
 app2.set('json escape', true);

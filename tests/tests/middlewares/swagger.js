@@ -6,6 +6,8 @@ const swaggerUi = require("swagger-ui-express");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 const options = {
   explorer: true,
   swaggerOptions: {

@@ -3,6 +3,9 @@
 const express = require("express");
 
 const app = express();
+
+app.use(require("../../middleware"));
+
 const app2 = express();
 app.set('case sensitive routing', true);
 app2.set('case sensitive routing', false);

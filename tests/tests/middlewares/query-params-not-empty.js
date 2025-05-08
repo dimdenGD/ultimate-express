@@ -3,6 +3,9 @@
 const express = require("express");
 
 const app = express();
+
+app.use(require("../../middleware"));
+
 app.use(express.json());
 
 app.post('/abc/:param1', (req, res) => {

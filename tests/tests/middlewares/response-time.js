@@ -5,6 +5,8 @@ const responseTime = require("response-time");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.use(responseTime((req, res, time) => {
     console.log(typeof time);
 }));

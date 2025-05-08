@@ -5,6 +5,8 @@ const cookieParser = require("cookie-parser");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.use(cookieParser());
 
 app.get('/abc', (req, res) => {

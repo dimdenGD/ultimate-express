@@ -3,6 +3,9 @@
 const express = require("express");
 
 const app = express();
+
+app.use(require("../../middleware"));
+
 app.set('env', 'production');
 
 app.get('/test1', (req, res) => {

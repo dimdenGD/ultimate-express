@@ -5,6 +5,8 @@ const { deflate } = require("pako");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.use(express.raw());
 
 app.post('/abc', (req, res) => {

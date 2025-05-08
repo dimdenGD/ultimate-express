@@ -5,6 +5,8 @@ const path = require("path");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.get('/test', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'src/.src/index.js'), {
         dotfiles: 'deny'

@@ -3,6 +3,9 @@
 const express = require("express");
 
 const app = express();
+
+app.use(require("../../middleware"));
+
 const app2 = express();
 app2.set('json replacer', (key, value) => {
     if(typeof value === 'object' && value !== null) {

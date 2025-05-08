@@ -5,6 +5,8 @@ const { engine } = require("express-handlebars");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.engine('handlebars', engine());
 app.set('view engine', 'handlebars');
 app.set('views', 'tests/parts');

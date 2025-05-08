@@ -5,6 +5,8 @@ const bodyParser = require("body-parser");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.use(bodyParser.json({ limit: '10mb' }));
 
 app.post('/abc', (req, res) => {

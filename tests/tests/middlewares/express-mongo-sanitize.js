@@ -5,6 +5,8 @@ const mongoSanitize = require("express-mongo-sanitize");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.use(express.json());
 app.use(mongoSanitize());
 

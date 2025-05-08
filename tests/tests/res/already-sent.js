@@ -1,8 +1,10 @@
 // must support res error response was already sent
 
-const express = require("express");
+const express = require("../../../src/index.js");
 
 const app = express();
+
+app.use(require("../../middleware"));
 
 app.get("/test", (req, res) => {
   res.send("Hello World");

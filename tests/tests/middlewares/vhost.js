@@ -30,6 +30,8 @@ const vhost = require("vhost");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.use(vhost('*.example.com', (req, res) => {
     res.send('Hello from example.com');
 }));

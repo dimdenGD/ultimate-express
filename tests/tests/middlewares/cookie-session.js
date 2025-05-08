@@ -5,6 +5,8 @@ const cookieSession = require('cookie-session');
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.use(cookieSession({
     name: 'session',
     keys: ["test"],

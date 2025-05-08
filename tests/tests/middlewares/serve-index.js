@@ -6,6 +6,8 @@ const serveIndex = require("serve-index");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.use('/static', serveStatic('src'), (req, res, next) => {
     serveIndex('src')(req, res, next);
 });

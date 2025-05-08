@@ -4,6 +4,8 @@ const express = require("express");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.get('/test1', (req, res, next) => {
     next(new Error("Error occurred 1!"));
 });

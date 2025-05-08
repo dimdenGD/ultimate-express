@@ -4,6 +4,8 @@ const express = require("express");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 const _send = express.response.send;
 
 express.response.send = function(body) {

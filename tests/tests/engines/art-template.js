@@ -5,6 +5,8 @@ const artTemplate = require("express-art-template");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.engine('art', artTemplate);
 app.set('env', 'production');
 app.set('views', 'tests/parts');

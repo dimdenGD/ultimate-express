@@ -5,6 +5,8 @@ const dot = require("express-dot-engine");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.engine('dot', dot.__express);
 app.set('view engine', 'dot');
 app.set('views', 'tests/parts');

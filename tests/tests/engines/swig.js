@@ -5,6 +5,8 @@ const swig = require("swig");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.engine('swig', swig.renderFile);
 app.set('view engine', 'swig');
 app.set('views', 'tests/parts');

@@ -5,6 +5,8 @@ const cors = require("cors");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.get('/abc', cors(), (req, res) => {
     res.send('1');
 });
