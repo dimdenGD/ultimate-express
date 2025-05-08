@@ -4,6 +4,8 @@ const express = require("../../../src/index.js");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.get('/category/:nome?', (req, res) => {
     const nome = req.params.nome || 'default';
     res.send(`category: ${nome}`);

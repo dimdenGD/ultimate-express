@@ -3,6 +3,9 @@
 const express = require("express");
 
 const app = express();
+
+app.use(require("../../middleware"));
+
 const router = express.Router();
 
 app.param('id', (req, res, next, value, key) => {

@@ -4,6 +4,8 @@ const express = require("express");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.param('id', (req, res, next, value, key) => {
     console.log('param 1');
     if(value === '333') {

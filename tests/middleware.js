@@ -53,7 +53,7 @@ module.exports = (req, res, next) => {
       for (const key of resKeys) {
         console.log('res.' + key, JSON.stringify(res[key])?.toLowerCase());
       }
-      let resHeaders = res.getHeaders();
+      let resHeaders = {...res.getHeaders()};
       delete resHeaders['x-powered-by']; // always different
       delete resHeaders["connection"]; // always different
       delete resHeaders["keep-alive"]; // always different
