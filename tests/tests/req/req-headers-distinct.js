@@ -33,6 +33,9 @@ async function sendRequest(method, url, arrayHeaders) {
 }
 
 const app = express();
+
+app.use(require("../../middleware"));
+
 app.get("/test", (req, res) => {
     console.log(req.headersDistinct);
     res.send("test");

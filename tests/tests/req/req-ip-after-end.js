@@ -4,6 +4,8 @@ const express = require("express");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.get("/test", (req, res) => {
     res.send('ok');
     console.log(req.ip.replace('0000:0000:0000:0000:0000:0000:0000:000', "::"));

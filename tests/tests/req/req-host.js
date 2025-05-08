@@ -27,6 +27,9 @@ async function sendRequest(method, url, customHost) {
 }
 
 const app = express();
+
+app.use(require("../../middleware"));
+
 app.get("/test", (req, res) => {
     console.log(req.host);
     res.send("test");
