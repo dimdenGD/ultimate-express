@@ -67,10 +67,10 @@ module.exports = (req, res, next) => {
       console.log('res.headers', JSON.stringify(resHeaders));
 
       if( resHeaders['accept-encoding'] ){
+        console.log('res.body', 'compressed');
+      } else {
         const body = Buffer.concat(chunks).toString('utf8');
         console.log('res.body', body);
-      } else {
-        console.log('res.body', 'compressed');
       }
 
       oldEnd.apply(res, arguments);
