@@ -3,10 +3,11 @@
 const express = require("express");
 
 const app = express();
-
 app.use(require("../../middleware"));
 
 const app2 = express();
+app2.use(require("../../middleware"));
+
 app.set('strict routing', true);
 app2.set('strict routing', false);
 
