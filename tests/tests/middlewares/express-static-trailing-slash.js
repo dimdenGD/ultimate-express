@@ -17,15 +17,15 @@ app.use((req, res, next) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    const responses = await Promise.all([
-        fetch('http://localhost:13333/trailing', {
+    const responses =[
+        await fetch('http://localhost:13333/trailing', {
             redirect: 'manual'
         }),
-        fetch('http://localhost:13333/trailing/', {
+        await fetch('http://localhost:13333/trailing/', {
             redirect: 'manual'
         }),
-        fetch('http://localhost:13333/trailing/')
-    ]);
+        await fetch('http://localhost:13333/trailing/')
+    ];
 
     const texts = await Promise.all(responses.map(r => r.text()));
 

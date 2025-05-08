@@ -5,6 +5,8 @@ const fs = require("fs");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.get('/test', (req, res) => {
     if(!fs.existsSync('./src/router.js')) {
         throw new Error('File not found');

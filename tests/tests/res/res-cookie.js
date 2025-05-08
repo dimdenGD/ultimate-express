@@ -4,6 +4,8 @@ const express = require("express");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 const sharedOptions = { maxAge: 1000 };
 
 app.get('/test', (req, res) => {

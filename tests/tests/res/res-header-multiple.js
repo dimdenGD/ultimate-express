@@ -34,6 +34,8 @@ async function sendRequest(method, url, arrayHeaders) {
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.get("/abc", (req, res) => {
   res.header('set-cookie', ['my_cookie=foo', 'my_cookie2=bar']);
   res.send('ok');

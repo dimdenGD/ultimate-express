@@ -3,7 +3,11 @@
 const express = require("express");
 
 const app = express();
+app.use(require("../../middleware"));
+
 const app2 = express();
+app2.use(require("../../middleware"));
+
 app2.set('etag', false);
 
 app.get('/test', (req, res) => {

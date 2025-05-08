@@ -4,6 +4,8 @@ const express = require("express");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.get('/test', (req, res) => {
     res.set('Content-Type', 'text/plain');
     res.send(res.get('Content-Type').toLowerCase());

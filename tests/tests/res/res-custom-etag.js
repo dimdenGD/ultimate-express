@@ -4,6 +4,8 @@ const express = require("express");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.set("etag fn", () => "foo");
 
 app.get("/test", (req, res) => {

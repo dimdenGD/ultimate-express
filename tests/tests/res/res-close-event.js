@@ -4,6 +4,8 @@ const express = require("express");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.post("/test", (req, res) => {
   res
     .on("close", () => console.log("res close"));

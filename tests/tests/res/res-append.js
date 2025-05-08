@@ -35,6 +35,8 @@ async function sendRequest(method, url, arrayHeaders) {
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.get('/test', (req, res) => {
     res.append('X-Test', '1');
     res.append('X-Test', '2');

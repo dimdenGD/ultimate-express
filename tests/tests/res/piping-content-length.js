@@ -5,6 +5,8 @@ const fs = require("fs");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.get('/test', (req, res) => {
     if(!fs.existsSync('./tests/parts/huge.jpg')) {
         throw new Error('File not found');

@@ -27,20 +27,20 @@ app.use((req, res, next) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    const responses = await Promise.all([
-        fetch('http://localhost:13333/static/.test.txt'),
-        fetch('http://localhost:13333/static2/.test.txt'),
-        fetch('http://localhost:13333/static3/.test.txt'),
-        fetch('http://localhost:13333/static4/.test.txt'),
-        fetch('http://localhost:13333/static/.test/index.html'),
-        fetch('http://localhost:13333/static2/.test/index.html'),
-        fetch('http://localhost:13333/static3/.test/index.html'),
-        fetch('http://localhost:13333/static4/.test/index.html'),
-        fetch('http://localhost:13333/static/.gitignore'),
-        fetch('http://localhost:13333/static2/.gitignore'),
-        fetch('http://localhost:13333/static3/.gitignore'),
-        fetch('http://localhost:13333/static4/.gitignore'),
-    ]);
+    const responses = [
+        await fetch('http://localhost:13333/static/.test.txt'),
+        await fetch('http://localhost:13333/static2/.test.txt'),
+        await fetch('http://localhost:13333/static3/.test.txt'),
+        await fetch('http://localhost:13333/static4/.test.txt'),
+        await fetch('http://localhost:13333/static/.test/index.html'),
+        await fetch('http://localhost:13333/static2/.test/index.html'),
+        await fetch('http://localhost:13333/static3/.test/index.html'),
+        await fetch('http://localhost:13333/static4/.test/index.html'),
+        await fetch('http://localhost:13333/static/.gitignore'),
+        await fetch('http://localhost:13333/static2/.gitignore'),
+        await fetch('http://localhost:13333/static3/.gitignore'),
+        await fetch('http://localhost:13333/static4/.gitignore'),
+    ];
 
     console.log(responses.map(r => r.status), await Promise.all(responses.map(r => r.text())));
 
