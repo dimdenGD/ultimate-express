@@ -8,6 +8,7 @@ app.get('/test', (req, res) => {
     res.header('asdf', 'foo');
     res.header('asdf', 'bar');
     res.header('def', 'des');
+    console.log(res.getHeaders()['asdf']);
     res.send('test');
 });
 

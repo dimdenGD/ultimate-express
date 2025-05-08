@@ -612,6 +612,9 @@ module.exports = class Response extends Writable {
     getHeader(field) {
         return this.get(field);
     }
+    getHeaders(){
+        return this.headers;
+    }
     removeHeader(field) {
         delete this.headers[field.toLowerCase()];
         return this;
