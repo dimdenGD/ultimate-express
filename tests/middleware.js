@@ -59,12 +59,14 @@ module.exports = (req, res, next) => {
       delete resHeaders["keep-alive"]; // always different
       delete resHeaders["content-length"]; // not always present on ultimate
       delete resHeaders["etag"]; // default enabled on express
+      delete resHeaders["last-modified"]; // maybe different
 
+      // sort headers in the same order
       resHeaders = Object.keys(resHeaders).sort().reduce(function (result, key) {
           result[key] = resHeaders[key];
           return result;
       }, {});
-      console.log('res.headers', JSON.stringify(resHeaders));
+      console.log('res.headers', JSON.stringify(resHeaders)?.toLowerCase());
 
       if( resHeaders['accept-encoding'] ){
         console.log('res.body', 'compressed');
