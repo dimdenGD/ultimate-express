@@ -5,7 +5,7 @@ require('express-async-errors');
 
 const app = express();
 
-app.use(require("../../middleware"));
+// app.use(require("../../middleware"));
 
 app.set('env', 'production');
 app.set('catch async errors', true);

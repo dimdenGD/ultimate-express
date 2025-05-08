@@ -3,6 +3,9 @@
 const express = require("express");
 
 const app = express();
+
+app.use(require("../../middleware"));
+
 app.set('strict routing', true);
 
 app.use("/test/", (req, res, next) => {
