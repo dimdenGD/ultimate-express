@@ -33,6 +33,8 @@ async function sendRequest(method, url, arrayHeaders) {
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.get('/test', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'src/index.js'));
 });

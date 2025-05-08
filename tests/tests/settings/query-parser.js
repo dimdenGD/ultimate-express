@@ -3,12 +3,16 @@
 const express = require("express");
 
 const app = express();
-
 app.use(require("../../middleware"));
 
 const app2 = express();
+app2.use(require("../../middleware"));
+
 const app3 = express();
+app3.use(require("../../middleware"));
+
 const app4 = express();
+app4.use(require("../../middleware"));
 
 app.set('query parser', false);
 app2.set('query parser', 'simple');
