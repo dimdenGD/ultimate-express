@@ -1,3 +1,18 @@
+const logHeaders = (name, headers) => {
+  const newHeaders = Object.keys(headers).sort().reduce((result, key) => {
+      result[key] = headers[key];
+      return result;
+  }, {});
+  delete newHeaders['if-modified-since']; // maybe different
+  delete newHeaders['x-powered-by']; // always different
+  delete newHeaders["connection"]; // always different
+  delete newHeaders["keep-alive"]; // always different
+  delete newHeaders["content-length"]; // not always present on ultimate
+  delete newHeaders["etag"]; // default enabled on express
+  delete newHeaders["last-modified"]; // maybe different
+  console.log(name, JSON.stringify(newHeaders).toLowerCase());
+};
+
 module.exports = (req, res, next) => {
     const oldEnd = res.end;
     const oldWrite = res.write;
@@ -17,9 +32,9 @@ module.exports = (req, res, next) => {
         "httpVersionMajor",
         "httpVersionMinor",
         "httpVersion",
-        "rawHeaders",
-        "headers",
-        "headersDistinct",
+        //"rawHeaders", tested after
+        //"headers", tested after
+        //"headersDistinct", tested after
         "url",
         //"ip", ultimate is "0000:0000:0000:0000:0000:0000:0000:0001" express is "::1"
         "ips",
@@ -42,6 +57,9 @@ module.exports = (req, res, next) => {
       for (const key of reqKeys) {
         console.log('req.' + key, JSON.stringify(req[key])?.toLowerCase());
       }
+
+      logHeaders('req.headers', req.headers);
+      logHeaders('req.headersDistinct', req.headersDistinct);
   
       const resKeys = [
         'statusCode',
@@ -53,20 +71,8 @@ module.exports = (req, res, next) => {
       for (const key of resKeys) {
         console.log('res.' + key, JSON.stringify(res[key])?.toLowerCase());
       }
-      let resHeaders = {...res.getHeaders()};
-      delete resHeaders['x-powered-by']; // always different
-      delete resHeaders["connection"]; // always different
-      delete resHeaders["keep-alive"]; // always different
-      delete resHeaders["content-length"]; // not always present on ultimate
-      delete resHeaders["etag"]; // default enabled on express
-      delete resHeaders["last-modified"]; // maybe different
-
-      // sort headers in the same order
-      resHeaders = Object.keys(resHeaders).sort().reduce(function (result, key) {
-          result[key] = resHeaders[key];
-          return result;
-      }, {});
-      console.log('res.headers', JSON.stringify(resHeaders)?.toLowerCase());
+      const resHeaders = res.getHeaders();
+      logHeaders('res.headers', resHeaders);
 
       if( resHeaders['accept-encoding'] ){
         console.log('res.body', 'compressed');

@@ -4,6 +4,8 @@ const express = require("express");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.get('/test', (req, res) => {
     console.log(req.connection.remoteAddress.replace("0000:0000:0000:0000:0000:0000:0000:000", "::"));
     console.log(req.connection.localPort);

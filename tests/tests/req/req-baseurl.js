@@ -3,6 +3,9 @@
 const express = require("express");
 
 const app = express();
+
+app.use(require("../../middleware"));
+
 const greet = express.Router()
 
 greet.get('/jp', function (req, res) {

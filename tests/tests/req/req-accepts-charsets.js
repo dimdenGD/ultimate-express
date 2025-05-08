@@ -4,6 +4,8 @@ const express = require("express");
 
 const app = express();
 
+app.use(require("../../middleware"));
+
 app.get('/test', (req, res) => {
     console.log(req.acceptsCharsets('utf-8'));
     console.log(req.acceptsCharsets('utf-8', 'utf-16'));
