@@ -1,11 +1,11 @@
-// must support res.sendFile()
+// must support res.sendFile() simple
 
 const express = require("express");
 const path = require("path");
 
 const app = express();
 
-app.use(require("../../middleware"));
+// app.use(require("../../middleware"));
 
 app.get('/test', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'src/index.js'));

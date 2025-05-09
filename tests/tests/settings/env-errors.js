@@ -3,10 +3,12 @@
 const express = require("express");
 
 const app = express();
-
-app.use(require("../../middleware"));
+// app.use(require("../../middleware"));
 
 const app2 = express();
+// app2.use(require("../../middleware"));
+
+
 app.set('env', 'production');
 app2.set('env', 'development');
 

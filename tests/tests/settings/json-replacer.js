@@ -3,10 +3,11 @@
 const express = require("express");
 
 const app = express();
-
-app.use(require("../../middleware"));
+// app.use(require("../../middleware"));
 
 const app2 = express();
+// app2.use(require("../../middleware"));
+
 app2.set('json replacer', (key, value) => {
     if(typeof value === 'object' && value !== null) {
         return 'REPLACED';

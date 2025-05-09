@@ -5,7 +5,7 @@ const path = require("path");
 
 const app = express();
 
-app.use(require("../../middleware"));
+// app.use(require("../../middleware"));
 
 app.get('/test', (req, res) => {
     res.sendFile('src/index.js', { root: '.' });

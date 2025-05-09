@@ -3,6 +3,8 @@
 const express = require("express");
 const app = express();
 
+// app.use(require("../../middleware"));
+
 app.get('/test', (req, res) => {
     res.sendFile('tests/parts/large-file.json', { root: "." });
 });

@@ -1,8 +1,10 @@
-// must support res.sendFile()
+// must support res.sendFile() res-send-file
 
 const express = require("express");
 
 const app = express();
+
+// app.use(require("../../middleware"));
 
 app.set("etag fn", false);
 

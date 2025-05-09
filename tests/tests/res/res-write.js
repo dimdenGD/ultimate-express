@@ -1,8 +1,10 @@
-// must support res.sendFile()
+// must support res.sendFile() res-write
 
 const express = require("express");
 
 const app = express();
+
+// app.use(require("../../middleware"));
 
 app.get('/test', (req, res) => {
     res.write('test');
