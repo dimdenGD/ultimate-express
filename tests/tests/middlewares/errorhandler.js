@@ -5,7 +5,7 @@ const errorhandler = require('errorhandler')
 
 const app = express();
 
-app.use(require("../../middleware"));
+// app.use(require("../../middleware"));
 
 app.get('/abc', (req, res) => {
     throw new Error('test');

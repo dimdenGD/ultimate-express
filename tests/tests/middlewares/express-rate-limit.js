@@ -1,6 +1,6 @@
 // must support express-rate-limit middleware
 
-const express = require("express");
+const express = require("../../../src/index.js");
 const { rateLimit } = require('express-rate-limit');
 
 const app = express();

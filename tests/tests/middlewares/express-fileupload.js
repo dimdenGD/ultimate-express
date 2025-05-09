@@ -7,7 +7,7 @@ const fileUpload = require("express-fileupload");
 
 const app = express();
 
-app.use(require("../../middleware"));
+// app.use(require("../../middleware"));
 
 app.post('/file', fileUpload(), (req, res) => {
     res.send(req.files);

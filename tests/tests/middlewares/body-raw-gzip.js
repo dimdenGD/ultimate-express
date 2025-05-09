@@ -5,7 +5,7 @@ const { gzip } = require("pako");
 
 const app = express();
 
-app.use(require("../../middleware"));
+// app.use(require("../../middleware"));
 
 app.use(express.raw());
 

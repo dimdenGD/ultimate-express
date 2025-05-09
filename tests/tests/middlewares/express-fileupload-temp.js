@@ -8,7 +8,7 @@ const fs = require("fs");
 
 const app = express();
 
-app.use(require("../../middleware"));
+// app.use(require("../../middleware"));
 
 app.post('/file', fileUpload({
     tempFileDir: './tmp',
