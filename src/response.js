@@ -39,6 +39,7 @@ const outgoingMessage = new http.OutgoingMessage();
 const symbols = Object.getOwnPropertySymbols(outgoingMessage);
 const kOutHeaders = symbols.find(s => s.toString() === 'Symbol(kOutHeaders)');
 const HIGH_WATERMARK = 256 * 1024;
+const MAX_BUNCH_SIZE = HIGH_WATERMARK / 16384;
 
 class Socket extends EventEmitter {
     constructor(response) {
@@ -150,7 +151,7 @@ module.exports = class Response extends Writable {
     
             if (this.chunkedTransfer) {
                 this.#pendingChunks.push(chunk);
-                if (chunk.length !== 16384) {
+                if (chunk.length !== 16384 || this.#pendingChunks.length === MAX_BUNCH_SIZE) {
                     this._res.write(Buffer.concat(this.#pendingChunks));
                     this.#pendingChunks = [];
                 }
