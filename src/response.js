@@ -71,6 +71,7 @@ class Socket extends EventEmitter {
 module.exports = class Response extends Writable {
     #socket = null;
     #pendingChunks = [];
+    #writeTimeout = null;
     constructor(res, req, app) {
         super();
         this._req = req;
@@ -151,9 +152,21 @@ module.exports = class Response extends Writable {
     
             if (this.chunkedTransfer) {
                 this.#pendingChunks.push(chunk);
+                clearTimeout(this.#writeTimeout);
                 if (chunk.length !== 16384 || this.#pendingChunks.length === MAX_BUNCH_SIZE) {
                     this._res.write(Buffer.concat(this.#pendingChunks));
                     this.#pendingChunks = [];
+                } else {
+                    this.#writeTimeout = setTimeout(() => {
+                        if (!this.aborted && !this.finished) {
+                            this._res.cork(() => {
+                                if (this.#pendingChunks.length) {
+                                    this._res.write(Buffer.concat(this.#pendingChunks));
+                                    this.#pendingChunks = [];
+                                }
+                            });
+                        }
+                    }, 10).unref();
                 }
                 this.writingChunk = false;
                 callback(null);
