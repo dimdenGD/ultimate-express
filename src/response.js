@@ -70,8 +70,6 @@ class Socket extends EventEmitter {
 module.exports = class Response extends Writable {
     #socket = null;
     #pendingChunks = [];
-    #lastWriteChunkTime = 0;
-    #writeTimeout = null;
     constructor(res, req, app) {
         super();
         this._req = req;
@@ -152,32 +150,9 @@ module.exports = class Response extends Writable {
     
             if (this.chunkedTransfer) {
                 this.#pendingChunks.push(chunk);
-                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-                const now = Date.now();
-                // the first chunk is sent immediately (!this.#lastWriteChunkTime)
-                // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
-                // or if elapsed 50ms of last send (now - this.#lastWriteChunkTime > 50)
-                if (!this.#lastWriteChunkTime || size >= HIGH_WATERMARK || now - this.#lastWriteChunkTime > 50) {
-                    this._res.write(Buffer.concat(this.#pendingChunks, size));
+                if (chunk.length !== 16384) {
+                    this._res.write(Buffer.concat(this.#pendingChunks));
                     this.#pendingChunks = [];
-                    this.#lastWriteChunkTime = now;
-                    if(this.#writeTimeout) {
-                        clearTimeout(this.#writeTimeout);
-                        this.#writeTimeout = null;
-                    }
-                } else if(!this.#writeTimeout) {
-                    this.#writeTimeout = setTimeout(() => {
-                        this.#writeTimeout = null;
-                        if(!this.finished && !this.aborted) this._res.cork(() => {
-                            if(this.#pendingChunks.length) {
-                                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-                                this._res.write(Buffer.concat(this.#pendingChunks, size));
-                                this.#pendingChunks = [];
-                                this.#lastWriteChunkTime = now;
-                            }
-                        });
-                    }, 50);
-                    this.#writeTimeout.unref();
                 }
                 this.writingChunk = false;
                 callback(null);
@@ -296,7 +271,6 @@ module.exports = class Response extends Writable {
                 if(this.#pendingChunks.length) {
                     this._res.write(Buffer.concat(this.#pendingChunks));
                     this.#pendingChunks = [];
-                    this.lastWriteChunkTime = 0;
                 }
                 if(data instanceof Buffer) {
                     data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
