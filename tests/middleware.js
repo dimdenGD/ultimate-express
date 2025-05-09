@@ -11,6 +11,7 @@ const logHeaders = (name, headers) => {
   delete newHeaders["etag"]; // default enabled on express
   delete newHeaders["last-modified"]; // maybe different
   delete newHeaders["date"]; // always different
+  delete newHeaders["set-cookie"]; // always different
   console.log(name, JSON.stringify(newHeaders).toLowerCase());
 };
 
