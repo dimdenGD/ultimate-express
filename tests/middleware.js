@@ -10,6 +10,7 @@ const logHeaders = (name, headers) => {
   delete newHeaders["content-length"]; // not always present on ultimate
   delete newHeaders["etag"]; // default enabled on express
   delete newHeaders["last-modified"]; // maybe different
+  delete newHeaders["date"]; // always different
   console.log(name, JSON.stringify(newHeaders).toLowerCase());
 };
 
