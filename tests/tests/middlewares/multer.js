@@ -7,7 +7,7 @@ const multer = require("multer");
 
 const app = express();
 
-app.use(require("../../middleware"));
+// app.use(require("../../middleware"));
 
 const upload = multer();
 

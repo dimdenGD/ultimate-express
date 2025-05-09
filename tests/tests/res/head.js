@@ -31,7 +31,7 @@ async function sendRequest(method, url, arrayHeaders) {
 }
 const app = express();
 
-app.use(require("../../middleware"));
+// app.use(require("../../middleware"));
 
 app.get('/test', (req, res) => {
     res.send('Hello World');

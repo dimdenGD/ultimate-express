@@ -7,7 +7,7 @@ const session = require("express-session");
 
 const app = express();
 
-app.use(require("../../middleware"));
+// app.use(require("../../middleware"));
 
 app.use(express.urlencoded({ extended: true }));
 

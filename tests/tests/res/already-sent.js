@@ -1,6 +1,6 @@
 // must support res error response was already sent
 
-const express = require("../../../src/index.js");
+const express = require("express");
 
 const app = express();
 

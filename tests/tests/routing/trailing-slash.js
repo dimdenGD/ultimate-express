@@ -1,6 +1,6 @@
 // must support trailing slash in routes
 
-const express = require("express");
+const express = require("../../../src/index.js");
 
 const app = express();
 

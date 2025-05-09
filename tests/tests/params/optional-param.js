@@ -1,10 +1,10 @@
 // must support optional params
 
-const express = require("../../../src/index.js");
+const express = require("express");
 
 const app = express();
 
-app.use(require("../../middleware"));
+// app.use(require("../../middleware"));
 
 app.get('/category/:nome?', (req, res) => {
     const nome = req.params.nome || 'default';

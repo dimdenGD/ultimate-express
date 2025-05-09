@@ -4,7 +4,7 @@ const express = require("express");
 
 const app = express();
 
-app.use(require("../../middleware"));
+// app.use(require("../../middleware"));
 
 app.get('/test/:id(t\\d+t)', (req, res) => {
     res.send(`id: ${req.params.id}`);

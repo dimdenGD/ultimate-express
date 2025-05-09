@@ -4,7 +4,7 @@ const express = require("express");
 
 const app = express();
 
-app.use(require("../../middleware"));
+// app.use(require("../../middleware"));
 
 const router = new express.Router();
 
