@@ -39,6 +39,7 @@ const outgoingMessage = new http.OutgoingMessage();
 const symbols = Object.getOwnPropertySymbols(outgoingMessage);
 const kOutHeaders = symbols.find(s => s.toString() === 'Symbol(kOutHeaders)');
 const HIGH_WATERMARK = 256 * 1024;
+const MAX_BUNCH_SIZE = HIGH_WATERMARK / 16384;
 
 class Socket extends EventEmitter {
     constructor(response) {
@@ -70,7 +71,6 @@ class Socket extends EventEmitter {
 module.exports = class Response extends Writable {
     #socket = null;
     #pendingChunks = [];
-    #lastWriteChunkTime = 0;
     #writeTimeout = null;
     constructor(res, req, app) {
         super();
@@ -152,32 +152,21 @@ module.exports = class Response extends Writable {
     
             if (this.chunkedTransfer) {
                 this.#pendingChunks.push(chunk);
-                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-                const now = Date.now();
-                // the first chunk is sent immediately (!this.#lastWriteChunkTime)
-                // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
-                // or if elapsed 50ms of last send (now - this.#lastWriteChunkTime > 50)
-                if (!this.#lastWriteChunkTime || size >= HIGH_WATERMARK || now - this.#lastWriteChunkTime > 50) {
-                    this._res.write(Buffer.concat(this.#pendingChunks, size));
+                clearTimeout(this.#writeTimeout);
+                // Write chunks if not equal to 16384 bytes or the max bunch size has been reached
+                if (chunk.length !== 16384 || this.#pendingChunks.length === MAX_BUNCH_SIZE) {
+                    this._res.write(Buffer.concat(this.#pendingChunks));
                     this.#pendingChunks = [];
-                    this.#lastWriteChunkTime = now;
-                    if(this.#writeTimeout) {
-                        clearTimeout(this.#writeTimeout);
-                        this.#writeTimeout = null;
-                    }
-                } else if(!this.#writeTimeout) {
+                } else {
+                    // If we always write 16384 bytes, we need a timeout to ensure the writing
                     this.#writeTimeout = setTimeout(() => {
-                        this.#writeTimeout = null;
-                        if(!this.finished && !this.aborted) this._res.cork(() => {
-                            if(this.#pendingChunks.length) {
-                                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-                                this._res.write(Buffer.concat(this.#pendingChunks, size));
+                        if (!this.aborted && !this.finished && this.#pendingChunks.length) {
+                            this._res.cork(() => {
+                                this._res.write(Buffer.concat(this.#pendingChunks));
                                 this.#pendingChunks = [];
-                                this.#lastWriteChunkTime = now;
-                            }
-                        });
-                    }, 50);
-                    this.#writeTimeout.unref();
+                            });
+                        }
+                    }, 10).unref();
                 }
                 this.writingChunk = false;
                 callback(null);
@@ -298,7 +287,6 @@ module.exports = class Response extends Writable {
                 if(this.#pendingChunks.length) {
                     this._res.write(Buffer.concat(this.#pendingChunks));
                     this.#pendingChunks = [];
-                    this.lastWriteChunkTime = 0;
                 }
                 if(data instanceof Buffer) {
                     data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
