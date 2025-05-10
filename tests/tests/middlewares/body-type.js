@@ -28,6 +28,7 @@ app.listen(13333, async () => {
         }
     });
     const text = await response.text();
+    console.log(response.headers.get('content-type'));
     console.log(text);
 
     const response2 = await fetch('http://localhost:13333/abc', {
@@ -40,6 +41,7 @@ app.listen(13333, async () => {
         }
     });
     const text2 = await response2.text();
+    console.log(response2.headers.get('content-type'));
     console.log(text2);
 
     const response3 = await fetch('http://localhost:13333/def', {
@@ -52,6 +54,7 @@ app.listen(13333, async () => {
         }
     });
     const text3 = await response3.text();
+    console.log(response3.headers.get('content-type'));
     console.log(text3);
 
     process.exit(0);

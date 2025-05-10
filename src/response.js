@@ -244,9 +244,6 @@ module.exports = class Response extends Writable {
                 this._res.writeHeader(header, value);
             }
         }
-        if(!this.headers['content-type']) {
-            this._res.writeHeader('content-type', 'text/html' + (utf8 ? `; charset=utf-8` : ''));
-        }
         this.headersSent = true;
     }
     _implicitHeader() {
@@ -339,13 +336,15 @@ module.exports = class Response extends Writable {
         } else if(!isBuffer) {
             body = String(body);
         }
-        if(typeof body === 'string') {
+        if(typeof body === 'string' && !isBuffer) {
             const contentType = this.headers['content-type'];
             if(!contentType) {
                 this.headers['content-type'] = 'text/html; charset=utf-8';
             } else if(!contentType.includes(';')) {
                 this.headers['content-type'] += '; charset=utf-8';
             }
+        } else {
+            this.headers['content-type'] = 'application/octet-stream';
         }
         return this.end(body);
     }

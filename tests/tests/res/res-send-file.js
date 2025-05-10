@@ -1,4 +1,4 @@
-// must support res.sendFile()
+// must support res.sendFile() send file
 
 const express = require("express");
 

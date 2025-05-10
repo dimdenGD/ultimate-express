@@ -1,4 +1,4 @@
-// must support res.sendFile()
+// must support res.sendFile() write
 
 const express = require("express");
 
@@ -22,8 +22,10 @@ app.listen(13333, async () => {
 
     const response = await fetch('http://localhost:13333/test');
     console.log(await response.text());
+    console.log(response.headers.get('content-type'));
 
     const response2 = await fetch('http://localhost:13333/test2');
     console.log(await response2.arrayBuffer());
+    console.log(response2.headers.get('content-type'));
     process.exit(0);
 });

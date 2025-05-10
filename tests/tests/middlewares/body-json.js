@@ -24,6 +24,7 @@ app.listen(13333, async () => {
         }
     });
     const text = await response.text();
+    console.log(response.headers.get('content-type'));
     console.log(text);
 
     process.exit(0);
