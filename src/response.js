@@ -764,7 +764,25 @@ module.exports = class Response extends Writable {
         this.location(url);
         this.status(status);
         this.headers['content-type'] = 'text/plain; charset=utf-8';
-        return this.send(`${statuses.message[status] ?? status}. Redirecting to ${url}`);
+        let body;
+        // Support text/{plain,html} by default
+        this.format({
+            text: function(){
+                body = statuses.message[status] + '. Redirecting to ' + url
+            },
+            html: function(){
+                var u = escapeHtml(url);
+                body = '<p>' + statuses.message[status] + '. Redirecting to ' + u + '</p>'
+            },
+            default: function(){
+                body = '';
+            }
+        });
+        if (this.req.method === 'HEAD') {
+            this.end();
+        } else {
+            this.end(body);
+        }
     }
 
     type(type) {
@@ -777,6 +795,11 @@ module.exports = class Response extends Writable {
     contentType = this.type;
 
     vary(field) {
+        // checks for back-compat
+        if (!field || (Array.isArray(field) && !field.length)) {
+            deprecate('res.vary(): Provide a field name');
+            return this;
+        }
         vary(this, field);
         return this;
     }
