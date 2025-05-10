@@ -153,17 +153,17 @@ module.exports = class Response extends Writable {
             if (this.chunkedTransfer) {
                 this.#pendingChunks.push(chunk);
                 clearTimeout(this.#writeTimeout);
+                // Write chunks if not equal to 16382 bytes or the max bunch size has been reached
                 if (chunk.length !== 16384 || this.#pendingChunks.length === MAX_BUNCH_SIZE) {
                     this._res.write(Buffer.concat(this.#pendingChunks));
                     this.#pendingChunks = [];
                 } else {
+                    // If we always write 16384 bytes, we need a timeout to ensure the writing
                     this.#writeTimeout = setTimeout(() => {
-                        if (!this.aborted && !this.finished) {
+                        if (!this.aborted && !this.finished && this.#pendingChunks.length) {
                             this._res.cork(() => {
-                                if (this.#pendingChunks.length) {
-                                    this._res.write(Buffer.concat(this.#pendingChunks));
-                                    this.#pendingChunks = [];
-                                }
+                                this._res.write(Buffer.concat(this.#pendingChunks));
+                                this.#pendingChunks = [];
                             });
                         }
                     }, 10).unref();
