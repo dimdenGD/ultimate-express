@@ -5,6 +5,8 @@ const express = require("express");
 const app = express();
 
 app.get('/test', (req, res) => {
+    res.once('finish', () => console.log('finish'));
+    res.once('close', () => console.log('close'));
     res.set('ETag', '"123"');
     res.send([req.fresh, req.stale]);
 });
