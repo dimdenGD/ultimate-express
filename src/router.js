@@ -355,7 +355,10 @@ module.exports = class Router extends EventEmitter {
             path = path.slice(0, -1);
         }
         let match = pattern.exec(path);
-        const obj = match?.groups ?? new NullObject();
+        if( match?.groups ){
+            return match.groups;
+        }
+        const obj = new NullObject();
         for(let i = 1; i < match.length; i++) {
             obj[i - 1] = match[i];
         }
