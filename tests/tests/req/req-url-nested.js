@@ -7,12 +7,14 @@ const router = express.Router();
 
 router.use("/:test", (req, res, next) => {
     console.log(req.url);
+    console.log(req.params);
     next();
 });
 
 app.use("/test", router);
 
 app.get('/test/:test', (req, res) => {
+    console.log(req.params);
     res.send(req.url);
 });
 
