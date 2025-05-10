@@ -34,6 +34,7 @@ app.listen(13333, async () => {
     ]);
 
     console.log(responses);
+    console.log(responses.map(response => response.headers?.get('content-type')));
     console.log(codes);
     process.exit(0);
 });
