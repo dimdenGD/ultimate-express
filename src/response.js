@@ -768,14 +768,14 @@ module.exports = class Response extends Writable {
         let body;
         // Support text/{plain,html} by default
         this.format({
-            text: function(){
+            text: function() {
                 body = statuses.message[status] + '. Redirecting to ' + url
             },
-            html: function(){
-                var u = escapeHtml(url);
+            html: function() {
+                let u = escapeHtml(url);
                 body = '<p>' + statuses.message[status] + '. Redirecting to ' + u + '</p>'
             },
-            default: function(){
+            default: function() {
                 body = '';
             }
         });
