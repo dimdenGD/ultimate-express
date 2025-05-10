@@ -50,7 +50,9 @@ app.listen(13333, async () => {
     redirect: "manual",
   });
   console.log("Redirected to:", response.headers.get("location"));
+  console.log("vary:", response.headers.get("vary"));
 
+ /*
   response = await fetch("http://localhost:13333/login/password", {
     method: "POST",
     headers: {
@@ -60,6 +62,8 @@ app.listen(13333, async () => {
     redirect: "manual",
   });
   console.log("Redirected to:", response.headers.get("location"));
+  console.log("vary:", response.headers.get("vary"));
+*/
 
   process.exit(0);
 });
