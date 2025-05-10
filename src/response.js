@@ -244,9 +244,6 @@ module.exports = class Response extends Writable {
                 this._res.writeHeader(header, value);
             }
         }
-        if(!this.headers['content-type']) {
-            this._res.writeHeader('content-type', 'text/html' + (utf8 ? `; charset=utf-8` : ''));
-        }
         this.headersSent = true;
     }
     _implicitHeader() {

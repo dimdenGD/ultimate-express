@@ -33,41 +33,48 @@ app.listen(13333, async () => {
 
     let response = await fetch('http://localhost:13333/test');
     console.log(await response.text());
+    console.log(response.headers.get('content-type'));
     response = await fetch('http://localhost:13333/test', {
         headers: {
             'Accept': 'text/html'
         }
     });
     console.log(await response.text());
+    console.log(response.headers.get('content-type'));
     response = await fetch('http://localhost:13333/test', {
         headers: {
             'Accept': 'application/json'
         }
     });
     console.log(await response.text());
+    console.log(response.headers.get('content-type')?.toLowerCase());
     response = await fetch('http://localhost:13333/test', {
         headers: {
             'Accept': 'text/plain'
         }
     });
     console.log(await response.text());
+    console.log(response.headers.get('content-type')?.toLowerCase());
     response = await fetch('http://localhost:13333/test', {
         headers: {
             'Accept': 'text/html, application/json, text/plain, */*'
         }
     });
     console.log(await response.text());
+    console.log(response.headers.get('content-type')?.toLowerCase());
     response = await fetch('http://localhost:13333/test', {
         headers: {
             'Accept': 'application/json; charset=utf-8'
         }
     });
     console.log(await response.text());
+    console.log(response.headers.get('content-type')?.toLowerCase());
     response = await fetch('http://localhost:13333/test', {
         headers: {
             'Accept': 'application/xml'
         }
     });
     console.log(await response.text());
+    console.log(response.headers.get('content-type')?.toLowerCase());
     process.exit(0);
 });
