@@ -286,6 +286,8 @@ module.exports = class Response extends Writable {
                     this._res.end();
                     this.finished = true;
                     if(this.socketExists) this.socket.emit('close');
+                    this.emit('finish');
+                    this.emit('close');
                     return;
                 }
             }
