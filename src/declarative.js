@@ -167,7 +167,9 @@ module.exports = function compileDeclarative(cb, app) {
 
         
         let statusCode = 200;
-        const headers = [];
+        const headers = [
+            ['content-type', 'text/html; charset=utf-8']
+        ];
         const body = [];
 
         // get statusCode
@@ -186,7 +188,7 @@ module.exports = function compileDeclarative(cb, app) {
                 if(call.arguments[0].type !== 'Literal' || call.arguments[1].type !== 'Literal') {
                     return false;
                 }
-                const sameHeader = headers.find(header => header[0] === call.arguments[0].value);
+                const sameHeader = headers.find(header => header[0].toLowerCase() === call.arguments[0].value.toLowerCase());
                 if(sameHeader) {
                     sameHeader[1] = call.arguments[1].value;
                 } else {
@@ -304,7 +306,11 @@ module.exports = function compileDeclarative(cb, app) {
                             return false;
                         }
 
-                        headers.push(['content-type', 'application/json; charset=utf-8']);
+                        if(!headers.some(header => header[0].toLowerCase() === 'content-type')) {
+                            headers.push(['content-type', 'application/json; charset=utf-8']);
+                        } else {
+                            headers.find(header => header[0].toLowerCase() === 'content-type')[1] = 'application/json; charset=utf-8';
+                        }
                         body.push({
                             type: 'text',
                             value: 
@@ -333,6 +339,9 @@ module.exports = function compileDeclarative(cb, app) {
         for(let header of headers) {
             if(header[0].toLowerCase() === 'content-length') {
                 return false;
+            }
+            if(header[0].toLowerCase() === 'content-type' && header[1].includes('text/') && !header[1].includes(';')) {
+                header[1] += '; charset=utf-8';
             }
             decRes = decRes.writeHeader(header[0], header[1]);
         }

@@ -1,11 +1,11 @@
-// must support declarative response content-type OFF
+// must support declarative response content-type
 
 const express = require("express");
 
 const app = express();
 
 app.get('/test1', (req, res) => {
-    res.setHeader('content-type', 'text/plain').send(`test1`);
+    res.setHeader('Content-Type', 'text/plain').send(`test1`);
 });
 
 app.get('/test2', (req, res) => {
