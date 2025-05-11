@@ -14,7 +14,7 @@ app.get('/abc', (req, res) => {
     res.json({ test: { test: 1 } });
 });
 
-app2.get('/def', (req, res) => {
+app.get('/def', (req, res) => {
     res.jsonp({ test: { test: 1 } });
 });
 
@@ -28,22 +28,25 @@ app2.get('/def', (req, res) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    let outputs = await Promise.all([
-        fetch('http://localhost:13333/abc').then(res => res.text()),
-        fetch('http://localhost:13333/def').then(res => res.text()),
-    ]);
+    let outputs = [
+        await fetch('http://localhost:13333/abc'),
+        await fetch('http://localhost:13333/def'),
+    ];
 
-    console.log(outputs.join(' '));
+    console.log(outputs.map(output => output.headers.get('content-type')));
+    console.log((await Promise.all(outputs.map((output) => output.text()))).join(' '));
 
     app2.listen(13334, async () => {
         console.log('Server is running on port 13334');
 
-        let outputs2 = await Promise.all([
-            fetch('http://localhost:13334/abc').then(res => res.text()),
-            fetch('http://localhost:13334/def').then(res => res.text()),
-        ]);
+        let outputs2 = [
+            await fetch('http://localhost:13334/abc'),
+            await fetch('http://localhost:13334/def'),
+        ];
 
-        console.log(outputs2.join(' '));
+        console.log(outputs2.map(output => output.headers.get('content-type')));
+        console.log((await Promise.all(outputs2.map((output) => output.text()))).join(' '));
+        
         process.exit(0);
     });
 

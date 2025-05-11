@@ -721,7 +721,7 @@ module.exports = class Response extends Writable {
         let body = stringify(object, this.app.get('json replacer'), this.app.get('json spaces'), this.app.get('json escape'));
 
         if(!this.headers['content-type']) {
-            this.headers['content-type'] = 'application/javascript; charset=utf-8';
+            this.headers['content-type'] = 'application/json; charset=utf-8';
             this.headers['X-Content-Type-Options'] = 'nosniff';
         }
 
