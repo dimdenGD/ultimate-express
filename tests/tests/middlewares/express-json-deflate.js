@@ -1,6 +1,7 @@
 // must support express.json deflate
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 const { deflate } = require("pako");
 
 const app = express();
@@ -17,7 +18,7 @@ app.listen(13333, async () => {
 
     console.log(def);
 
-    const response = await fetch('http://localhost:13333/abc', {
+    const response = await fetchTest('http://localhost:13333/abc', {
         method: 'POST',
         body: def,
         headers: {

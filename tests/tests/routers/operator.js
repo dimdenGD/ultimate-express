@@ -1,6 +1,7 @@
 // must support router operators
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 
@@ -54,21 +55,21 @@ app.listen(13333, async () => {
   ];
   const responses1 = await Promise.all(
     parts.map((part) =>
-      fetch(`http://localhost:13333/${part}?a=1&a=2&b=3`).then((res) => res.json())
+      fetchTest(`http://localhost:13333/${part}?a=1&a=2&b=3`).then((res) => res.json())
     )
   );
   console.log(JSON.stringify(responses1, null, 2));
 
   const responses2 = await Promise.all(
     parts.map((part) =>
-      fetch(`http://localhost:13333/sub/${part}/?c=4#foo`).then((res) => res.json())
+      fetchTest(`http://localhost:13333/sub/${part}/?c=4#foo`).then((res) => res.json())
     )
   );
   console.log(JSON.stringify(responses2, null, 2));
 
   const responses3 = await Promise.all(
     parts.map((part) =>
-      fetch(`http://localhost:13333/sub/123/${part}`).then((res) => res.json())
+      fetchTest(`http://localhost:13333/sub/123/${part}`).then((res) => res.json())
     )
   );
   console.log(JSON.stringify(responses3, null, 2));

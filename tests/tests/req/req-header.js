@@ -2,6 +2,7 @@
 
 const net = require("net");
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 // this is needed to actually test multiple headers with the same name
 // because fetch just combines them into one
@@ -42,10 +43,10 @@ app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
     let res;
-    res = await fetch('http://localhost:13333/test');
+    res = await fetchTest('http://localhost:13333/test');
     console.log(await res.text());
 
-    res = await fetch('http://localhost:13333/test', {
+    res = await fetchTest('http://localhost:13333/test', {
         headers: {
             'X-Test': 'test'
         }

@@ -1,6 +1,7 @@
 // must support text body parser with utf-16 encoding
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 const app = express();
 
 app.use(express.text());
@@ -14,7 +15,7 @@ app.listen(13333, async () => {
 
     const uint16 = new Uint16Array([0, 104, 0, 101, 0, 108, 0, 108, 0, 111]);
 
-    const response = await fetch('http://localhost:13333/abc', {
+    const response = await fetchTest('http://localhost:13333/abc', {
         method: 'POST',
         body: uint16,
         headers: {

@@ -1,6 +1,7 @@
 // must support req.is()
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 
@@ -18,22 +19,22 @@ app.all('/test', (req, res) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    await fetch('http://localhost:13333/test').then(res => res.text());
-    await fetch('http://localhost:13333/test', {
+    await fetchTest('http://localhost:13333/test').then(res => res.text());
+    await fetchTest('http://localhost:13333/test', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({ test: 'test' })
     }).then(res => res.text());
-    await fetch('http://localhost:13333/test', {
+    await fetchTest('http://localhost:13333/test', {
         method: 'POST',
         headers: {
             'Content-Type': 'text/html'
         },
         body: '<html><body><h1>Hello, World!</h1></body></html>'
     }).then(res => res.text());
-    await fetch('http://localhost:13333/test', {
+    await fetchTest('http://localhost:13333/test', {
         method: 'POST',
         headers: {
             'Content-Type': 'text/plain'

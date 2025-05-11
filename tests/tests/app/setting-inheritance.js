@@ -1,6 +1,7 @@
 // must support app.path()
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 const app2 = express();

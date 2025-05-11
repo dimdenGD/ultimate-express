@@ -1,6 +1,7 @@
 // must support server-sent events
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 const { createSession } = require("better-sse");
 const { EventSource } = require("eventsource");
 

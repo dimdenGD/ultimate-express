@@ -1,6 +1,7 @@
 // must support routers with trailing slashes
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 const router = new express.Router();
@@ -35,12 +36,12 @@ app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
     let outputs = await Promise.all([
-        fetch('http://localhost:13333/').then(res => res.text()),
-        fetch('http://localhost:13333/test').then(res => res.text()),
-        fetch('http://localhost:13333/test/page/123').then(res => res.text()),
-        fetch('http://localhost:13333/de/').then(res => res.text()),
-        fetch('http://localhost:13333/de/test').then(res => res.text()),
-        fetch('http://localhost:13333/de/test/page/123/').then(res => res.text()),
+        fetchTest('http://localhost:13333/').then(res => res.text()),
+        fetchTest('http://localhost:13333/test').then(res => res.text()),
+        fetchTest('http://localhost:13333/test/page/123').then(res => res.text()),
+        fetchTest('http://localhost:13333/de/').then(res => res.text()),
+        fetchTest('http://localhost:13333/de/test').then(res => res.text()),
+        fetchTest('http://localhost:13333/de/test/page/123/').then(res => res.text()),
     ]);
     
     console.log(outputs);

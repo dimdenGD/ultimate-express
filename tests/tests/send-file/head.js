@@ -1,6 +1,7 @@
 // must support HEAD method
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 const path = require("path");
 const net = require("net");
 

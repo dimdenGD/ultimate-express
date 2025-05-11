@@ -3,6 +3,7 @@
 const {FormData, File} = require("formdata-node");
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 const multer = require("multer");
 
 const app = express();
@@ -23,7 +24,7 @@ app.listen(13333, async () => {
     const formData = new FormData();
     formData.append('abc', '123');
 
-    const response = await fetch('http://localhost:13333/abc', {
+    const response = await fetchTest('http://localhost:13333/abc', {
         method: 'POST',
         body: formData
     });
@@ -34,7 +35,7 @@ app.listen(13333, async () => {
     const file = new File([1, 2, 3], 'test.txt');
     formData2.append('file', file);
 
-    const response2 = await fetch('http://localhost:13333/file', {
+    const response2 = await fetchTest('http://localhost:13333/file', {
         method: 'POST',
         body: formData2
     });
@@ -46,7 +47,7 @@ app.listen(13333, async () => {
     const bigFile = new File(new Array(Math.floor(1024 * 1024 * 0.2)).fill(0), 'big.txt');
     formData3.append('file', bigFile);
 
-    const response3 = await fetch('http://localhost:13333/file', {
+    const response3 = await fetchTest('http://localhost:13333/file', {
         method: 'POST',
         body: formData3
     });

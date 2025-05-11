@@ -1,6 +1,7 @@
 // must support error handler as second callback in use()
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 app.set('env', 'production');
@@ -32,11 +33,11 @@ app.use((err, req, res, next) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    const response = await fetch('http://localhost:13333/test1');
+    const response = await fetchTest('http://localhost:13333/test1');
     console.log(response.status, await response.text());
-    const response2 = await fetch('http://localhost:13333/test2');
+    const response2 = await fetchTest('http://localhost:13333/test2');
     console.log(response2.status, await response2.text());
-    const response3 = await fetch('http://localhost:13333/test3');
+    const response3 = await fetchTest('http://localhost:13333/test3');
     console.log(response3.status, await response3.text());
 
     process.exit(0);

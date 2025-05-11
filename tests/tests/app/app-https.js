@@ -2,6 +2,7 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; // ignore self-signed certificate error
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 const https = require("https");
 const fs = require("fs");
 
@@ -31,7 +32,7 @@ if (!app.uwsApp) {
 server.listen(13333, async () => {
   console.log("Server is running on port 13333");
 
-  const outputs = await fetch("https://localhost:13333/asdf", {
+  const outputs = await fetchTest("https://localhost:13333/asdf", {
     agent: new https.Agent({
       rejectUnauthorized: false,
     }),

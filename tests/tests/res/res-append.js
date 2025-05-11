@@ -2,6 +2,7 @@
 
 const net = require("net");
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 // this is needed to actually test multiple headers with the same name
 // because fetch just combines them into one

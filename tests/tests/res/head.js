@@ -1,6 +1,7 @@
 // must support HEAD method for res.send()
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 const net = require("net");
 
 async function sendRequest(method, url, arrayHeaders) {

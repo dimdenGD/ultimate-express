@@ -1,6 +1,7 @@
 // must support declarative response content-type
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 
@@ -13,11 +14,11 @@ app.get('/test2', (req, res) => {
 });
 
 app.listen(13333, async () => {
-    const response1 = await fetch('http://localhost:13333/test1');
+    const response1 = await fetchTest('http://localhost:13333/test1');
     console.log(response1.headers.get('content-type'));
     console.log(await response1.text());
 
-    const response2 = await fetch('http://localhost:13333/test2');
+    const response2 = await fetchTest('http://localhost:13333/test2');
     console.log(response2.headers.get('content-type'));
     console.log(await response2.text());
     

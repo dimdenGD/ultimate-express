@@ -1,6 +1,7 @@
 // must support body reading with different limits
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 
@@ -22,7 +23,7 @@ app.listen(13333, async () => {
         u8[i] = i % 256;
     }
 
-    const response = await fetch('http://localhost:13333/abc', {
+    const response = await fetchTest('http://localhost:13333/abc', {
         method: 'POST',
         body: ab,
         headers: {

@@ -1,6 +1,7 @@
 // must support app.all
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 
@@ -15,30 +16,30 @@ app.use((req, res) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    let res = await fetch('http://localhost:13333/test');
+    let res = await fetchTest('http://localhost:13333/test');
     console.log(await res.text());
 
-    res = await fetch('http://localhost:13333/test', {
+    res = await fetchTest('http://localhost:13333/test', {
         method: 'POST',
     });
     console.log(await res.text());
 
-    res = await fetch('http://localhost:13333/test', {
+    res = await fetchTest('http://localhost:13333/test', {
         method: 'PUT',
     });
     console.log(await res.text());
 
-    res = await fetch('http://localhost:13333/test', {
+    res = await fetchTest('http://localhost:13333/test', {
         method: 'DELETE',
     });
     console.log(await res.text());
 
-    res = await fetch('http://localhost:13333/test', {
+    res = await fetchTest('http://localhost:13333/test', {
         method: 'PATCH',
     });
     console.log(await res.text());
 
-    res = await fetch('http://localhost:13333/testas', {
+    res = await fetchTest('http://localhost:13333/testas', {
         method: 'OPTIONS',
     });
     console.log(await res.text());

@@ -1,6 +1,7 @@
 // must support cookie parser with signed cookies
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 const cookieParser = require("cookie-parser");
 
 const app = express();
@@ -21,9 +22,9 @@ app.get('/def', (req, res) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    const cookie = await fetch('http://localhost:13333/abc').then(res => res.headers.get('Set-Cookie'));
+    const cookie = await fetchTest('http://localhost:13333/abc').then(res => res.headers.get('Set-Cookie'));
     console.log(cookie);
-    await fetch('http://localhost:13333/def', {
+    await fetchTest('http://localhost:13333/def', {
         headers: {
             'Cookie': cookie.split('; ')[0]
         }

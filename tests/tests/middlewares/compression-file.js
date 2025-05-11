@@ -1,6 +1,7 @@
 // must support compression middleware with files
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 const compression = require("compression");
 
 const app = express();
@@ -23,7 +24,7 @@ app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
     // sent with pipe
-    let response = await fetch('http://localhost:13333/large-file.json', {
+    let response = await fetchTest('http://localhost:13333/large-file.json', {
         method: 'GET',
         headers: {
             'Accept-Encoding': 'gzip',
@@ -37,7 +38,7 @@ app.listen(13333, async () => {
     console.log(await response.json());
 
     // sent with pipe
-    response = await fetch('http://localhost:13333/medium-file.json', {
+    response = await fetchTest('http://localhost:13333/medium-file.json', {
         method: 'GET',
         headers: {
             'Accept-Encoding': 'gzip',
@@ -51,7 +52,7 @@ app.listen(13333, async () => {
     console.log(await response.json());
 
     // sent with worker
-    response = await fetch('http://localhost:13333/small-file.json', {
+    response = await fetchTest('http://localhost:13333/small-file.json', {
         method: 'GET',
         headers: {
             'Accept-Encoding': 'gzip',
@@ -65,7 +66,7 @@ app.listen(13333, async () => {
     console.log(await response.json());
 
     // sent with res.sendFile
-    response = await fetch('http://localhost:13333/test', {
+    response = await fetchTest('http://localhost:13333/test', {
         method: 'GET',
         headers: {
             'Accept-Encoding': 'gzip',

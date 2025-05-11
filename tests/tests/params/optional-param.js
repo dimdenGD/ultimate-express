@@ -1,6 +1,7 @@
 // must support optional params
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 
@@ -17,16 +18,16 @@ app.get('/category2/:nome?/adf', (req, res) => {
 app.listen(13333, async () => {
   console.log('Server is running on port 13333')
 
-  let response = await fetch('http://localhost:13333/category/bar').then(res => res.text())
+  let response = await fetchTest('http://localhost:13333/category/bar').then(res => res.text())
   console.log(response)
 
-  response = await fetch('http://localhost:13333/category').then(res => res.text())
+  response = await fetchTest('http://localhost:13333/category').then(res => res.text())
   console.log(response);
 
-  response = await fetch('http://localhost:13333/category2/bar/adf').then(res => res.text())
+  response = await fetchTest('http://localhost:13333/category2/bar/adf').then(res => res.text())
   console.log(response)
 
-  response = await fetch('http://localhost:13333/category2/adf').then(res => res.text())
+  response = await fetchTest('http://localhost:13333/category2/adf').then(res => res.text())
   console.log(response)
   
   

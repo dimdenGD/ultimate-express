@@ -1,6 +1,7 @@
 // must support req.baseUrl
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 const greet = express.Router()
@@ -22,16 +23,16 @@ app.use((req, res, next) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    let res = await fetch('http://localhost:13333/greet/jp');
+    let res = await fetchTest('http://localhost:13333/greet/jp');
     console.log(await res.text());
 
-    res = await fetch('http://localhost:13333/hello/jp');
+    res = await fetchTest('http://localhost:13333/hello/jp');
     console.log(await res.text());
 
-    res = await fetch('http://localhost:13333/greet/fsg');
+    res = await fetchTest('http://localhost:13333/greet/fsg');
     console.log(await res.text());
 
-    // res = await fetch('http://localhost:13333/greet/test');
+    // res = await fetchTest('http://localhost:13333/greet/test');
     // console.log(await res.text());
 
     process.exit(0);

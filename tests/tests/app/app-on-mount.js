@@ -1,6 +1,7 @@
 // must emit 'mount' when using subapp
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 const student = express();

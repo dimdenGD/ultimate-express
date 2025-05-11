@@ -1,6 +1,7 @@
 // must support express-subdomain middleware
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 const subdomain = require("express-subdomain");
 const net = require("net");
 

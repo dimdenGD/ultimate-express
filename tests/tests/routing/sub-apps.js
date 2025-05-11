@@ -1,6 +1,7 @@
 // must support sub-apps
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 const app2 = express();
@@ -23,8 +24,8 @@ app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
     const outputs = await Promise.all([
-        fetch('http://localhost:13333/test').then(res => res.text()),
-        fetch('http://localhost:13333/asdf/test').then(res => res.text()),
+        fetchTest('http://localhost:13333/test').then(res => res.text()),
+        fetchTest('http://localhost:13333/asdf/test').then(res => res.text()),
     ]);
 
     console.log(outputs.join(' '));

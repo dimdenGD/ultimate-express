@@ -1,6 +1,7 @@
 // must support swagger-ui-express
 
-const express = require("express");
+const express = require("../../../src/index.js");
+const { fetchTest } = require("../../utils");
 
 const swaggerUi = require("swagger-ui-express");
 
@@ -27,10 +28,9 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(null, options));
 app.listen(13333, async () => {
   console.log("Server is running on port 13333");
 
-  const responses = await fetch("http://localhost:13333/api-docs").then((r) =>
+  const responses = await fetchTest("http://localhost:13333/api-docs").then((r) =>
     r.text()
   );
   console.log(responses);
 
-  process.exit(0);
-});
+  process

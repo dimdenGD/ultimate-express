@@ -1,6 +1,7 @@
 // must support compression middleware
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 const compression = require("compression");
 const net = require("net");
 
@@ -57,7 +58,7 @@ app.listen(13333, async () => {
     console.log(compressedResponse);
 
     console.log('2');
-    let uncompressedResponse = await fetch('http://localhost:13333/abc', {
+    let uncompressedResponse = await fetchTest('http://localhost:13333/abc', {
         headers: {
             'Connection': 'close',
         }
@@ -70,7 +71,7 @@ app.listen(13333, async () => {
     console.log(compressedResponse);
 
     console.log('4');
-    uncompressedResponse = await fetch('http://localhost:13333/abc', {
+    uncompressedResponse = await fetchTest('http://localhost:13333/abc', {
         headers: {
             'Connection': 'close',
         }

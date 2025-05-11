@@ -1,6 +1,7 @@
 // must support deflate raw body parser
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 const { deflate } = require("pako");
 
 const app = express();
@@ -25,7 +26,7 @@ app.listen(13333, async () => {
     u8[7] = 8;
     u8[8] = 9;
 
-    const response = await fetch('http://localhost:13333/abc', {
+    const response = await fetchTest('http://localhost:13333/abc', {
         method: 'POST',
         body: await deflate(ab),
         headers: {

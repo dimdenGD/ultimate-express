@@ -1,6 +1,7 @@
 // must support "trust proxy" ip
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 const app2 = express();
@@ -29,26 +30,26 @@ app.listen(13333, async () => {
         app3.listen(13335, async () => {
             app4.listen(13336, async () => {
                 let outputs = await Promise.all([
-                    fetch('http://localhost:13333/abc', { headers: { 'X-Forwarded-For': '127.0.0.1' } }).then(res => res.text()),
-                    fetch('http://localhost:13334/abc', { headers: { 'X-Forwarded-For': '127.0.0.1' } }).then(res => res.text()),
-                    fetch('http://localhost:13335/abc', { headers: { 'X-Forwarded-For': '127.0.0.1' } }).then(res => res.text()),
-                    fetch('http://localhost:13336/abc', { headers: { 'X-Forwarded-For': '127.0.0.1' } }).then(res => res.text()),
-                    fetch('http://localhost:13333/abc', { headers: { 'X-Forwarded-For': '192.168.1.1' } }).then(res => res.text()),
-                    fetch('http://localhost:13334/abc', { headers: { 'X-Forwarded-For': '192.168.1.1' } }).then(res => res.text()),
-                    fetch('http://localhost:13335/abc', { headers: { 'X-Forwarded-For': '192.168.1.1' } }).then(res => res.text()),
-                    fetch('http://localhost:13336/abc', { headers: { 'X-Forwarded-For': '192.168.1.1' } }).then(res => res.text()),
-                    fetch('http://localhost:13333/abc', { headers: { 'X-Forwarded-For': '10.0.0.1' } }).then(res => res.text()),
-                    fetch('http://localhost:13334/abc', { headers: { 'X-Forwarded-For': '10.0.0.1' } }).then(res => res.text()),
-                    fetch('http://localhost:13335/abc', { headers: { 'X-Forwarded-For': '10.0.0.1' } }).then(res => res.text()),
-                    fetch('http://localhost:13336/abc', { headers: { 'X-Forwarded-For': '10.0.0.1' } }).then(res => res.text()),
-                    fetch('http://localhost:13333/abc', { headers: { 'X-Forwarded-For': '172.16.0.1' } }).then(res => res.text()),
-                    fetch('http://localhost:13334/abc', { headers: { 'X-Forwarded-For': '172.16.0.1' } }).then(res => res.text()),
-                    fetch('http://localhost:13335/abc', { headers: { 'X-Forwarded-For': '172.16.0.1' } }).then(res => res.text()),
-                    fetch('http://localhost:13336/abc', { headers: { 'X-Forwarded-For': '172.16.0.1' } }).then(res => res.text()),
-                    fetch('http://localhost:13333/abc').then(res => res.text()),
-                    fetch('http://localhost:13334/abc').then(res => res.text()),
-                    fetch('http://localhost:13335/abc').then(res => res.text()),
-                    fetch('http://localhost:13336/abc').then(res => res.text()),
+                    fetchTest('http://localhost:13333/abc', { headers: { 'X-Forwarded-For': '127.0.0.1' } }).then(res => res.text()),
+                    fetchTest('http://localhost:13334/abc', { headers: { 'X-Forwarded-For': '127.0.0.1' } }).then(res => res.text()),
+                    fetchTest('http://localhost:13335/abc', { headers: { 'X-Forwarded-For': '127.0.0.1' } }).then(res => res.text()),
+                    fetchTest('http://localhost:13336/abc', { headers: { 'X-Forwarded-For': '127.0.0.1' } }).then(res => res.text()),
+                    fetchTest('http://localhost:13333/abc', { headers: { 'X-Forwarded-For': '192.168.1.1' } }).then(res => res.text()),
+                    fetchTest('http://localhost:13334/abc', { headers: { 'X-Forwarded-For': '192.168.1.1' } }).then(res => res.text()),
+                    fetchTest('http://localhost:13335/abc', { headers: { 'X-Forwarded-For': '192.168.1.1' } }).then(res => res.text()),
+                    fetchTest('http://localhost:13336/abc', { headers: { 'X-Forwarded-For': '192.168.1.1' } }).then(res => res.text()),
+                    fetchTest('http://localhost:13333/abc', { headers: { 'X-Forwarded-For': '10.0.0.1' } }).then(res => res.text()),
+                    fetchTest('http://localhost:13334/abc', { headers: { 'X-Forwarded-For': '10.0.0.1' } }).then(res => res.text()),
+                    fetchTest('http://localhost:13335/abc', { headers: { 'X-Forwarded-For': '10.0.0.1' } }).then(res => res.text()),
+                    fetchTest('http://localhost:13336/abc', { headers: { 'X-Forwarded-For': '10.0.0.1' } }).then(res => res.text()),
+                    fetchTest('http://localhost:13333/abc', { headers: { 'X-Forwarded-For': '172.16.0.1' } }).then(res => res.text()),
+                    fetchTest('http://localhost:13334/abc', { headers: { 'X-Forwarded-For': '172.16.0.1' } }).then(res => res.text()),
+                    fetchTest('http://localhost:13335/abc', { headers: { 'X-Forwarded-For': '172.16.0.1' } }).then(res => res.text()),
+                    fetchTest('http://localhost:13336/abc', { headers: { 'X-Forwarded-For': '172.16.0.1' } }).then(res => res.text()),
+                    fetchTest('http://localhost:13333/abc').then(res => res.text()),
+                    fetchTest('http://localhost:13334/abc').then(res => res.text()),
+                    fetchTest('http://localhost:13335/abc').then(res => res.text()),
+                    fetchTest('http://localhost:13336/abc').then(res => res.text()),
                 ]);
                 console.log(outputs.join(' ').replaceAll('0000:0000:0000:0000:0000:0000:0000:000', "::"));
                 process.exit(0);

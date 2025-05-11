@@ -1,6 +1,7 @@
 // must support express.static() no type files
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 app.set("etag", false);
@@ -25,7 +26,7 @@ app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
     const responses = await Promise.all([
-        fetch('http://localhost:13333/static/asdf.it'),
+        fetchTest('http://localhost:13333/static/asdf.it'),
     ]);
 
     const texts = await Promise.all(responses.map(r => r.text()));

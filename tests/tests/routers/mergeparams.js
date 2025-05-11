@@ -1,6 +1,7 @@
 // must support mergeParams
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 const router = new express.Router({ mergeParams: true });
@@ -30,8 +31,8 @@ app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
     let responses = await Promise.all([
-        fetch('http://localhost:13333/1/2/3').then(res => res.text()),
-        fetch('http://localhost:13333/4/5/6').then(res => res.text()),
+        fetchTest('http://localhost:13333/1/2/3').then(res => res.text()),
+        fetchTest('http://localhost:13333/4/5/6').then(res => res.text()),
     ]);
 
 

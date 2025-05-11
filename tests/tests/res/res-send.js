@@ -1,6 +1,7 @@
 // must support res.send()
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 
@@ -49,30 +50,30 @@ app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
     const responses = await Promise.all([
-        fetch('http://localhost:13333/test').then(res => res.text()),
-        fetch('http://localhost:13333/json').then(res => res.text()),
-        fetch('http://localhost:13333/buffer').then(res => res.text()),
-        fetch('http://localhost:13333/null').then(res => res.text()),
-        fetch('http://localhost:13333/undefined').then(res => res.text()),
-        fetch('http://localhost:13333/number').then(res => res.text()),
-        fetch('http://localhost:13333/number2').then(res => res.text()),
-        fetch('http://localhost:13333/boolean').then(res => res.text()),
-        fetch('http://localhost:13333/arraybuffer').then(res => res.text()),
+        fetchTest('http://localhost:13333/test').then(res => res.text()),
+        fetchTest('http://localhost:13333/json').then(res => res.text()),
+        fetchTest('http://localhost:13333/buffer').then(res => res.text()),
+        fetchTest('http://localhost:13333/null').then(res => res.text()),
+        fetchTest('http://localhost:13333/undefined').then(res => res.text()),
+        fetchTest('http://localhost:13333/number').then(res => res.text()),
+        fetchTest('http://localhost:13333/number2').then(res => res.text()),
+        fetchTest('http://localhost:13333/boolean').then(res => res.text()),
+        fetchTest('http://localhost:13333/arraybuffer').then(res => res.text()),
     ]);
 
     const codes = await Promise.all([
-        fetch('http://localhost:13333/test').then(res => res.status),
-        fetch('http://localhost:13333/json').then(res => res.status),
-        fetch('http://localhost:13333/buffer').then(res => res.status),
-        fetch('http://localhost:13333/null').then(res => res.status),
-        fetch('http://localhost:13333/undefined').then(res => res.status),
-        fetch('http://localhost:13333/number').then(res => res.status),
-        fetch('http://localhost:13333/number2').then(res => res.status),
-        fetch('http://localhost:13333/boolean').then(res => res.status),
-        fetch('http://localhost:13333/arraybuffer').then(res => res.status),
+        fetchTest('http://localhost:13333/test').then(res => res.status),
+        fetchTest('http://localhost:13333/json').then(res => res.status),
+        fetchTest('http://localhost:13333/buffer').then(res => res.status),
+        fetchTest('http://localhost:13333/null').then(res => res.status),
+        fetchTest('http://localhost:13333/undefined').then(res => res.status),
+        fetchTest('http://localhost:13333/number').then(res => res.status),
+        fetchTest('http://localhost:13333/number2').then(res => res.status),
+        fetchTest('http://localhost:13333/boolean').then(res => res.status),
+        fetchTest('http://localhost:13333/arraybuffer').then(res => res.status),
     ]);
 
-    console.log(await fetch('http://localhost:13333/json').then(res => res.headers.get('content-type')));
+    console.log(await fetchTest('http://localhost:13333/json').then(res => res.headers.get('content-type')));
 
     console.log(responses);
     console.log(codes);

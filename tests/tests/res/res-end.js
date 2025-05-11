@@ -1,6 +1,7 @@
 // must support res.end()
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 
@@ -22,15 +23,15 @@ app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
     const responses = await Promise.all([
-        fetch('http://localhost:13333/text').then(res => res.text()),
-        fetch('http://localhost:13333/buffer').then(res => res.text()),
-        fetch('http://localhost:13333/arraybuffer').then(res => res.text()),
+        fetchTest('http://localhost:13333/text').then(res => res.text()),
+        fetchTest('http://localhost:13333/buffer').then(res => res.text()),
+        fetchTest('http://localhost:13333/arraybuffer').then(res => res.text()),
     ]);
 
     const codes = await Promise.all([
-        fetch('http://localhost:13333/text').then(res => res.status),
-        fetch('http://localhost:13333/buffer').then(res => res.status),
-        fetch('http://localhost:13333/arraybuffer').then(res => res.status),
+        fetchTest('http://localhost:13333/text').then(res => res.status),
+        fetchTest('http://localhost:13333/buffer').then(res => res.status),
+        fetchTest('http://localhost:13333/arraybuffer').then(res => res.status),
     ]);
 
     console.log(responses);

@@ -3,6 +3,7 @@
 const {FormData, File}  = require( "formdata-node")
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 const fileUpload = require("express-fileupload");
 
 const app = express();
@@ -18,7 +19,7 @@ app.listen(13333, async () => {
     const file = new File([1, 2, 3], 'test.txt');
     formData.append('file', file);
 
-    const response = await fetch('http://localhost:13333/file', {
+    const response = await fetchTest('http://localhost:13333/file', {
         method: 'POST',
         body: formData
     });

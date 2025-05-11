@@ -1,6 +1,7 @@
 // must support empty json body parser
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 
@@ -15,7 +16,7 @@ app.delete('/abc', (req, res) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    const response = await fetch('http://localhost:13333/abc', {
+    const response = await fetchTest('http://localhost:13333/abc', {
         headers: {
             'Content-Type': 'application/json'
         },

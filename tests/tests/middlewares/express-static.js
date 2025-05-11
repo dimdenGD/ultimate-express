@@ -1,6 +1,7 @@
 // must support express.static()
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 app.set("etag", false);
@@ -25,11 +26,11 @@ app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
     const responses = await Promise.all([
-        fetch('http://localhost:13333/abc'),
-        fetch('http://localhost:13333/static/workers'),
-        fetch('http://localhost:13333/static/'),
-        fetch('http://localhost:13333/static/index.js?1'),
-        fetch('http://localhost:13333/static/../package.json'),
+        fetchTest('http://localhost:13333/abc'),
+        fetchTest('http://localhost:13333/static/workers'),
+        fetchTest('http://localhost:13333/static/'),
+        fetchTest('http://localhost:13333/static/index.js?1'),
+        fetchTest('http://localhost:13333/static/../package.json'),
     ]);
 
     const texts = await Promise.all(responses.map(r => r.text()));

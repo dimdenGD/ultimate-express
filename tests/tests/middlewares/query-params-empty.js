@@ -1,6 +1,7 @@
 // must support correct query & params without data
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 
@@ -15,7 +16,7 @@ app.post('/abc', (req, res) => {
 });
 
 app.listen(13333, async () => {
-    const response = await fetch('http://localhost:13333/abc', {
+    const response = await fetchTest('http://localhost:13333/abc', {
         method: 'POST',
         body: JSON.stringify({
             abc: 123

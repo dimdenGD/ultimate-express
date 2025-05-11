@@ -1,6 +1,7 @@
 // must support graphql-http
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 const { createHandler } = require('graphql-http/lib/use/express');
 const { GraphQLSchema, GraphQLObjectType, GraphQLString } = require('graphql');
 
@@ -23,7 +24,7 @@ app.all('/graphql', createHandler({ schema }));
 app.listen(13333, async () => {
     console.log("Server is running on port 13333");
 
-    const response = await fetch('http://localhost:13333/graphql', {
+    const response = await fetchTest('http://localhost:13333/graphql', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

@@ -1,6 +1,7 @@
 // must support res.sendFile() with large file
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 const app = express();
 
 app.get('/test', (req, res) => {
@@ -10,7 +11,7 @@ app.get('/test', (req, res) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    const response = await fetch('http://localhost:13333/test');
+    const response = await fetchTest('http://localhost:13333/test');
     const text = await response.text();
     let out = '';
     for (let i = 0; i < text.length; i += 1000) {

@@ -1,6 +1,7 @@
 // must support next() in error handler
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 
@@ -36,9 +37,9 @@ app.use((err, req, res, next) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    const response = await fetch('http://localhost:13333/test');
+    const response = await fetchTest('http://localhost:13333/test');
     console.log(response.status, await response.text());
-    const response2 = await fetch('http://localhost:13333/test2');
+    const response2 = await fetchTest('http://localhost:13333/test2');
     console.log(response2.status, await response2.text());
     process.exit(0);
 });

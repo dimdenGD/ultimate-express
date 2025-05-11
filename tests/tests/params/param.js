@@ -1,6 +1,7 @@
 // must support app.param and router.param
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 const router = express.Router();
@@ -57,11 +58,11 @@ app.use('/test', router);
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    const response = await fetch('http://localhost:13333/user/123');
+    const response = await fetchTest('http://localhost:13333/user/123');
     console.log(response.status);
-    const response2 = await fetch('http://localhost:13333/test/123');
+    const response2 = await fetchTest('http://localhost:13333/test/123');
     console.log(response2.status);
-    const response3 = await fetch('http://localhost:13333/user/555').then(res => res.text());
+    const response3 = await fetchTest('http://localhost:13333/user/555').then(res => res.text());
     console.log(response3);
 
     process.exit(0);

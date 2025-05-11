@@ -1,6 +1,7 @@
 // must support app chaining
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 
@@ -17,9 +18,9 @@ app.use((req, res, next) => {
 });
 
 app.listen(13333, async () => {
-    const output = await fetch('http://localhost:13333/abc', { method: 'POST' });
+    const output = await fetchTest('http://localhost:13333/abc', { method: 'POST' });
     console.log(output.headers.get('etag'), await output.text());
-    const output2 = await fetch('http://localhost:13333/def');
+    const output2 = await fetchTest('http://localhost:13333/def');
     console.log(output2.headers.get('etag'), await output2.text());
     process.exit(0);
 });

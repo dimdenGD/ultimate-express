@@ -1,6 +1,7 @@
 // must open random port
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 

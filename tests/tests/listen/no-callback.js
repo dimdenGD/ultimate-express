@@ -1,6 +1,7 @@
 // must support listen with no callback
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 

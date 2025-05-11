@@ -1,6 +1,7 @@
 // must support setting and getting options
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 

@@ -1,6 +1,7 @@
 // must support array arguments
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 
@@ -28,7 +29,7 @@ app.get('/asdf', (req, res) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    let output = await fetch('http://localhost:13333/asdf').then(res => res.text());
+    let output = await fetchTest('http://localhost:13333/asdf').then(res => res.text());
 
     console.log(output);
     process.exit(0);

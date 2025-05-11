@@ -1,6 +1,7 @@
 // must support multi params
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 
@@ -16,10 +17,10 @@ app.listen(13333, async () => {
     console.log("Server is running at http://localhost:13333");
 
     const responses = await Promise.all([
-        fetch("http://localhost:13333/api/1.0/projects/123/users").then((res) =>
+        fetchTest("http://localhost:13333/api/1.0/projects/123/users").then((res) =>
             res.json()
         ),
-        fetch("http://localhost:13333/api/1.0/projects/456/user/789").then((res) =>
+        fetchTest("http://localhost:13333/api/1.0/projects/456/user/789").then((res) =>
             res.json()
         ),
     ]);

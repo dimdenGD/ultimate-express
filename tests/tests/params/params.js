@@ -1,6 +1,7 @@
 // must support params
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 
@@ -24,10 +25,10 @@ app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
     let outputs = await Promise.all([
-        fetch('http://localhost:13333/123').then(res => res.text()),
-        fetch('http://localhost:13333/456/test').then(res => res.text()),
-        fetch('http://localhost:13333/789/test/123').then(res => res.text()),
-        fetch('http://localhost:13333/456/test/789/testy').then(res => res.text()),
+        fetchTest('http://localhost:13333/123').then(res => res.text()),
+        fetchTest('http://localhost:13333/456/test').then(res => res.text()),
+        fetchTest('http://localhost:13333/789/test/123').then(res => res.text()),
+        fetchTest('http://localhost:13333/456/test/789/testy').then(res => res.text()),
     ]);
 
     console.log(outputs.join(' '));

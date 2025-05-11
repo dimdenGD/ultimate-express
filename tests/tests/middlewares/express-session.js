@@ -1,6 +1,7 @@
 // must support express-session middleware
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 const session = require('express-session');
 
 const app = express();
@@ -19,12 +20,12 @@ app.get('/abc', (req, res) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    const response = await fetch('http://localhost:13333/abc');
+    const response = await fetchTest('http://localhost:13333/abc');
     const cookie = response.headers.get('Set-Cookie').match(/connect.sid=(.*?);/)[1];
     const text = await response.text();
     console.log(text, response.status);
 
-    const response2 = await fetch('http://localhost:13333/abc', {
+    const response2 = await fetchTest('http://localhost:13333/abc', {
         headers: {
             'Cookie': `connect.sid=${cookie}`
         }

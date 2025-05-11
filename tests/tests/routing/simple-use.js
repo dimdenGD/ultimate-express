@@ -1,6 +1,7 @@
 // must support simple "use"
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 
 const app = express();
 
@@ -44,8 +45,8 @@ app.use((req, res, next) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    let output1 = await fetch('http://localhost:13333/test').then(res => res.text());
-    let output2 = await fetch('http://localhost:13333/asdf/asdf').then(res => res.text());
+    let output1 = await fetchTest('http://localhost:13333/test').then(res => res.text());
+    let output2 = await fetchTest('http://localhost:13333/asdf/asdf').then(res => res.text());
 
     console.log(output1, output2);
     process.exit(0);

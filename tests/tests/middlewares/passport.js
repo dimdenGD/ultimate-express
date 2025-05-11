@@ -1,6 +1,7 @@
 // must support passport middleware
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const session = require("express-session");
@@ -41,7 +42,7 @@ app.post(
 app.listen(13333, async () => {
   console.log("Server is running on port 13333");
 
-  let response = await fetch("http://localhost:13333/login/password", {
+  let response = await fetchTest("http://localhost:13333/login/password", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -53,7 +54,7 @@ app.listen(13333, async () => {
   console.log("vary:", response.headers.get("vary"));
 
  /*
-  response = await fetch("http://localhost:13333/login/password", {
+  response = await fetchTest("http://localhost:13333/login/password", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",

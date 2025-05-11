@@ -1,6 +1,7 @@
 // must support errorhandler middleware
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 const errorhandler = require('errorhandler')
 
 const app = express();
@@ -19,7 +20,7 @@ app.use(errorhandler({
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    const response = await fetch('http://localhost:13333/abc');
+    const response = await fetchTest('http://localhost:13333/abc');
 
     process.exit(0);
 

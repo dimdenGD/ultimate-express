@@ -26,6 +26,7 @@ async function sendRequest(method, url, customHost) {
 }
 
 const express = require("express");
+const { fetchTest } = require("../../utils");
 const vhost = require("vhost");
 
 const app = express();
