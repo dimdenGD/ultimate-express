@@ -1,6 +1,6 @@
 // must support swagger-ui-express
 
-const express = require("../../../src/index.js");
+const express = require("express");
 const { fetchTest } = require("../../utils");
 
 const swaggerUi = require("swagger-ui-express");
@@ -33,4 +33,6 @@ app.listen(13333, async () => {
   );
   console.log(responses);
 
-  process
+  process.exit(0);
+
+});
