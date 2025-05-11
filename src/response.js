@@ -719,11 +719,7 @@ module.exports = class Response extends Writable {
     jsonp(object) {
         let callback = this.req.query[this.app.get('jsonp callback name')];
         let body = stringify(object, this.app.get('json replacer'), this.app.get('json spaces'), this.app.get('json escape'));
-
-        if(!this.headers['content-type']) {
-            this.headers['content-type'] = 'application/javascript; charset=utf-8';
-            this.headers['X-Content-Type-Options'] = 'nosniff';
-        }
+        let js = false;
 
         if(Array.isArray(callback)) {
             callback = callback[0];
@@ -741,6 +737,13 @@ module.exports = class Response extends Writable {
                     .replace(/\u2029/g, '\\u2029')
             }
             body = '/**/ typeof ' + callback + ' === \'function\' && ' + callback + '(' + body + ');';
+            js = true;
+        }
+
+        
+        if(!this.headers['content-type']) {
+            this.headers['content-type'] = `${js ? 'text/javascript' : 'application/json'}; charset=utf-8`;
+            if(js) this.headers['X-Content-Type-Options'] = 'nosniff';
         }
 
         return this.send(body);
