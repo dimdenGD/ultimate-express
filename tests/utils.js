@@ -19,6 +19,7 @@ async function fetchTest(input, init) {
         switch (key) {
             case 'x-powered-by': console.log(key, typeof value); break;
             case 'x-content-type-options': break;
+            case 'x-ratelimit-reset': break;
             default: console.log(key, value);
         }
     }
