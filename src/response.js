@@ -323,6 +323,7 @@ module.exports = class Response extends Writable {
         const isBuffer = Buffer.isBuffer(body);
         if(body === null || body === undefined) {
             body = '';
+            return this.end(body);
         } else if(typeof body === 'object' && !isBuffer) {
             return this.json(body);
         } else if(typeof body === 'number') {
@@ -331,8 +332,13 @@ module.exports = class Response extends Writable {
                 return this.status(body).send(arguments[1]);
             } else {
                 deprecated('res.send(status)', 'res.sendStatus(status)');
+                if(!this.headers['content-type']) {
+                    this.headers['content-type'] = 'text/plain; charset=utf-8';
+                }
                 return this.sendStatus(body);
             }
+        } else if(typeof body === 'boolean') {
+            return this.json(body);
         } else if(!isBuffer) {
             body = String(body);
         }
