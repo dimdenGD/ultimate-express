@@ -4,8 +4,6 @@ const express = require("express");
 
 const app = express();
 
-app.set("declarative responses", false);
-
 app.get('/text', (req, res) => {
     res.end('Hello World');
 });
