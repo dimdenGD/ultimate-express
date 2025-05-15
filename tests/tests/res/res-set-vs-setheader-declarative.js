@@ -77,8 +77,7 @@ app.listen(13333, async () => {
     ]);
 
     for(const response of responses) {
-        console.log(await response.text());
-        console.log(response.headers.get('content-type'), response.headers.get('x-test'), response.headers.get('x-test2'));
+        console.log([await response.text(), response.headers.get('content-type'), response.headers.get('x-test'), response.headers.get('x-test2'), response.headers.get('x-test3')]);
     }
 
     process.exit(0);
