@@ -53,12 +53,12 @@ for (const testCategory of testCategories) {
                     };
 
                     try {
-                        timeout = setTimeout(() => timeoutFunc('express'), 120000);
+                        timeout = setTimeout(() => timeoutFunc('express'), 60000);
                         let expressOutput = (await exec(`node ${testPath}`, {maxBuffer: 1024 * 1024 * 100})).stdout;
                         clearTimeout(timeout);
 
                         fs.writeFileSync(testPath, testCode.replace(`const express = require("express");`, `const express = require("../../../src/index.js");`));
-                        timeout = setTimeout(() => timeoutFunc('ultimate-express'), 120000)
+                        timeout = setTimeout(() => timeoutFunc('ultimate-express'), 60000)
                         let uExpressOutput = (await exec(`node ${testPath}`, {maxBuffer: 1024 * 1024 * 100})).stdout;
                         clearTimeout(timeout);
                         assert.strictEqual(uExpressOutput, expressOutput);
