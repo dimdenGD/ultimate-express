@@ -1,4 +1,4 @@
-// must support res.send() raw
+// must support res.send()
 
 const express = require("express");
 

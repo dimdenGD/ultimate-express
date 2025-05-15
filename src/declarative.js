@@ -167,9 +167,7 @@ module.exports = function compileDeclarative(cb, app) {
 
         
         let statusCode = 200;
-        const headers = [
-            ['content-type', 'text/html; charset=utf-8']
-        ];
+        const headers = [];
         const body = [];
 
         // get statusCode
@@ -209,6 +207,12 @@ module.exports = function compileDeclarative(cb, app) {
                 if(sendUsed) {
                     return false;
                 }
+                if(call.obj.propertyName === 'send') {
+                    const index = headers.findIndex(header => header[0].toLowerCase() === 'content-type');
+                    if(index === -1) {
+                        headers.push(['content-type', 'text/html; charset=utf-8']);
+                    }
+                }
                 const arg = call.arguments[0];
                 if(arg) {
                     if(arg.type === 'Literal') {
@@ -218,6 +222,17 @@ module.exports = function compileDeclarative(cb, app) {
                         let val = arg.value;
                         if(val === null) {
                             val = '';
+                            const index = headers.findIndex(header => header[0].toLowerCase() === 'content-type');
+                            if(index !== -1) {
+                                headers.splice(index, 1);
+                            }
+                        }
+                        if(typeof val === 'boolean') {
+                            if(!headers.some(header => header[0].toLowerCase() === 'content-type')) {
+                                headers.push(['content-type', 'application/json; charset=utf-8']);
+                            } else {
+                                headers.find(header => header[0].toLowerCase() === 'content-type')[1] = 'application/json; charset=utf-8';
+                            }
                         }
                         body.push({type: 'text', value: val});
                     } else if(arg.type === 'TemplateLiteral') {

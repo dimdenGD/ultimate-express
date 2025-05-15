@@ -1,10 +1,10 @@
-// must support res.send() declarative OFF
+// must support res.send() declarative
 
 const express = require("express");
 
 const app = express();
 
-app.set("declarative responses", false);
+app.set("declarative responses", true);
 
 app.get('/test', (req, res) => {
     res.send('Hello World');
@@ -63,10 +63,12 @@ app.listen(13333, async () => {
     ];
 
     for await(const response of responses) {
-        console.log(response.url);
-        console.log(response.status +' '+ response.statusText);
-        console.log(response.headers.get('content-type'));
-        console.log(await response.text());
+        console.log([
+            response.url,
+            response.status +' '+ response.statusText,
+            response.headers.get('content-type'),
+            await response.text()
+        ]);
     }
 
     process.exit(0);

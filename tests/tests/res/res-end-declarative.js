@@ -1,4 +1,4 @@
-// must support res.end() declarative OFF
+// must support res.end() declarative
 
 const express = require("express");
 
