@@ -587,11 +587,14 @@ module.exports = class Response extends Writable {
         this.attachment(name);
         this.sendFile(path, opts, done);
     }
-    set(field, value) {
+    setHeader(field, value, raw = true) {
         if(this.headersSent) {
             throw new Error('Cannot set headers after they are sent to the client');
         }
         if(typeof field === 'object') {
+            if(raw) {
+                throw new TypeError('Header name must be a valid HTTP token');
+            }
             for(const header in field) {
                 this.set(header, field[header]);
             }
@@ -600,7 +603,7 @@ module.exports = class Response extends Writable {
             if(Array.isArray(value)) {
                 this.headers[field] = value;
                 return this;
-            } else if(field === 'content-type') {
+            } else if(field === 'content-type' && !raw) {
                 if(!value.includes('charset=') && (value.startsWith('text/') || value === 'application/json' || value === 'application/javascript')) {
                     value += '; charset=utf-8';
                 }
@@ -610,10 +613,10 @@ module.exports = class Response extends Writable {
         return this;
     }
     header(field, value) {
-        return this.set(field, value);
+        return this.setHeader(field, value, false);
     }
-    setHeader(field, value) {
-        return this.set(field, value);
+    set(field, value) {
+        return this.setHeader(field, value, false);
     }
     get(field) {
         return this.headers[field.toLowerCase()];

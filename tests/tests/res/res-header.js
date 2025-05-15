@@ -1,6 +1,6 @@
 // must support res.header()
 
-const express = require("../../../src/index.js");
+const express = require("express");
 
 const app = express();
 
