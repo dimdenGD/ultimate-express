@@ -1,10 +1,8 @@
-// must support res.end() raw
+// must support res.end() declarative OFF
 
 const express = require("express");
 
 const app = express();
-
-app.set("declarative responses", false);
 
 app.get('/text', (req, res) => {
     res.end('Hello World');
