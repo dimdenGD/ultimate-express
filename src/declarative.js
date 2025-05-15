@@ -187,10 +187,16 @@ module.exports = function compileDeclarative(cb, app) {
                     return false;
                 }
                 const sameHeader = headers.find(header => header[0].toLowerCase() === call.arguments[0].value.toLowerCase());
+                let [header, value] = [call.arguments[0].value, call.arguments[1].value];
+                if(call.obj.propertyName !== 'setHeader') {
+                    if(value.includes('text/') && !value.includes('; charset=')) {
+                        value += '; charset=utf-8';
+                    }
+                }
                 if(sameHeader) {
-                    sameHeader[1] = call.arguments[1].value;
+                    sameHeader[1] = value;
                 } else {
-                    headers.push([call.arguments[0].value, call.arguments[1].value]);
+                    headers.push([header, value]);
                 }
             } else if(call.obj.propertyName === 'append') {
                 if(call.arguments[0].type !== 'Literal' || call.arguments[1].type !== 'Literal') {
@@ -211,6 +217,10 @@ module.exports = function compileDeclarative(cb, app) {
                     const index = headers.findIndex(header => header[0].toLowerCase() === 'content-type');
                     if(index === -1) {
                         headers.push(['content-type', 'text/html; charset=utf-8']);
+                    } else {
+                        if(headers[index][1].includes('text/') && !headers[index][1].includes('; charset=')) {
+                            headers[index][1] += '; charset=utf-8';
+                        }
                     }
                 }
                 const arg = call.arguments[0];
@@ -354,9 +364,6 @@ module.exports = function compileDeclarative(cb, app) {
         for(let header of headers) {
             if(header[0].toLowerCase() === 'content-length') {
                 return false;
-            }
-            if(header[0].toLowerCase() === 'content-type' && header[1].includes('text/') && !header[1].includes(';')) {
-                header[1] += '; charset=utf-8';
             }
             decRes = decRes.writeHeader(header[0], header[1]);
         }

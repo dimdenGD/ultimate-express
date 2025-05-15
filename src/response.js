@@ -587,36 +587,40 @@ module.exports = class Response extends Writable {
         this.attachment(name);
         this.sendFile(path, opts, done);
     }
-    setHeader(field, value, raw = true) {
+    setHeader(field, value) {
         if(this.headersSent) {
             throw new Error('Cannot set headers after they are sent to the client');
         }
-        if(typeof field === 'object') {
-            if(raw) {
-                throw new TypeError('Header name must be a valid HTTP token');
-            }
-            for(const header in field) {
-                this.set(header, field[header]);
-            }
+        if(typeof field !== 'string') {
+            throw new TypeError('Header name must be a valid HTTP token');
         } else {
             field = field.toLowerCase();
             if(Array.isArray(value)) {
                 this.headers[field] = value;
                 return this;
-            } else if(field === 'content-type' && !raw) {
-                if(!value.includes('charset=') && (value.startsWith('text/') || value === 'application/json' || value === 'application/javascript')) {
-                    value += '; charset=utf-8';
-                }
             }
             this.headers[field] = String(value);
         }
         return this;
     }
     header(field, value) {
-        return this.setHeader(field, value, false);
+        return this.set(field, value);
     }
     set(field, value) {
-        return this.setHeader(field, value, false);
+        if(typeof field === 'object') {
+            for(const header in field) {
+                this.setHeader(header, field[header]);
+            }
+        } else {
+            field = field.toLowerCase();
+            if(field === 'content-type') {
+                if(!value.includes('charset=') && (value.startsWith('text/') || value === 'application/json' || value === 'application/javascript')) {
+                    value += '; charset=utf-8';
+                }
+            }
+            this.setHeader(field, value);
+        }
+        return this;
     }
     get(field) {
         return this.headers[field.toLowerCase()];
