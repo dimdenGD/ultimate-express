@@ -350,7 +350,9 @@ module.exports = class Response extends Writable {
                 this.headers['content-type'] += '; charset=utf-8';
             }
         } else {
-            this.headers['content-type'] = 'application/octet-stream';
+            if(!this.headers['content-type']) {
+                this.headers['content-type'] = 'application/octet-stream';
+            }
         }
         return this.end(body);
     }
