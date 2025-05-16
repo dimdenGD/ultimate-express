@@ -173,7 +173,7 @@ module.exports = class Response extends Writable {
                                 const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
                                 this._res.write(Buffer.concat(this.#pendingChunks, size));
                                 this.#pendingChunks = [];
-                                this.#lastWriteChunkTime = now;
+                                this.#lastWriteChunkTime = Date.now();
                             }
                         });
                     }, 50);
