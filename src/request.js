@@ -135,6 +135,10 @@ module.exports = class Request extends Readable {
         return match ? match[0] : '';
     }
 
+    set baseUrl(x) {
+        return this._originalPath = x;
+    }
+
     get #host() {
         const trust = this.app.get('trust proxy fn');
         if(!trust) {
