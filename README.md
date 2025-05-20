@@ -57,7 +57,7 @@ For full table with other runtimes, check [here](https://github.com/dimdenGD/bun
 | express              | 10,411.313     | 11,245.57     | 10,598.74     | 9,389.63      |
 
 Other benchmarks:
- - [TechEmpower / FrameworkBenchmarks](https://www.techempower.com/benchmarks/#hw=ph&test=composite&section=data-r23&l=zik0sf-cn3)
+ - [TechEmpower / FrameworkBenchmarks](https://www.techempower.com/benchmarks/#section=data-r23&test=plaintext&l=zik0sf-pa7)
  - [the-benchmarker / web-frameworks](https://web-frameworks-benchmark.netlify.app/result?l=javascript)
 
 ### Performance on real-world application
