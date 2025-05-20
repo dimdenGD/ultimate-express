@@ -86,8 +86,9 @@ function static(root, options) {
 
         if(stat.isDirectory()) {
             if(!req.endsWithSlash) {
-                if(options.redirect) return res.redirect(301, req._originalPath + '/');
-                else {
+                if(options.redirect) {
+                    return res.redirect(301, req._originalPath + '/', true);
+                } else {
                     if(!options.fallthrough) {
                         res.status(404);
                         return next(new Error('Not found'));

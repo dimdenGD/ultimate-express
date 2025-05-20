@@ -31,23 +31,30 @@ app.get('/test6', (req, res) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    const response = await fetch('http://localhost:13333/test', { redirect: 'manual' });
-    console.log(response.status, response.headers.get('Location'), response.headers.get('Vary'), await response.text());
+    const responses = [
+        await fetch('http://localhost:13333/test', { redirect: 'manual' }),
+        await fetch('http://localhost:13333/test2', { redirect: 'manual' }),
+        await fetch('http://localhost:13333/test3', { redirect: 'manual' }),
+        await fetch('http://localhost:13333/test4', { redirect: 'manual' }),
+        await fetch('http://localhost:13333/test5', { redirect: 'manual' }),
+        await fetch('http://localhost:13333/test6', { redirect: 'manual' }),
+        await fetch('http://localhost:13333/test', { redirect: 'manual', headers: { 'accept': 'text/html' } }),
+        await fetch('http://localhost:13333/test2', { redirect: 'manual', headers: { 'accept': 'text/html' } }),
+        await fetch('http://localhost:13333/test3', { redirect: 'manual', headers: { 'accept': 'text/html' } }),
+        await fetch('http://localhost:13333/test4', { redirect: 'manual', headers: { 'accept': 'text/html' } }),
+        await fetch('http://localhost:13333/test5', { redirect: 'manual', headers: { 'accept': 'text/html' } }),
+        await fetch('http://localhost:13333/test6', { redirect: 'manual', headers: { 'accept': 'text/html' } }),
+        await fetch('http://localhost:13333/test', { redirect: 'manual', headers: { 'accept': 'text/plain' } }),
+        await fetch('http://localhost:13333/test2', { redirect: 'manual', headers: { 'accept': 'text/plain' } }),
+        await fetch('http://localhost:13333/test3', { redirect: 'manual', headers: { 'accept': 'text/plain' } }),
+        await fetch('http://localhost:13333/test4', { redirect: 'manual', headers: { 'accept': 'text/plain' } }),
+        await fetch('http://localhost:13333/test5', { redirect: 'manual', headers: { 'accept': 'text/plain' } }),
+        await fetch('http://localhost:13333/test6', { redirect: 'manual', headers: { 'accept': 'text/plain' } }),
+    ]
 
-    const response2 = await fetch('http://localhost:13333/test2', { redirect: 'manual' });
-    console.log(response2.status, response2.headers.get('Location'), response.headers.get('Vary'));
-
-    const response3 = await fetch('http://localhost:13333/test3', { redirect: 'manual' });
-    console.log(response3.status, response3.headers.get('Location'), response.headers.get('Vary'));
-
-    const response4 = await fetch('http://localhost:13333/test4', { redirect: 'manual' });
-    console.log(response4.status, response4.headers.get('Location'), response.headers.get('Vary'));
-
-    const response5 = await fetch('http://localhost:13333/test5', { redirect: 'manual' });
-    console.log(response5.status, response5.headers.get('Location'), response.headers.get('Vary'));
-
-    const response6 = await fetch('http://localhost:13333/test6', { redirect: 'manual' });
-    console.log(response6.status, response6.headers.get('Location'), response.headers.get('Vary'));
+    for(const response of responses) {
+        console.log(response.status, response.headers.get('Location'), response.headers.get('Vary'), await response.text());
+    }
 
     process.exit(0);
 });

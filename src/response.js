@@ -775,28 +775,44 @@ module.exports = class Response extends Writable {
         }
         return this.headers['location'] = encodeUrl(path);
     }
-    redirect(status, url) {
+    redirect(status, url, forceHtml = false) {
         if(typeof status !== 'number' && !url) {
             url = status;
             status = 302;
         }
         this.location(url);
         this.status(status);
-        this.headers['content-type'] = 'text/plain; charset=utf-8';
         let body;
         // Support text/{plain,html} by default
-        this.format({
-            text: function() {
-                body = statuses.message[status] + '. Redirecting to ' + url
-            },
-            html: function() {
-                let u = escapeHtml(url);
-                body = '<p>' + statuses.message[status] + '. Redirecting to ' + u + '</p>'
-            },
-            default: function() {
-                body = '';
-            }
-        });
+        if(forceHtml) {
+            this.set('Content-Type', 'text/html; charset=UTF-8');
+            body = 
+                '<!DOCTYPE html>\n' +
+                '<html lang="en">\n' +
+                '<head>\n' +
+                '<meta charset="utf-8">\n' +
+                '<title>Redirecting</title>\n' +
+                '</head>\n' +
+                '<body>\n' +
+                `<pre>Redirecting to ${url.replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</pre>\n` +
+                '</body>\n' +
+                '</html>\n';
+        } else {
+            this.format({
+                text: () => {
+                    this.set('Content-Type', 'text/plain; charset=UTF-8');
+                    body = statuses.message[status] + '. Redirecting to ' + url
+                },
+                html: () => {
+                    this.set('Content-Type', 'text/html; charset=UTF-8');
+                    body = `<p>${statuses.message[status]}. Redirecting to ${url.replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</p>`;
+                },
+                default: () => {
+                    this.set('Content-Type', 'text/plain; charset=UTF-8');
+                    body = '';
+                }
+            });
+        }
         if (this.req.method === 'HEAD') {
             this.end();
         } else {
