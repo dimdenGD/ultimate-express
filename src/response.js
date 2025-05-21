@@ -69,6 +69,7 @@ class Socket extends EventEmitter {
 
 module.exports = class Response extends Writable {
     #socket = null;
+    #ended = false;
     #pendingChunks = [];
     #lastWriteChunkTime = 0;
     #writeTimeout = null;
@@ -270,7 +271,10 @@ module.exports = class Response extends Writable {
         if(this.writingChunk) {
             this.once('drain', () => {
                 this.end(data);
-                cb && queueMicrotask(cb);
+                cb && queueMicrotask(() => {
+                    this.#ended = true
+                    cb()
+                });
             });
             return;
         }
@@ -294,7 +298,10 @@ module.exports = class Response extends Writable {
                     if(this.socketExists) this.socket.emit('close');
                     this.emit('finish');
                     this.emit('close');
-                    cb && queueMicrotask(cb);
+                    cb && queueMicrotask(() => {
+                        this.#ended = true;
+                        cb();
+                    });
                     return;
                 }
             }
@@ -322,7 +329,10 @@ module.exports = class Response extends Writable {
             if(this.socketExists) this.socket.emit('close');
             this.emit('finish');
             this.emit('close');
-            cb && queueMicrotask(cb);
+            cb && queueMicrotask(() => {
+                this.#ended = true;
+                cb();
+            });
         });
         return this;
     }
