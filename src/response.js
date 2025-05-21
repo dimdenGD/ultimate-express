@@ -113,13 +113,13 @@ module.exports = class Response extends Writable {
             this._res.cork(() => {
                 this._res.close();
                 this.finished = true;
-                if(this.socketExists) this.socket.emit('close');
+                this.#socket?.emit('close');
             });
         });
     }
 
     get socket() {
-        this.socketExists = true;
+        if(this.#ended) return null;
         if(!this.#socket) {
             this.#socket = new Socket(this);
         }
@@ -189,7 +189,7 @@ module.exports = class Response extends Writable {
                     super.end();
                     this.finished = true;
                     this.writingChunk = false;
-                    if (this.socketExists) this.socket.emit('close');
+                    this.#socket?.emit('close');
                     callback(null);
                 } else if (!ok) {
                     this._res.ab = chunk;
@@ -199,7 +199,7 @@ module.exports = class Response extends Writable {
                         const [ok, done] = this._res.tryEnd(this._res.ab.slice(offset - this._res.abOffset), this.totalSize);
                         if (done) {
                             this.finished = true;
-                            if (this.socketExists) this.socket.emit('close');
+                            this.#socket?.emit('close');
                         }
                         if (ok) {
                             this.writingChunk = false;
@@ -272,8 +272,8 @@ module.exports = class Response extends Writable {
             this.once('drain', () => {
                 this.end(data);
                 cb && queueMicrotask(() => {
-                    this.#ended = true
-                    cb()
+                    this.#ended = true;
+                    cb();
                 });
             });
             return;
@@ -295,7 +295,7 @@ module.exports = class Response extends Writable {
                 if(fresh) {
                     this._res.end();
                     this.finished = true;
-                    if(this.socketExists) this.socket.emit('close');
+                    this.#socket?.emit('close');
                     this.emit('finish');
                     this.emit('close');
                     cb && queueMicrotask(() => {
@@ -326,7 +326,7 @@ module.exports = class Response extends Writable {
             }
             
             this.finished = true;
-            if(this.socketExists) this.socket.emit('close');
+            this.#socket?.emit('close');
             this.emit('finish');
             this.emit('close');
             cb && queueMicrotask(() => {
