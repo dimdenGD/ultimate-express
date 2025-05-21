@@ -252,7 +252,7 @@ module.exports = class Request extends Readable {
         if(this.#cachedParsedIp !== null) {
             return this.#cachedParsedIp;
         }
-        const finished = !this.res.socket.writable;
+        const finished = this.res.finished;
         if(finished) {
             // mark app as one that needs ip after response
             this.app.needsIpAfterResponse = true;
