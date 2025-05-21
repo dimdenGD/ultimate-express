@@ -116,6 +116,9 @@ module.exports = class Response extends Writable {
                 this.#socket?.emit('close');
             });
         });
+        this.once('close', () => {
+            this.#ended = true
+        })
     }
 
     get socket() {
@@ -270,11 +273,7 @@ module.exports = class Response extends Writable {
 
         if(this.writingChunk) {
             this.once('drain', () => {
-                this.end(data);
-                cb && queueMicrotask(() => {
-                    this.#ended = true;
-                    cb();
-                });
+                this.end(data, cb);
             });
             return;
         }

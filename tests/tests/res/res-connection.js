@@ -15,6 +15,14 @@ app.get('/test', (req, res) => {
     // console.log(res.connection.writable); on express is true; on ultimate is false
 });
 
+app.get('/test2', (req, res) => {
+    res.end('on cb')
+    console.log(res.socket !== null) // since express/node.js end is asynchronous
+    setImmediate(() => {
+        console.log(res.socket) // should be null
+    })
+})
+
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
