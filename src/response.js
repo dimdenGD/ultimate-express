@@ -258,10 +258,19 @@ module.exports = class Response extends Writable {
     sendStatus(code) {
         return this.status(code).send(statuses.message[+code] ?? code.toString());
     }
-    end(data) {
+    end(data, cb) {
+        if(typeof data === 'function') {
+            cb = data;
+            data = undefined;
+        }
+        if(typeof cb !== 'function') {
+            cb = undefined; // silence the error?
+        }
+
         if(this.writingChunk) {
             this.once('drain', () => {
                 this.end(data);
+                cb && queueMicrotask(cb);
             });
             return;
         }
@@ -285,6 +294,7 @@ module.exports = class Response extends Writable {
                     if(this.socketExists) this.socket.emit('close');
                     this.emit('finish');
                     this.emit('close');
+                    cb && queueMicrotask(cb);
                     return;
                 }
             }
@@ -312,6 +322,7 @@ module.exports = class Response extends Writable {
             if(this.socketExists) this.socket.emit('close');
             this.emit('finish');
             this.emit('close');
+            cb && queueMicrotask(cb);
         });
         return this;
     }
