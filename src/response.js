@@ -116,9 +116,6 @@ module.exports = class Response extends Writable {
                 this.#socket?.emit('close');
             });
         });
-        this.once('close', () => {
-            this.#ended = true
-        })
     }
 
     get socket() {
@@ -294,12 +291,12 @@ module.exports = class Response extends Writable {
                 if(fresh) {
                     this._res.end();
                     this.finished = true;
-                    this.#socket?.emit('close');
                     this.emit('finish');
-                    this.emit('close');
-                    cb && queueMicrotask(() => {
+                    queueMicrotask(() => {
                         this.#ended = true;
-                        cb();
+                        this.#socket?.emit('close');
+                        cb && cb();
+                        this.emit('close');
                     });
                     return;
                 }
@@ -325,12 +322,12 @@ module.exports = class Response extends Writable {
             }
             
             this.finished = true;
-            this.#socket?.emit('close');
             this.emit('finish');
-            this.emit('close');
-            cb && queueMicrotask(() => {
+            queueMicrotask(() => {
                 this.#ended = true;
-                cb();
+                this.#socket?.emit('close');
+                cb && cb();
+                this.emit('close');
             });
         });
         return this;
