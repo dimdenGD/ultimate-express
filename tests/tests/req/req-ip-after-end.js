@@ -5,7 +5,10 @@ const express = require("express");
 const app = express();
 
 app.get("/test", (req, res) => {
-    res.send('ok');
+    res.write('ok');
+    res.end(() => {
+        console.log(req.ip.replace('0000:0000:0000:0000:0000:0000:0000:000', "::"));
+    });
     console.log(req.ip.replace('0000:0000:0000:0000:0000:0000:0000:000', "::"));
 });
 
