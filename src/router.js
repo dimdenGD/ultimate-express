@@ -296,6 +296,12 @@ module.exports = class Router extends EventEmitter {
                 if(request._error) {
                     return this._handleError(request._error, null, request, response);
                 }
+                if(request._isOptions && request._matchedMethods.size > 0) {
+                    const allowedMethods = Array.from(request._matchedMethods).join(',');
+                    response.setHeader('Allow', allowedMethods);
+                    response.send(allowedMethods);
+                    return;
+                }
                 response.status(404);
                 request.noEtag = true;
                 this._sendErrorPage(request, response, `Cannot ${request.method} ${request._originalPath}`, false);
@@ -445,7 +451,7 @@ module.exports = class Router extends EventEmitter {
     }
 
     async _routeRequest(req, res, startIndex = 0, routes = this._routes, skipCheck = false, skipUntil) {
-        let routeIndex = skipCheck ? startIndex : findIndexStartingFrom(routes, r => (r.all || r.method === req.method || (r.gettable && req.method === 'HEAD')) && this._pathMatches(r, req), startIndex);
+        let routeIndex = skipCheck ? startIndex : findIndexStartingFrom(routes, r => (r.all || r.method === req.method || req._isOptions || (r.gettable && req._isHead)) && this._pathMatches(r, req), startIndex);
         const route = routes[routeIndex];
         if(!route) {
             if(!skipCheck) {
@@ -487,6 +493,9 @@ module.exports = class Router extends EventEmitter {
                 if(thingamabob) {
                     if(thingamabob === 'route' || thingamabob === 'skipPop') {
                         if(route.use && thingamabob !== 'skipPop') {
+                            if(req._isOptions) {
+                                return resolve(false);
+                            }
                             req._stack.pop();
                             
                             req._opPath = req._stack.length > 0 ? req._originalPath.replace(this.getFullMountpath(req), '') : req._originalPath;
@@ -546,6 +555,15 @@ module.exports = class Router extends EventEmitter {
                     }
                     
                     try {
+                        // handling OPTIONS method
+                        if(req._isOptions && route.method !== 'OPTIONS') {
+                            req._matchedMethods.add(route.method);
+                            if(route.gettable) {
+                                req._matchedMethods.add('HEAD');
+                            }
+                            return next();
+                        }
+
                         // skipping routes we already went through via optimized path
                         if(!skipCheck && skipUntil && skipUntil.routeKey >= route.routeKey) {
                             return next();
