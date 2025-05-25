@@ -42,6 +42,10 @@ app.options('/options', (req, res, next) => {
     next();
 });
 
+app.all('/all', (req, res) => {
+    res.send('hello');
+});
+
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
@@ -58,6 +62,9 @@ app.listen(13333, async () => {
     console.log(await res.text(), res.status, res.headers.get('allow'));
 
     res = await fetch('http://localhost:13333/options', { method: 'OPTIONS' });
+    console.log(await res.text(), res.status, res.headers.get('allow'));
+
+    res = await fetch('http://localhost:13333/all', { method: 'OPTIONS' });
     console.log(await res.text(), res.status, res.headers.get('allow'));
 
     process.exit(0);
