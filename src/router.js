@@ -556,7 +556,7 @@ module.exports = class Router extends EventEmitter {
                     
                     try {
                         // handling OPTIONS method
-                        if(req._isOptions && route.method !== 'OPTIONS') {
+                        if(req._isOptions && !route.all && route.method !== 'OPTIONS') {
                             req._matchedMethods.add(route.method);
                             if(route.gettable) {
                                 req._matchedMethods.add('HEAD');
