@@ -152,6 +152,9 @@ module.exports = class Router extends EventEmitter {
                 all: method === 'ALL' || method === 'USE',
                 gettable: method === 'GET' || method === 'HEAD',
             };
+            if(typeof route.path === 'string' && (route.path.includes(':') || route.path.includes('*') || (route.path.includes('(') && route.path.includes(')'))) && route.pattern instanceof RegExp) {
+                route.complex = true;
+            }
             routes.push(route);
             // normal routes optimization
             if(canBeOptimized(route.path) && route.pattern !== '/*' && !this.parent && this.get('case sensitive routing') && this.uwsApp) {
@@ -375,7 +378,7 @@ module.exports = class Router extends EventEmitter {
         req.route = route;
         if(route.optimizedParams) {
             req.params = {...req.optimizedParams};
-        } else if(typeof route.path === 'string' && (route.path.includes(':') || route.path.includes('*') || (route.path.includes('(') && route.path.includes(')'))) && route.pattern instanceof RegExp) {
+        } else if(route.complex) {
             let path = req._originalPath;
             if(req._stack.length > 0) {
                 path = path.replace(this.getFullMountpath(req), '');
