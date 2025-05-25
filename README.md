@@ -189,6 +189,7 @@ In general, basically all features and options are supported. Use [Express 4.x d
 - ✅ app.engines
 - ✅ app.on("mount")
 - ✅ HEAD method
+- ✅ OPTIONS method
 
 ### Application settings
 
