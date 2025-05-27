@@ -1,4 +1,4 @@
-// must support OPTIONS method on GET routes
+// must support OPTIONS method
 
 const express = require("express");
 

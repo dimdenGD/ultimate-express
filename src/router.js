@@ -543,6 +543,10 @@ module.exports = class Router extends EventEmitter {
                         req._errorKey = route.routeKey;
                     }
                     if(routed) return resolve(true);
+                    else if(req._isOptions && req._matchedMethods.size) {
+                        // OPTIONS routing is different, it stops in the router if matched
+                        return resolve(false);
+                    }
                     next();
                 } else {
                     // handle errors and error handlers
