@@ -270,7 +270,7 @@ module.exports = class Router extends EventEmitter {
             err.code = 'ECONNRESET';
             response.aborted = true;
             response.finished = true;
-            response.socket.emit('error', err);
+            response.socket?.emit('error', err);
         });
 
         return { request, response };
