@@ -32,7 +32,7 @@ const { sign } = require("cookie-signature");
 // since we create a ton of objects and dont send a ton of events, its better to use events here
 const { EventEmitter } = require("events");
 const http = require("http");
-const ms = require('ms');   
+const { parse: ms } = require('@lukeed/ms');
 const etag = require("etag");
 
 const outgoingMessage = new http.OutgoingMessage();
