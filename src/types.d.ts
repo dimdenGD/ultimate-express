@@ -1,12 +1,12 @@
 declare module "ultimate-express" {
   import e from "@types/express";
-  import { AppOptions } from "uWebSockets.js";
+  import uWS from "uWebSockets.js";
 
   type Settings = {
-    uwsOptions?: AppOptions;
+    uwsOptions?: uWS.AppOptions;
     threads?: number;
     http3?: boolean;
-    uwsApp?: any;
+    uwsApp?: uWS.TemplatedApp;
   };
 
   namespace express {
@@ -45,7 +45,7 @@ declare module "ultimate-express" {
     export import Send = e.Send;
   }
 
-  function express(settings?: Settings): e.Express;
+  function express(settings?: Settings): e.Express & {readonly uwsApp: uWS.TemplatedApp};
 
   export = express;
 }
