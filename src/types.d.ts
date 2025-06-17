@@ -1,12 +1,12 @@
 declare module "ultimate-express" {
   import e from "@types/express";
-  import { AppOptions } from "uWebSockets.js";
+  import uWS from "uWebSockets.js";
 
   type Settings = {
-    uwsOptions?: AppOptions;
+    uwsOptions?: uWS.AppOptions;
     threads?: number;
     http3?: boolean;
-    uwsApp?: any;
+    uwsApp?: uWS.TemplatedApp;
   };
 
   namespace express {
@@ -24,7 +24,10 @@ declare module "ultimate-express" {
     export import urlencoded = e.urlencoded;
 
     export import RouterOptions = e.RouterOptions;
-    export import Application = e.Application;
+    // export import Application = e.Application;
+    export interface Application extends e.Application {
+      readonly uwsApp: uWS.TemplatedApp;
+    }
     export import CookieOptions = e.CookieOptions;
     export import Errback = e.Errback;
     export import ErrorRequestHandler = e.ErrorRequestHandler;
