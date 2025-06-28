@@ -52,3 +52,14 @@ Application.text = middlewares.text;
 Application.raw = middlewares.raw;
 
 module.exports = Application;
+
+// re-export some named exports for compatibility
+exports.application = Application;
+exports.request = Request.prototype;
+exports.response = Response.prototype;
+exports.Router = Router;
+exports.json = middlewares.json;
+exports.raw = middlewares.raw;
+exports.static = middlewares.static;
+exports.text = middlewares.text;
+exports.urlencoded = middlewares.urlencoded;
