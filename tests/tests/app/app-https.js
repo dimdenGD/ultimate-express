@@ -1,7 +1,7 @@
 // must support https
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; // ignore self-signed certificate error
 
-const express = require("express");
+const express = require("../../../src/index.js");
 const https = require("https");
 const fs = require("fs");
 

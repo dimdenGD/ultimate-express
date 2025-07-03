@@ -168,7 +168,7 @@ function createBodyParser(defaultType, beforeReturn) {
 
             const type = req.headers['content-type'];
 
-            req.body = new NullObject();
+            if(!req.body) req.body = new NullObject();
 
             // skip reading body for no content type
             if(!type) {
