@@ -68,7 +68,7 @@ module.exports = class Router extends EventEmitter {
 
         for(let method of methods) {
             this[method] = (path, ...callbacks) => {
-                return this.createRoute(method.toUpperCase(), path, this, ...callbacks);
+                return this.createRoute(method, path, this, ...callbacks);
             };
         };
     }
@@ -132,6 +132,7 @@ module.exports = class Router extends EventEmitter {
     }
 
     createRoute(method, path, parent = this, ...callbacks) {
+        method = method.toUpperCase();
         callbacks = callbacks.flat();
         const paths = Array.isArray(path) ? path : [path];
         const routes = [];
@@ -143,7 +144,7 @@ module.exports = class Router extends EventEmitter {
                 path = '/*';
             }
             const route = {
-                method: method === 'USE' ? 'ALL' : method.toUpperCase(),
+                method: method === 'USE' ? 'ALL' : method,
                 path,
                 pattern: method === 'USE' || needsConversionToRegex(path) ? patternToRegex(path, method === 'USE') : path,
                 callbacks,
@@ -627,7 +628,7 @@ module.exports = class Router extends EventEmitter {
         let fns = new NullObject();
         for(let method of methods) {
             fns[method] = (...callbacks) => {
-                return this.createRoute(method.toUpperCase(), path, fns, ...callbacks);
+                return this.createRoute(method, path, fns, ...callbacks);
             };
         }
         fns.get = (...callbacks) => {
