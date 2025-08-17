@@ -44,7 +44,7 @@ function removeDuplicateSlashes(path) {
 }
 
 function patternToRegex(pattern, isPrefix = false) {
-    if(pattern instanceof RegExp) {
+    if(typeof pattern === 'object') {
         return pattern;
     }
     if(isPrefix && pattern === '') {
@@ -64,19 +64,18 @@ function patternToRegex(pattern, isPrefix = false) {
 }
 
 function needsConversionToRegex(pattern) {
-    if(pattern instanceof RegExp) {
-        return false;
-    }
     if(pattern === '/*') {
         return false;
     }
-
-    return pattern.includes('*') ||
+    if(typeof pattern === 'object') {
+        return false;
+    }
+    return pattern.includes(':') ||
+        pattern.includes('*') ||
         pattern.includes('?') ||
         pattern.includes('+') ||
         pattern.includes('(') ||
         pattern.includes(')') ||
-        pattern.includes(':') ||
         pattern.includes('{') ||
         pattern.includes('}') ||
         pattern.includes('[') ||
@@ -87,7 +86,7 @@ function canBeOptimized(pattern) {
     if(pattern === '/*') {
         return false;
     }
-    if(pattern instanceof RegExp) {
+    if(typeof pattern === 'object') {
         return false;
     }
     if(

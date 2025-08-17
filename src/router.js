@@ -153,7 +153,7 @@ module.exports = class Router extends EventEmitter {
                 all: method === 'ALL' || method === 'USE',
                 gettable: method === 'GET' || method === 'HEAD',
             };
-            if(typeof route.path === 'string' && (route.path.includes(':') || route.path.includes('*') || (route.path.includes('(') && route.path.includes(')'))) && route.pattern instanceof RegExp) {
+            if(typeof route.path === 'string' && (route.path.includes(':') || route.path.includes('*') || (route.path.includes('(') && route.path.includes(')'))) && typeof route.pattern === 'object') {
                 route.complex = true;
             }
             routes.push(route);
