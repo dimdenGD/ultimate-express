@@ -455,7 +455,29 @@ module.exports = class Router extends EventEmitter {
     }
 
     async _routeRequest(req, res, startIndex = 0, routes = this._routes, skipCheck = false, skipUntil) {
-        let routeIndex = skipCheck ? startIndex : findIndexStartingFrom(routes, r => (r.all || r.method === req.method || req._isOptions || (r.gettable && req._isHead)) && this._pathMatches(r, req), startIndex);
+        // Fast path: avoid unnecessary allocations and function calls
+        let routeIndex;
+        if (skipCheck) {
+            routeIndex = startIndex;
+        } else {
+            // Inline findIndexStartingFrom for performance
+            const len = routes.length;
+            routeIndex = -1;
+            for (let i = startIndex; i < len; i++) {
+                const r = routes[i];
+                if (
+                    r.all ||
+                    r.method === req.method ||
+                    req._isOptions ||
+                    (r.gettable && req._isHead)
+                ) {
+                    if (this._pathMatches(r, req)) {
+                        routeIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
         const route = routes[routeIndex];
         if(!route) {
             if(!skipCheck) {
@@ -470,9 +492,13 @@ module.exports = class Router extends EventEmitter {
         // avoid calling _preprocessRequest as async function as its slower
         // but it seems like calling it as async has unintended, but useful consequence of resetting max call stack size
         // so call it as async when the request has been through every 300 routes to reset it
-        const continueRoute = this._paramCallbacks.size === 0 && req.routeCount % 300 !== 0 ? 
-            this._preprocessRequest(req, res, route) : await this._preprocessRequest(req, res, route);
-        
+        let continueRoute;
+        if (this._paramCallbacks.size === 0 && req.routeCount % 300 !== 0) {
+            continueRoute = this._preprocessRequest(req, res, route);
+        } else {
+            continueRoute = await this._preprocessRequest(req, res, route);
+        }
+
         const strictRouting = this.get('strict routing');
         if(route.use) {
             req._stack.push(route.path);
@@ -492,14 +518,17 @@ module.exports = class Router extends EventEmitter {
                 req.path = '/';
             }
         }
+
+        // Use a non-async next for most cases, only await if needed
         return new Promise((resolve) => {
-            const next = async (thingamabob) => {
+            const self = this;
+            function next(thingamabob) {
                 if(thingamabob) {
                     if(thingamabob === 'route' || thingamabob === 'skipPop') {
                         if(route.use && thingamabob !== 'skipPop') {
                             req._stack.pop();
-                            
-                            req._opPath = req._stack.length > 0 ? req._originalPath.replace(this.getFullMountpath(req), '') : req._originalPath;
+
+                            req._opPath = req._stack.length > 0 ? req._originalPath.replace(self.getFullMountpath(req), '') : req._originalPath;
                             if(strictRouting) {
                                 if(req.endsWithSlash && req._opPath[req._opPath.length - 1] !== '/') {
                                     req._opPath += '/';
@@ -514,12 +543,13 @@ module.exports = class Router extends EventEmitter {
                             if(!strictRouting && req.endsWithSlash && req._originalPath !== '/' && req._opPath[req._opPath.length - 1] === '/') {
                                 req._opPath = req._opPath.slice(0, -1);
                             }
-                            if(req.app.parent && route.callback.constructor.name === 'Application') {
+                            if(req.app.parent && route.callback && route.callback.constructor && route.callback.constructor.name === 'Application') {
                                 req.app = req.app.parent;
                             }
                         }
                         req.routeCount++;
-                        return resolve(this._routeRequest(req, res, routeIndex + 1, routes, skipCheck, skipUntil));
+                        // Tail call for next route
+                        return resolve(self._routeRequest(req, res, routeIndex + 1, routes, skipCheck, skipUntil));
                     } else {
                         req._error = thingamabob;
                         req._errorKey = route.routeKey;
@@ -539,26 +569,39 @@ module.exports = class Router extends EventEmitter {
                     if(callback.settings['strict routing'] && req.endsWithSlash && req._opPath[req._opPath.length - 1] !== '/') {
                         req._opPath += '/';
                     }
-                    const routed = await callback._routeRequest(req, res, 0);
-                    if (req._error) {
-                        req._errorKey = route.routeKey;
+                    // Avoid await if possible
+                    const routedPromise = callback._routeRequest(req, res, 0);
+                    if (routedPromise && typeof routedPromise.then === 'function') {
+                        routedPromise.then(routed => {
+                            if (req._error) {
+                                req._errorKey = route.routeKey;
+                            }
+                            if (routed) return resolve(true);
+                            else if (req._isOptions && req._matchedMethods.size) {
+                                return resolve(false);
+                            }
+                            next();
+                        });
+                    } else {
+                        if (req._error) {
+                            req._errorKey = route.routeKey;
+                        }
+                        if(routedPromise) return resolve(true);
+                        else if(req._isOptions && req._matchedMethods.size) {
+                            return resolve(false);
+                        }
+                        next();
                     }
-                    if(routed) return resolve(true);
-                    else if(req._isOptions && req._matchedMethods.size) {
-                        // OPTIONS routing is different, it stops in the router if matched
-                        return resolve(false);
-                    }
-                    next();
                 } else {
                     // handle errors and error handlers
                     if(req._error || callback.length === 4) {
                         if(req._error && callback.length === 4 && route.routeKey >= req._errorKey) {
-                            return this._handleError(req._error, callback, req, res);
+                            return self._handleError(req._error, callback, req, res);
                         } else {
                             return next();
                         }
                     }
-                    
+
                     try {
                         // handling OPTIONS method
                         if(req._isOptions && !route.all && route.method !== 'OPTIONS') {
@@ -574,9 +617,9 @@ module.exports = class Router extends EventEmitter {
                             return next();
                         }
                         const out = callback(req, res, next);
-                        if(out instanceof Promise) {
+                        if(out && typeof out.then === 'function') {
                             out.catch(err => {
-                                if(this.get("catch async errors")) {
+                                if(self.get("catch async errors")) {
                                     req._error = err;
                                     req._errorKey = route.routeKey;
                                     return next();
