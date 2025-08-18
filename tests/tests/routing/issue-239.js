@@ -1,12 +1,9 @@
 // issue 239
 
 const express = require("express");
+const getRouter = require('../../parts/route-of-issue-239');
 
-const router = express.Router();
-
-router.post("/path", function handler(req, res) {
-    throw new Error("Whoops");
-});
+const router = getRouter(express);
 
 const app = express();
 
