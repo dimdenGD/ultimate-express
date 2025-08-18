@@ -9,7 +9,9 @@ router.post("/path", function handler(req, res) {
 });
 
 const app = express();
+
 app.use(express.json());
+
 app.set("catch async errors", true);
 
 app.use(function jsonErrorHandler(err, req, res, next){
