@@ -529,9 +529,14 @@ module.exports = class Router extends EventEmitter {
                 if(thingamabob) {
                     if(thingamabob === 'route' || thingamabob === 'skipPop') {
                         if(route.use && thingamabob !== 'skipPop') {
-                            req._stack.pop();
-
-                            req._opPath = req._stack.length > 0 ? req._originalPath.replace(self.getFullMountpath(req), '') : req._originalPath;
+                            if( req._stack.length > 0 ){
+                                req._stack.pop();
+                                req._opPath = req._originalPath.replace(self.getFullMountpath(req), '')
+                            } else {
+                                req._stack = [];
+                                req._opPath = req._originalPath;
+                            }
+                        
                             if(strictRouting) {
                                 if(req.endsWithSlash && req._opPath[req._opPath.length - 1] !== '/') {
                                     req._opPath += '/';
