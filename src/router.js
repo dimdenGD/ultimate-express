@@ -385,7 +385,10 @@ module.exports = class Router extends EventEmitter {
         } else if(route.complex) {
             let path = req._originalPath;
             if(req._stack.length > 0) {
-                path = path.replace(this.getFullMountpath(req), '');
+                const fullMountpath = this.getFullMountpath(req);
+                if (fullMountpath !== EMPTY_REGEX){
+                    path = path.replace(fullMountpath, '');
+                } 
             }
             req.params = {...this._extractParams(route.pattern, path)};
             if(req._paramStack.length > 0) {
@@ -531,7 +534,12 @@ module.exports = class Router extends EventEmitter {
                         if(route.use && thingamabob !== 'skipPop') {
                             if( req._stack.length > 1 ){
                                 req._stack.pop();
-                                req._opPath = req._originalPath.replace(self.getFullMountpath(req), '')
+                                const fullMountpath = self.getFullMountpath(req);
+                                if (fullMountpath !== EMPTY_REGEX){
+                                    req._opPath = req._originalPath.replace(fullMountpath, '');
+                                } else {
+                                    req._opPath = req._originalPath;
+                                }
                             } else {
                                 req._stack = [];
                                 req._opPath = req._originalPath;
