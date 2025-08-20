@@ -107,11 +107,11 @@ module.exports = class Router extends EventEmitter {
         return fullMountpath;
     }
 
-    _pathMatches(route, req) {
+    _pathMatches(route, req, strictRouting) {
         let path = req._opPath;
         let pattern = route.pattern;
 
-        if(req.endsWithSlash && path.endsWith('/') && !this.get('strict routing')) {
+        if(req.endsWithSlash && path.endsWith('/') && !strictRouting) {
             path = path.slice(0, -1);
         }
 
@@ -458,6 +458,7 @@ module.exports = class Router extends EventEmitter {
     }
 
     async _routeRequest(req, res, startIndex = 0, routes = this._routes, skipCheck = false, skipUntil) {
+        const strictRouting = this.get('strict routing');
         // Fast path: avoid unnecessary allocations and function calls
         let routeIndex;
         if (skipCheck) {
@@ -474,7 +475,7 @@ module.exports = class Router extends EventEmitter {
                     req._isOptions ||
                     (r.gettable && req._isHead)
                 ) {
-                    if (this._pathMatches(r, req)) {
+                    if (this._pathMatches(r, req, strictRouting)) {
                         routeIndex = i;
                         break;
                     }
@@ -502,7 +503,6 @@ module.exports = class Router extends EventEmitter {
             continueRoute = await this._preprocessRequest(req, res, route);
         }
 
-        const strictRouting = this.get('strict routing');
         if(route.use) {
             req._stack.push(route.path);
             const fullMountpath = this.getFullMountpath(req);
