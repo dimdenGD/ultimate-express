@@ -504,9 +504,7 @@ module.exports = class Router extends EventEmitter {
         }
 
         if(route.use) {
-            if(route.path){
-                req._stack.push(route.path);
-            }
+            req._stack.push(route.path);
             const fullMountpath = this.getFullMountpath(req);
             req._opPath = fullMountpath !== EMPTY_REGEX ? req._originalPath.replace(fullMountpath, '') : req._originalPath;
             if(req.endsWithSlash && req._opPath[req._opPath.length - 1] !== '/') {
