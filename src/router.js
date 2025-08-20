@@ -92,6 +92,9 @@ module.exports = class Router extends EventEmitter {
     }
 
     getFullMountpath(req) {
+        if(!req.path && !req._stack.length) {
+            return EMPTY_REGEX;
+        }
         let fullStack = req._stack.join("");
         if(!fullStack){
             return EMPTY_REGEX;
