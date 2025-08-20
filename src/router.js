@@ -529,7 +529,7 @@ module.exports = class Router extends EventEmitter {
                 if(thingamabob) {
                     if(thingamabob === 'route' || thingamabob === 'skipPop') {
                         if(route.use && thingamabob !== 'skipPop') {
-                            if( req._stack.length > 0 ){
+                            if( req._stack.length > 1 ){
                                 req._stack.pop();
                                 req._opPath = req._originalPath.replace(self.getFullMountpath(req), '')
                             } else {
