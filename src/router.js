@@ -572,7 +572,7 @@ module.exports = class Router extends EventEmitter {
                 if(!callback) {
                     return next('route');
                 }
-                if(callback instanceof Router) {
+                if(typeof callback._routeRequest === 'function') {
                     if(callback.constructor.name === 'Application') {
                         req.app = callback;
                     }
