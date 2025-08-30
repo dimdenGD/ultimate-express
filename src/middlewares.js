@@ -20,6 +20,7 @@ const bytes = require('bytes');
 const zlib = require('fast-zlib');
 const typeis = require('type-is');
 const querystring = require('fast-querystring');
+const { AsyncResource } = require('async_hooks');
 const { fastQueryParse, NullObject } = require('./utils.js');
 
 function static(root, options) {
@@ -42,6 +43,9 @@ function static(root, options) {
     return (req, res, next) => {
         const iq = req.url.indexOf('?');
         let url;
+
+        next = AsyncResource.bind(next);
+
         try {
             url = decodeURIComponent(iq !== -1 ? req.url.substring(0, iq) : req.url);
         } catch(e) {
@@ -160,6 +164,7 @@ function createBodyParser(defaultType, beforeReturn) {
         let additionalMethods;
 
         return (req, res, next) => {
+            next = AsyncResource.bind(next);
             
             // skip reading body twice
             if(req.bodyRead) {
