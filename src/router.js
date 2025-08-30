@@ -458,7 +458,8 @@ module.exports = class Router extends EventEmitter {
     }
 
     async _routeRequest(req, res, startIndex = 0, routes = this._routes, skipCheck = false, skipUntil) {
-        let routeIndex = skipCheck ? startIndex : findIndexStartingFrom(routes, r => (r.all || r.method === req.method || req._isOptions || (r.gettable && req._isHead)) && this._pathMatches(r, req), startIndex);
+        const strictRouting = this.get('strict routing');
+        let routeIndex = skipCheck ? startIndex : findIndexStartingFrom(routes, r => (r.all || r.method === req.method || req._isOptions || (r.gettable && req._isHead)) && this._pathMatches(r, req, strictRouting), startIndex);
         const route = routes[routeIndex];
         if(!route) {
             if(!skipCheck) {
@@ -473,8 +474,7 @@ module.exports = class Router extends EventEmitter {
         // avoid calling _preprocessRequest as async function as its slower
         // but it seems like calling it as async has unintended, but useful consequence of resetting max call stack size
         // so call it as async when the request has been through every 300 routes to reset it
-        const continueRoute = (this._paramCallbacks.size === 0 && req.routeCount % 300 !== 0) ? this._preprocessRequest(req, res, route) : await this._preprocessRequest(req, res, route);
-        const strictRouting = this.get('strict routing');
+        const continueRoute = this._paramCallbacks.size === 0 && req.routeCount % 300 !== 0 ? this._preprocessRequest(req, res, route) : await this._preprocessRequest(req, res, route);
         if(route.use) {
             req._stack.push(route.path);
             const fullMountpath = this.getFullMountpath(req);
@@ -493,7 +493,6 @@ module.exports = class Router extends EventEmitter {
                 req.path = '/';
             }
         }
-
         return new Promise((resolve) => {
             const self = this;
             function next(thingamabob) {
@@ -560,6 +559,7 @@ module.exports = class Router extends EventEmitter {
                             }
                             if (routed) return resolve(true);
                             else if (req._isOptions && req._matchedMethods.size) {
+                                 // OPTIONS routing is different, it stops in the router if matched
                                 return resolve(false);
                             }
                             next();
@@ -583,7 +583,6 @@ module.exports = class Router extends EventEmitter {
                             return next();
                         }
                     }
-
                     try {
                         // handling OPTIONS method
                         if(req._isOptions && !route.all && route.method !== 'OPTIONS') {
