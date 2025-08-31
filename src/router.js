@@ -501,7 +501,7 @@ module.exports = class Router extends EventEmitter {
                 if(thingamabob) {
                     if(thingamabob === 'route' || thingamabob === 'skipPop') {
                         if(route.use && thingamabob !== 'skipPop') {
-                            if( req._stack.length > 1 ){
+                            if(req._stack.length > 1){
                                 req._stack.pop();
                                 const fullMountpath = self.getFullMountpath(req);
                                 if (fullMountpath !== EMPTY_REGEX){
@@ -556,25 +556,32 @@ module.exports = class Router extends EventEmitter {
                     const routed = callback._routeRequest(req, res, 0);
                     if (routed && typeof routed.then === 'function') {
                         routed.then(routed => {
+                            // This code has been duplicated in two places, please keep it aligned
+                            // BEGIN: @routed
                             if (req._error) {
                                 req._errorKey = route.routeKey;
                             }
                             if (routed) return resolve(true);
                             else if (req._isOptions && req._matchedMethods.size) {
-                                 // OPTIONS routing is different, it stops in the router if matched
+                                // OPTIONS routing is different, it stops in the router if matched
                                 return resolve(false);
                             }
                             next();
+                            // END: @routed
                         });
                     } else {
+                        // This code has been duplicated in two places, please keep it aligned
+                        // BEGIN: @routed
                         if (req._error) {
                             req._errorKey = route.routeKey;
                         }
                         if(routed) return resolve(true);
                         else if(req._isOptions && req._matchedMethods.size) {
+                            // OPTIONS routing is different, it stops in the router if matched
                             return resolve(false);
                         }
                         next();
+                        // END: @routed
                     }
                 } else {
                     // handle errors and error handlers
