@@ -17,7 +17,7 @@ limitations under the License.
 const { patternToRegex, needsConversionToRegex, deprecated, findIndexStartingFrom, canBeOptimized, NullObject, EMPTY_REGEX } = require("./utils.js");
 const Response = require("./response.js");
 const Request = require("./request.js");
-const { EventEmitter } = require("tseep");
+const { CozyEvent: EventEmitter } = require("cozyevent");
 const compileDeclarative = require("./declarative.js");
 const statuses = require("statuses");
 
