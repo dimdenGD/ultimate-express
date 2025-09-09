@@ -28,9 +28,7 @@ const fs = require("fs");
 const Path = require("path");
 const statuses = require("statuses");
 const { sign } = require("cookie-signature");
-// events is faster at init, cozyevent is faster at sending events
-// since we create a ton of objects and don't send a ton of events, its better to use events here
-const { CozyEvent: EventEmitter } = require("cozyevent");
+const { EventEmitter } = require("events");
 const http = require("http");
 const ms = require('ms');   
 const etag = require("etag");
