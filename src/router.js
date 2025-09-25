@@ -514,7 +514,7 @@ module.exports = class Router extends EventEmitter {
                             if(!strictRouting && req.endsWithSlash && req._originalPath !== '/' && req._opPath[req._opPath.length - 1] === '/') {
                                 req._opPath = req._opPath.slice(0, -1);
                             }
-                            if(req.app.parent && route.callback.constructor.name === 'Application') {
+                            if(req.app.parent && route.callbacks[0]?.constructor.name === 'Application') {
                                 req.app = req.app.parent;
                             }
                         }
