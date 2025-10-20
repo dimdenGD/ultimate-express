@@ -89,6 +89,7 @@
     "express-subdomain": "^1.0.6",
     "graphql-http": "^1.22.4",
     "helmet": "^8.1.0",
+    "http-proxy-middleware": "^3.0.5",
     "method-override": "^3.0.0",
     "morgan": "^1.10.1",
     "multer": "^1.4.5-lts.2",
