@@ -83,6 +83,7 @@
     "express-dot-engine": "^1.0.8",
     "express-fileupload": "^1.5.2",
     "express-handlebars": "^8.0.3",
+    "express-http-proxy": "^2.1.2",
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^8.0.1",
     "express-session": "^1.18.2",
