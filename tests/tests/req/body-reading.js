@@ -6,6 +6,12 @@ const crypto = require("crypto");
 
 const app = express();
 
+const echo = (req, res) => {
+    req.pipe(res);
+};
+app.get("/non-body", echo);
+app.delete("/non-body", echo);
+
 app.post("/test", (req, res) => {
     const body = new PassThrough();
     req.pipe(body);
@@ -35,6 +41,20 @@ app.listen(13333, async () => {
         body: body,
     });
     console.log(await res.text());
+
+        await fetch('http://localhost:13333/non-body', {
+        method: 'GET',
+    }).then(async (res) => {
+        console.log(res.status);
+        console.log(await res.text());
+    })
+
+    await fetch('http://localhost:13333/non-body', {
+        method: 'DELETE',
+    }).then(async (res) => {
+        console.log(res.status);
+        console.log(await res.text());
+    })
 
     setTimeout(() => {
         process.exit(0);
