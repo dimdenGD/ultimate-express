@@ -62,7 +62,7 @@
     "statuses": "^2.0.2",
     "tseep": "^1.3.1",
     "type-is": "^2.0.1",
-    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.53.0",
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.55.0",
     "vary": "^1.1.2"
   },
   "devDependencies": {
@@ -85,7 +85,7 @@
     "express-handlebars": "^8.0.3",
     "express-http-proxy": "^2.1.2",
     "express-mongo-sanitize": "^2.2.0",
-    "express-rate-limit": "^8.0.1",
+    "express-rate-limit": "^8.1.0",
     "express-session": "^1.18.2",
     "express-subdomain": "^1.0.6",
     "graphql-http": "^1.22.4",
@@ -99,7 +99,7 @@
     "pako": "^2.1.0",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
-    "pkg-pr-new": "^0.0.54",
+    "pkg-pr-new": "^0.0.60",
     "pug": "^3.0.3",
     "response-time": "^2.3.4",
     "serve-index": "^1.9.1",
