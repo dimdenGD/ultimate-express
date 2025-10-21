@@ -113,6 +113,10 @@ module.exports = class Request extends Readable {
             });
         } else {
             this.receivedData = true;
+            // For GET and other non-body methods, initialize bufferedData as empty buffer
+            // to ensure pipe() works correctly
+            this.#bufferedData = Buffer.allocUnsafe(0);
+            this.#doneReadingData = true;
         }
     }
 
