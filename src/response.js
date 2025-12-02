@@ -195,19 +195,16 @@ module.exports = class Response extends Writable {
                     this.#socket?.emit('close');
                     callback(null);
                 } else if (!ok) {
-                    this._res.ab = chunk;
-                    this._res.abOffset = lastOffset;
-                    let handlerUsed = false;
                     this._res.onWritable((offset) => {
-                        if (this.finished || handlerUsed) return true;
-                        const [ok, done] = this._res.tryEnd(this._res.ab.slice(offset - this._res.abOffset), this.totalSize);
+                        if (this.finished || callback.used) return true;
+                        const [ok, done] = this._res.tryEnd(chunk.slice(offset - lastOffset), this.totalSize);
                         if (done) {
                             this.finished = true;
                             this.#socket?.emit('close');
                         }
                         if (ok) {
                             this.writingChunk = false;
-                            handlerUsed = true;
+                            callback.used = true;
                             callback(null);
                         }
                         return ok;
