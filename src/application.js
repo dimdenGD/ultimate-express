@@ -29,21 +29,25 @@ let workers = [];
 let taskKey = 0;
 const workerTasks = new NullObject();
 
-function createWorker() {
-    const worker = new Worker(path.join(__dirname, 'worker.js'));
-    workers.push(worker);
+class FSWorker {
+    constructor() {
+        this.busy = false;
+        this.worker = new Worker(path.join(__dirname, 'worker.js'));
 
-    worker.on('message', (message) => {
-        if(message.err) {
-            workerTasks[message.key].reject(new Error(message.err));
-        } else {
-            workerTasks[message.key].resolve(message.data);
-        }
-        delete workerTasks[message.key];
-    });
-    worker.unref();
+        this.worker.on('message', (message) => {
+            this.busy = false;
+            if(message.err) {
+                workerTasks[message.key].reject(new Error(message.err));
+            } else {
+                workerTasks[message.key].resolve(message.data);
+            }
+            delete workerTasks[message.key];
+        });
+        this.worker.unref();
 
-    return worker;
+        workers.push(this);
+    }
+
 }
 
 class Application extends Router {
@@ -79,7 +83,7 @@ class Application extends Router {
             if(workers[i]) {
                 this.workers[i] = workers[i];
             } else {
-                this.workers[i] = createWorker();
+                this.workers[i] = new FSWorker();
             }
         }
         this.port = undefined;
@@ -109,7 +113,8 @@ class Application extends Router {
         return new Promise((resolve, reject) => {
             const worker = this.workers[Math.floor(Math.random() * this.workers.length)];
             const key = this.createWorkerTask(resolve, reject);
-            worker.postMessage({ key, type: 'readFile', path });
+            worker.busy = true;
+            worker.worker.postMessage({ key, type: 'readFile', path });
         });
     }
 

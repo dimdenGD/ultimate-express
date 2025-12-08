@@ -197,8 +197,9 @@ module.exports = class Response extends Writable {
                 } else if (!ok) {
                     this._res.ab = chunk;
                     this._res.abOffset = lastOffset;
+                    let handlerUsed = false;
                     this._res.onWritable((offset) => {
-                        if (this.finished) return true;
+                        if (this.finished || handlerUsed) return true;
                         const [ok, done] = this._res.tryEnd(this._res.ab.slice(offset - this._res.abOffset), this.totalSize);
                         if (done) {
                             this.finished = true;
@@ -206,6 +207,7 @@ module.exports = class Response extends Writable {
                         }
                         if (ok) {
                             this.writingChunk = false;
+                            handlerUsed = true;
                             callback(null);
                         }
                         return ok;
