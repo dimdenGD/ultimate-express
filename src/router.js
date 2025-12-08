@@ -502,7 +502,7 @@ module.exports = class Router extends EventEmitter {
                         if(route.use && thingamabob !== 'skipPop') {
                             if(req._stack.length > 1){
                                 req._stack.pop();
-                                const fullMountpath = self.getFullMountpath(req);
+                                const fullMountpath = this.getFullMountpath(req);
                                 if (fullMountpath !== EMPTY_REGEX){
                                     req._opPath = req._originalPath.replace(fullMountpath, '');
                                 } else {
