@@ -92,10 +92,10 @@ module.exports = class Router extends EventEmitter {
     }
 
     getFullMountpath(req) {
-        let fullStack = req._stack.join("");
-        if(!fullStack){
+        if(!req._stack.length) {
             return EMPTY_REGEX;
         }
+        const fullStack = req._stack.join("");
         let fullMountpath = this._mountpathCache.get(fullStack);
         if(!fullMountpath) {
             fullMountpath = patternToRegex(fullStack, true);
@@ -382,7 +382,10 @@ module.exports = class Router extends EventEmitter {
         } else if(route.complex) {
             let path = req._originalPath;
             if(req._stack.length > 0) {
-                path = path.replace(this.getFullMountpath(req), '');
+                const fullMountpath = this.getFullMountpath(req);
+                if (fullMountpath !== EMPTY_REGEX){
+                    path = path.replace(fullMountpath, '');
+                } 
             }
             req.params = {...this._extractParams(route.pattern, path)};
             if(req._paramStack.length > 0) {
