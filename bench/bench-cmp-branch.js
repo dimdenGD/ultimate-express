@@ -51,7 +51,7 @@ function parseBenchmarksStdout (text) {
 
   const lines = text.split('\n')
   for (const line of lines) {
-    const match = /^(.+?)(\.*) x (.+) req\/sec .*$/.exec(line)
+    const match = /^(.+?)(\.*) x (.+) req\/sec.*$/.exec(line)
     if (match !== null) {
       results.push({
         name: match[1],
@@ -108,6 +108,7 @@ function compareResults (featureBranch, mainBranch) {
   }
 
   try {
+    debugger;
     const featureBranchResult = await executeCommandOnBranch(COMMAND, featureBranch)
     const mainBranchResult = await executeCommandOnBranch(COMMAND, mainBranch)
     compareResults(featureBranchResult, mainBranchResult)
