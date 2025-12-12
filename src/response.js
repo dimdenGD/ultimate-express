@@ -388,7 +388,7 @@ module.exports = class Response extends Writable {
                         // HEAD must not send body; only set length
                         this._res.endWithoutBody(out.byteLength.toString());
                     } else {
-                        this._res.write(out.buffer);
+                        this._res.write(out);
                     }
                 }
 
