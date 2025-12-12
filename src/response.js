@@ -137,14 +137,15 @@ module.exports = class Response extends Writable {
     }
 
     _write(chunk, encoding, callback) {
-        // Fast-fail without extra allocations
         if (this.aborted) return this._destroyAbort(callback);
         if (this.finished) return this._destroyAlreadyFinished(callback);
 
         this.writingChunk = true;
 
-        const ab = this._normalizeToArrayBuffer(chunk);
+        // normalize chunk -> prefer Uint8Array view (no copy when possible)
+        const view = this._normalizeToUint8Array(chunk);
 
+        // single cork per logical write
         this._res.cork(() => {
             if (!this.headersSent) this._writeHeadersOnce(typeof chunk === 'string');
 
@@ -172,8 +173,8 @@ module.exports = class Response extends Writable {
         if (typeof callback === 'function') callback(err);
     }
 
-    _normalizeToArrayBuffer(chunk) {
-        if (chunk instanceof ArrayBuffer) return chunk;
+    _normalizeToUint8Array(chunk) {
+        if (chunk instanceof Uint8Array) return chunk;
         if (ArrayBuffer.isView(chunk)) {
             // Buffer is a subclass of Uint8Array in Node, so this covers Buffer and other TypedArrays
             return chunk;
@@ -211,7 +212,7 @@ module.exports = class Response extends Writable {
         this.#pendingChunks.push(view);
         this.#pendingSize += view.byteLength;
 
-        const now = Date.now();
+        const now = performance.now();
         const shouldFlush =
             !this.#lastWriteChunkTime ||
             this.#pendingSize >= HIGH_WATERMARK ||
@@ -419,7 +420,7 @@ module.exports = class Response extends Writable {
                     // reset pending
                     this.#pendingChunks.length = 0;
                     this.#pendingSize = 0;
-                    this.#lastWriteChunkTime = Date.now();
+                    this.#lastWriteChunkTime = performance.now();
                     // write the combined buffer
                     if(this.req.method === 'HEAD') {
                         // HEAD must not send body; only set length
