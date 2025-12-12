@@ -71,6 +71,7 @@ module.exports = class Response extends Writable {
     #socket = null;
     #ended = false;
     #pendingChunks = [];
+    #pendingSize = 0;
     #lastWriteChunkTime = 0;
     #writeTimeout = null;
     constructor(res, req, app) {
@@ -130,95 +131,179 @@ module.exports = class Response extends Writable {
     }
 
     _write(chunk, encoding, callback) {
-        if (this.aborted) {
-            const err = new Error('Request aborted');
-            err.code = 'ECONNABORTED';
-            return this.destroy(err);
-        }
-        if (this.finished) {
-            const err = new Error('Response already finished');
-            return this.destroy(err);
-        }
+        // Fast-fail without extra allocations
+        if (this.aborted) return this._destroyAbort(callback);
+        if (this.finished) return this._destroyAlreadyFinished(callback);
 
         this.writingChunk = true;
+
+        const ab = this._normalizeToArrayBuffer(chunk);
+
         this._res.cork(() => {
-            if (!this.headersSent) {
-                this.writeHead(this.statusCode);
-                const statusMessage = this.statusText ?? statuses.message[this.statusCode] ?? '';
-                this._res.writeStatus(`${this.statusCode} ${statusMessage}`.trim());
-                this.writeHeaders(typeof chunk === 'string');
-            }
-    
-            if (!Buffer.isBuffer(chunk) && !(chunk instanceof ArrayBuffer)) {
-                chunk = Buffer.from(chunk);
-                chunk = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
-            }
-    
+            if (!this.headersSent) this._writeHeadersOnce(typeof chunk === 'string');
+
             if (this.chunkedTransfer) {
-                this.#pendingChunks.push(chunk);
-                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-                const now = performance.now();
-                // the first chunk is sent immediately (!this.#lastWriteChunkTime)
-                // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
-                // or if elapsed 50ms of last send (now - this.#lastWriteChunkTime > 50)
-                if (!this.#lastWriteChunkTime || size >= HIGH_WATERMARK || now - this.#lastWriteChunkTime > 50) {
-                    this._res.write(Buffer.concat(this.#pendingChunks, size));
-                    this.#pendingChunks = [];
-                    this.#lastWriteChunkTime = now;
-                    if(this.#writeTimeout) {
-                        clearTimeout(this.#writeTimeout);
-                        this.#writeTimeout = null;
-                    }
-                } else if(!this.#writeTimeout) {
-                    this.#writeTimeout = setTimeout(() => {
-                        this.#writeTimeout = null;
-                        if(!this.finished && !this.aborted) this._res.cork(() => {
-                            if(this.#pendingChunks.length) {
-                                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-                                this._res.write(Buffer.concat(this.#pendingChunks, size));
-                                this.#pendingChunks = [];
-                                this.#lastWriteChunkTime = performance.now();
-                            }
-                        });
-                    }, 50);
-                    this.#writeTimeout.unref();
-                }
-                this.writingChunk = false;
-                callback(null);
+                this._handleChunked(ab, callback);
             } else {
-                const lastOffset = this._res.getWriteOffset();
-                const [ok, done] = this._res.tryEnd(chunk, this.totalSize);
-                if (done) {
-                    super.end();
-                    this.finished = true;
-                    this.writingChunk = false;
-                    this.#socket?.emit('close');
-                    callback(null);
-                } else if (!ok) {
-                    this._res.ab = chunk;
-                    this._res.abOffset = lastOffset;
-                    let handlerUsed = false;
-                    this._res.onWritable((offset) => {
-                        if (this.finished || handlerUsed) return true;
-                        const [ok, done] = this._res.tryEnd(this._res.ab.slice(offset - this._res.abOffset), this.totalSize);
-                        if (done) {
-                            this.finished = true;
-                            this.#socket?.emit('close');
-                        }
-                        if (ok) {
-                            this.writingChunk = false;
-                            handlerUsed = true;
-                            callback(null);
-                        }
-                        return ok;
-                    });
-                } else {
-                    this.writingChunk = false;
-                    callback(null);
-                }
+                this._handleTryEnd(ab, callback);
             }
         });
     }
+
+    _destroyAbort(callback) {
+        if (!this._abortError) {
+            const e = new Error('Request aborted');
+            e.code = 'ECONNABORTED';
+            this._abortError = e;
+        }
+        this.destroy(this._abortError);
+        if (typeof callback === 'function') callback(this._abortError);
+    }
+
+    _destroyAlreadyFinished(callback) {
+        const err = this._alreadyFinishedError ??= new Error('Response already finished');
+        this.destroy(err);
+        if (typeof callback === 'function') callback(err);
+    }
+
+    _normalizeToArrayBuffer(chunk) {
+        if (chunk instanceof ArrayBuffer) return chunk;
+        if (ArrayBuffer.isView(chunk)) {
+            // TypedArray (Buffer is a Uint8Array subclass in Node), return underlying buffer view
+            const ta = chunk;
+            if (ta.byteOffset === 0 && ta.byteLength === ta.buffer.byteLength) {
+                return ta.buffer;
+            } else {
+                // return a subarray view's buffer via Uint8Array.subarray (no copy) but we need ArrayBuffer for uWS.
+                return ta.buffer.slice(ta.byteOffset, ta.byteOffset + ta.byteLength);
+            }
+        }
+        // string or other -> Buffer -> ArrayBuffer (single allocation)
+        if (typeof chunk === 'string') {
+            const b = Buffer.from(chunk);
+            return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+        }
+        // fallback: try Buffer
+        if (Buffer.isBuffer(chunk)) {
+            return chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
+        }
+        // last resort: convert to Buffer then ArrayBuffer
+        const b = Buffer.from(String(chunk));
+        return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+    }
+
+    _writeHeadersOnce(isStringChunk) {
+        // precompute status line once per response
+        if (!this.headersSent) {
+            const statusMessage = this.statusText ?? statuses?.message?.[this.statusCode] ?? '';
+            this._statusLine = this._statusLine ?? `${this.statusCode} ${statusMessage}`.trim();
+            this.writeHead(this.statusCode);
+            this._res.writeStatus(this._statusLine);
+            this.writeHeaders(isStringChunk);
+            this.headersSent = true;
+        }
+    }
+
+    _handleChunked(arrayBufferChunk, callback) {
+        // push view to pending as Uint8Array to simplify concat later
+        const view = new Uint8Array(arrayBufferChunk);
+        this.#pendingChunks.push(view);
+        this.#pendingSize = (this.#pendingSize || 0) + view.byteLength;
+
+        const now = Date.now();
+        const shouldFlush =
+            !this.#lastWriteChunkTime ||
+            this.#pendingSize >= HIGH_WATERMARK ||
+            now - this.#lastWriteChunkTime > 50;
+
+        if (shouldFlush) {
+            this._flushPending();
+            this.writingChunk = false;
+            if (typeof callback === 'function') callback(null);
+            return;
+        }
+
+        if (!this.#writeTimeout) {
+            this.#writeTimeout = setTimeout(() => {
+                this.#writeTimeout = null;
+                if (!this.finished && !this.aborted) {
+                    this._res.cork(() => this._flushPending());
+                }
+            }, 50);
+            if (typeof this.#writeTimeout.unref === 'function') this.#writeTimeout.unref();
+        }
+
+        this.writingChunk = false;
+        if (typeof callback === 'function') callback(null);
+    }
+
+    _flushPending() {
+        if (!this.#pendingChunks || this.#pendingChunks.length === 0) return;
+
+        const total = this.#pendingSize || 0;
+        const out = new Uint8Array(total);
+        let offset = 0;
+        for (let i = 0; i < this.#pendingChunks.length; i++) {
+            const p = this.#pendingChunks[i];
+            out.set(p, offset);
+            offset += p.byteLength;
+        }
+
+        this._res.write(out.buffer);
+
+        this.#pendingChunks.length = 0;
+        this.#pendingSize = 0;
+        this.#lastWriteChunkTime = performance.now();
+    }
+
+    _handleTryEnd(arrayBufferChunk, callback) {
+        const lastOffset = this._res.getWriteOffset?.() ?? 0;
+
+        // uWS tryEnd might accept ArrayBuffer/TypedArray; pass as Uint8Array view for safety
+        const view = new Uint8Array(arrayBufferChunk);
+        const [ok, done] = this._res.tryEnd(view, this.totalSize);
+
+        if (done) {
+            super.end?.();
+            this.finished = true;
+            this.writingChunk = false;
+            this.#socket?.emit('close');
+            if (typeof callback === 'function') callback(null);
+            return;
+        }
+
+        if (!ok) {
+            this._res.ab = view;
+            this._res.abOffset = lastOffset;
+
+            this._res.onWritable((offset) => {
+                if (this.finished) return true;
+
+                const start = offset - this._res.abOffset;
+                const slice = this._res.ab.subarray(start); // no copy, view only
+                const [ok2, done2] = this._res.tryEnd(slice, this.totalSize);
+
+                if (done2) {
+                    this.finished = true;
+                    this.#socket?.emit('close');
+                    return true;
+                }
+
+                if (ok2) {
+                    this.writingChunk = false;
+                    if (typeof callback === 'function') callback(null);
+                    return true;
+                }
+
+                return false;
+            });
+            return;
+        }
+
+        this.writingChunk = false;
+        if (typeof callback === 'function') callback(null);
+    }
+
     writeHead(statusCode, statusMessage, headers) {
         this.statusCode = statusCode;
         if(typeof statusMessage === 'string') {
@@ -313,6 +398,7 @@ module.exports = class Response extends Writable {
                 if(this.#pendingChunks.length) {
                     this._res.write(Buffer.concat(this.#pendingChunks));
                     this.#pendingChunks = [];
+                    this.#pendingSize = 0;
                     this.lastWriteChunkTime = 0;
                 }
                 if(data instanceof Buffer) {
