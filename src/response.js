@@ -39,6 +39,9 @@ const outgoingMessage = new http.OutgoingMessage();
 const symbols = Object.getOwnPropertySymbols(outgoingMessage);
 const kOutHeaders = symbols.find(s => s.toString() === 'Symbol(kOutHeaders)');
 const HIGH_WATERMARK = 256 * 1024;
+const MAX_BATCH_SIZE = 64 * 1024 * 1024; // or configurable
+
+const textEncoder = new TextEncoder();
 
 class Socket extends EventEmitter {
     constructor(response) {
@@ -162,7 +165,8 @@ module.exports = class Response extends Writable {
                 // the first chunk is sent immediately (!this.#lastWriteChunkTime)
                 // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
                 // or if elapsed 50ms of last send (now - this.#lastWriteChunkTime > 50)
-                if (!this.#lastWriteChunkTime || this.#pendingSize >= HIGH_WATERMARK || (now - this.#lastWriteChunkTime) > 50) {
+                // or if pending size is very large (to avoid excessive memory use)
+                if (!this.#lastWriteChunkTime || this.#pendingSize >= HIGH_WATERMARK || (now - this.#lastWriteChunkTime) > 50 || this.#pendingSize >= MAX_BATCH_SIZE) {
                     this._flushPending();
                     this.writingChunk = false;
                     callback(null);
@@ -204,6 +208,7 @@ module.exports = class Response extends Writable {
                         if (this.finished) return true;
 
                         const start = offset - this._res.abOffset;
+                        if (offset <= this._res.abOffset) return true; // nothing to do
                         const slice = this._res.ab.subarray(start); // no copy, view only
                         const [ok2, done2] = this._res.tryEnd(slice, this.totalSize);
 
@@ -240,15 +245,13 @@ module.exports = class Response extends Writable {
             return new Uint8Array(chunk);
         }
         if (typeof chunk === 'string') {
-            const b = Buffer.from(chunk);
-            return new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
+            return textEncoder.encode(chunk);
         }
         if (Buffer.isBuffer(chunk)) {
             return new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength);
         }
         // fallback: stringify then buffer
-        const b = Buffer.from(String(chunk));
-        return new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
+        return textEncoder.encode(String(chunk));
     }
 
     _flushPending() {
