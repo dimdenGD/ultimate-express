@@ -187,7 +187,6 @@ module.exports = class Response extends Writable {
             } else {
                 const lastOffset = this._res.getWriteOffset();
                 const [ok, done] = this._res.tryEnd(view, this.totalSize);
-
                 if (done) {
                     super.end();
                     this.finished = true;
