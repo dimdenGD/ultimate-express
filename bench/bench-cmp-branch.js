@@ -90,10 +90,10 @@ function compareResults (featureBranch, mainBranch) {
   const branches = await git.branch()
   const currentBranch = branches.branches[branches.current]
 
-  let featureBranch = null
-  let mainBranch = null
+  let featureBranch = process.argv[2] ?? null
+  let mainBranch = process.argv[3] ?? null
 
-  if (process.argv[2] === '--ci') {
+  if (featureBranch === 'current') {
     featureBranch = currentBranch.name
     mainBranch = DEFAULT_BRANCH
   } else {
