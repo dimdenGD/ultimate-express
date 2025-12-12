@@ -132,7 +132,7 @@ module.exports = class Response extends Writable {
     }
 
     _write(chunk, encoding, callback) {
-         if (this.aborted) {
+        if (this.aborted) {
             const err = new Error('Request aborted');
             err.code = 'ECONNABORTED';
             return this.destroy(err);
@@ -146,7 +146,6 @@ module.exports = class Response extends Writable {
 
         const view = this._normalizeToUint8Array(chunk);
 
-        // single cork per logical write
         this._res.cork(() => {
             if (!this.headersSent) {
                 this.writeHead(this.statusCode);
@@ -191,12 +190,10 @@ module.exports = class Response extends Writable {
         this.#pendingSize += view.byteLength;
 
         const now = performance.now();
-        const shouldFlush =
-            !this.#lastWriteChunkTime ||
-            this.#pendingSize >= HIGH_WATERMARK ||
-            (now - this.#lastWriteChunkTime) > 100; // slightly more tolerant
-
-        if (shouldFlush) {
+        // the first chunk is sent immediately (!this.#lastWriteChunkTime)
+        // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
+        // or if elapsed 50ms of last send (now - this.#lastWriteChunkTime > 50)
+        if (!this.#lastWriteChunkTime || this.#pendingSize >= HIGH_WATERMARK || (now - this.#lastWriteChunkTime) > 50) {
             this._flushPending();
             this.writingChunk = false;
             if (typeof callback === 'function') callback(null);
@@ -330,9 +327,6 @@ module.exports = class Response extends Writable {
     }
     status(code) {
         this.statusCode = parseInt(code);
-        // update precomputed status line proactively
-        const statusMessage = this.statusText ?? statuses?.message?.[this.statusCode] ?? '';
-        this._statusLine = `${this.statusCode} ${statusMessage}`.trim();
         return this;
     }
     sendStatus(code) {
