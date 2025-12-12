@@ -90,15 +90,21 @@ function compareResults (featureBranch, mainBranch) {
   const branches = await git.branch()
   const currentBranch = branches.branches[branches.current]
 
+  
+
   let featureBranch = process.argv[2] ?? null
   let mainBranch = process.argv[3] ?? null
 
-  if (featureBranch === 'current') {
+  if (featureBranch === 'current' && !mainBranch) {
     featureBranch = currentBranch.name
     mainBranch = DEFAULT_BRANCH
-  } else {
+  }
+
+  if (!featureBranch) {
     featureBranch = await selectBranchName('Select the branch you want to compare (feature branch):', branches.all)
-    mainBranch = await selectBranchName('Select the branch you want to compare with (main branch):', branches.all)
+  }
+  if (!mainBranch) {
+    mainBranch = await selectBranchName('Select the main branch to compare against:', branches.all.filter(b => b !== featureBranch))
   }
 
   try {
