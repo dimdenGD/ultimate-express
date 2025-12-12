@@ -54,7 +54,7 @@ async function runBenchmark(benchmark) {
       }
     );
 
-    autocannon.track(instance, { renderProgressBar: false });
+    // autocannon.track(instance, { renderProgressBar: false });
   });
 }
 
