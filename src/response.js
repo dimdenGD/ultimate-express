@@ -155,8 +155,6 @@ module.exports = class Response extends Writable {
             }
 
             if (this.chunkedTransfer) {
-                // push view to pending as Uint8Array to simplify concat later
-                const view = new Uint8Array(arrayBufferChunk);
                 this.#pendingChunks.push(view);
                 this.#pendingSize += view.byteLength;
 
@@ -167,7 +165,7 @@ module.exports = class Response extends Writable {
                 if (!this.#lastWriteChunkTime || this.#pendingSize >= HIGH_WATERMARK || (now - this.#lastWriteChunkTime) > 50) {
                     this._flushPending();
                     this.writingChunk = false;
-                    if (typeof callback === 'function') callback(null);
+                    callback(null);
                     return;
                 }
 
@@ -185,7 +183,7 @@ module.exports = class Response extends Writable {
                 }
 
                 this.writingChunk = false;
-                if (typeof callback === 'function') callback(null);
+                callback(null);
             } else {
                 const lastOffset = this._res.getWriteOffset();
                 const [ok, done] = this._res.tryEnd(view, this.totalSize);
@@ -195,7 +193,7 @@ module.exports = class Response extends Writable {
                     this.finished = true;
                     this.writingChunk = false;
                     this.#socket?.emit('close');
-                    if (typeof callback === 'function') callback(null);
+                    callback(null);
                     return;
                 }
 
@@ -218,7 +216,7 @@ module.exports = class Response extends Writable {
 
                         if (ok2) {
                             this.writingChunk = false;
-                            if (typeof callback === 'function') callback(null);
+                            callback(null);
                             return true;
                         }
 
@@ -228,7 +226,7 @@ module.exports = class Response extends Writable {
                 }
 
                 this.writingChunk = false;
-                if (typeof callback === 'function') callback(null);
+                callback(null);
             }
         });
     }
@@ -378,8 +376,9 @@ module.exports = class Response extends Writable {
                     const out = new Uint8Array(total);
                     let offset = 0;
                     for (let i = 0; i < this.#pendingChunks.length; i++) {
-                        out.set(this.#pendingChunks[i], offset);
-                        offset += this.#pendingChunks[i].byteLength;
+                        const chunk = this.#pendingChunks[i];
+                        out.set(chunk, offset);
+                        offset += chunk.byteLength;
                     }
                     // reset pending
                     this.#pendingChunks.length = 0;
