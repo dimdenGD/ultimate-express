@@ -269,6 +269,9 @@ module.exports = class Response extends Writable {
         } catch (err) {
             // on rare errors, emit and attempt to close
             this.emit('error', err);
+            this._res.close();
+            this.finished = true;
+            this.#socket?.emit('close');
         }
 
         this.#pendingChunks.length = 0;
