@@ -65,9 +65,9 @@ async function runBenchmark(benchmark) {
   for (const b of benchmarks) {
     const result = await runBenchmark(b);
 
-    const ops = (result.requests.average).toFixed(0);
-    const msg = b.name.padEnd(maxName, ".") + ` x ${ops} req/sec`;
-
-    console.log(msg);
+    const ops = result.requests.average.toFixed(0);
+    const alignedName = b.name.padEnd(maxName, ".");
+    
+    console.log(`${alignedName} x ${ops} req/sec`);
   }
 })();

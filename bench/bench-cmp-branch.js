@@ -51,7 +51,7 @@ function parseBenchmarksStdout (text) {
 
   const lines = text.split('\n')
   for (const line of lines) {
-    const match = /^(.+?)(\.*) x (.+) ops\/sec .*$/.exec(line)
+    const match = /^(.+?)(\.*) x (.+) req\/sec .*$/.exec(line)
     if (match !== null) {
       results.push({
         name: match[1],
