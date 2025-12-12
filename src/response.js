@@ -73,7 +73,13 @@ module.exports = class Response extends Writable {
     #pendingChunks = [];
     #pendingSize = 0;
     #lastWriteChunkTime = 0;
-    #writeTimeout = null;
+    #flushScheduled = false;
+
+    // single reusable errors/status
+    _abortError = null;
+    _alreadyFinishedError = null;
+    _statusLine = null;
+
     constructor(res, req, app) {
         super();
         this._req = req;
@@ -143,9 +149,9 @@ module.exports = class Response extends Writable {
             if (!this.headersSent) this._writeHeadersOnce(typeof chunk === 'string');
 
             if (this.chunkedTransfer) {
-                this._handleChunked(ab, callback);
+                this._handleChunked(view, callback);
             } else {
-                this._handleTryEnd(ab, callback);
+                this._handleTryEnd(view, callback);
             }
         });
     }
@@ -169,27 +175,22 @@ module.exports = class Response extends Writable {
     _normalizeToArrayBuffer(chunk) {
         if (chunk instanceof ArrayBuffer) return chunk;
         if (ArrayBuffer.isView(chunk)) {
-            // TypedArray (Buffer is a Uint8Array subclass in Node), return underlying buffer view
-            const ta = chunk;
-            if (ta.byteOffset === 0 && ta.byteLength === ta.buffer.byteLength) {
-                return ta.buffer;
-            } else {
-                // return a subarray view's buffer via Uint8Array.subarray (no copy) but we need ArrayBuffer for uWS.
-                return ta.buffer.slice(ta.byteOffset, ta.byteOffset + ta.byteLength);
-            }
+            // Buffer is a subclass of Uint8Array in Node, so this covers Buffer and other TypedArrays
+            return chunk;
         }
-        // string or other -> Buffer -> ArrayBuffer (single allocation)
+        if (chunk instanceof ArrayBuffer) {
+            return new Uint8Array(chunk);
+        }
         if (typeof chunk === 'string') {
             const b = Buffer.from(chunk);
-            return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+            return new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
         }
-        // fallback: try Buffer
         if (Buffer.isBuffer(chunk)) {
-            return chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
+            return new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength);
         }
-        // last resort: convert to Buffer then ArrayBuffer
+        // fallback: stringify then buffer
         const b = Buffer.from(String(chunk));
-        return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+        return new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
     }
 
     _writeHeadersOnce(isStringChunk) {
@@ -208,13 +209,13 @@ module.exports = class Response extends Writable {
         // push view to pending as Uint8Array to simplify concat later
         const view = new Uint8Array(arrayBufferChunk);
         this.#pendingChunks.push(view);
-        this.#pendingSize = (this.#pendingSize || 0) + view.byteLength;
+        this.#pendingSize += view.byteLength;
 
         const now = Date.now();
         const shouldFlush =
             !this.#lastWriteChunkTime ||
             this.#pendingSize >= HIGH_WATERMARK ||
-            now - this.#lastWriteChunkTime > 50;
+            (now - this.#lastWriteChunkTime) > 100; // slightly more tolerant
 
         if (shouldFlush) {
             this._flushPending();
@@ -223,14 +224,17 @@ module.exports = class Response extends Writable {
             return;
         }
 
-        if (!this.#writeTimeout) {
-            this.#writeTimeout = setTimeout(() => {
-                this.#writeTimeout = null;
+        // schedule a single microtask flush per event loop tick
+        if (!this.#flushScheduled) {
+            this.#flushScheduled = true;
+            // queueMicrotask is ideal: runs at microtask checkpoint, cheap
+            queueMicrotask(() => {
+                this.#flushScheduled = false;
                 if (!this.finished && !this.aborted) {
+                    // cork to batch syscalls but avoid nested corks in other places
                     this._res.cork(() => this._flushPending());
                 }
-            }, 50);
-            if (typeof this.#writeTimeout.unref === 'function') this.#writeTimeout.unref();
+            });
         }
 
         this.writingChunk = false;
@@ -240,27 +244,30 @@ module.exports = class Response extends Writable {
     _flushPending() {
         if (!this.#pendingChunks || this.#pendingChunks.length === 0) return;
 
-        const total = this.#pendingSize || 0;
+        const total = this.#pendingSize;
+        // allocate single buffer
         const out = new Uint8Array(total);
         let offset = 0;
         for (let i = 0; i < this.#pendingChunks.length; i++) {
-            const p = this.#pendingChunks[i];
-            out.set(p, offset);
-            offset += p.byteLength;
+            out.set(this.#pendingChunks[i], offset);
+            offset += this.#pendingChunks[i].byteLength;
         }
 
-        this._res.write(out.buffer);
+        // write the combined ArrayBuffer (uWS accepts ArrayBuffer/TypedArray)
+        try {
+            this._res.write(out.buffer);
+        } catch (err) {
+            // on rare errors, emit and attempt to close
+            this.emit('error', err);
+        }
 
         this.#pendingChunks.length = 0;
         this.#pendingSize = 0;
         this.#lastWriteChunkTime = performance.now();
     }
 
-    _handleTryEnd(arrayBufferChunk, callback) {
+    _handleTryEnd(view, callback) {
         const lastOffset = this._res.getWriteOffset?.() ?? 0;
-
-        // uWS tryEnd might accept ArrayBuffer/TypedArray; pass as Uint8Array view for safety
-        const view = new Uint8Array(arrayBufferChunk);
         const [ok, done] = this._res.tryEnd(view, this.totalSize);
 
         if (done) {
@@ -344,6 +351,9 @@ module.exports = class Response extends Writable {
     }
     status(code) {
         this.statusCode = parseInt(code);
+        // update precomputed status line proactively
+        const statusMessage = this.statusText ?? statuses?.message?.[this.statusCode] ?? '';
+        this._statusLine = `${this.statusCode} ${statusMessage}`.trim();
         return this;
     }
     sendStatus(code) {
@@ -391,16 +401,34 @@ module.exports = class Response extends Writable {
                     return;
                 }
             }
+
             const contentLength = this.headers['content-length'];
             if(!data && contentLength) {
                 this._res.endWithoutBody(contentLength.toString());
             } else {
+                // if there are pending chunks flush them using the efficient single-allocation flush
                 if(this.#pendingChunks.length) {
-                    this._res.write(Buffer.concat(this.#pendingChunks));
-                    this.#pendingChunks = [];
+                    // reuse _flushPending logic but ensure we pass ArrayBuffer to _res.end if needed
+                    const total = this.#pendingSize;
+                    const out = new Uint8Array(total);
+                    let offset = 0;
+                    for (let i = 0; i < this.#pendingChunks.length; i++) {
+                        out.set(this.#pendingChunks[i], offset);
+                        offset += this.#pendingChunks[i].byteLength;
+                    }
+                    // reset pending
+                    this.#pendingChunks.length = 0;
                     this.#pendingSize = 0;
-                    this.lastWriteChunkTime = 0;
+                    this.#lastWriteChunkTime = Date.now();
+                    // write the combined buffer
+                    if(this.req.method === 'HEAD') {
+                        // HEAD must not send body; only set length
+                        this._res.endWithoutBody(out.byteLength.toString());
+                    } else {
+                        this._res.write(out.buffer);
+                    }
                 }
+
                 if(data instanceof Buffer) {
                     data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
                 }
