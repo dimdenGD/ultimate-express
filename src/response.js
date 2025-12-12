@@ -259,8 +259,9 @@ module.exports = class Response extends Writable {
         const out = new Uint8Array(total);
         let offset = 0;
         for (let i = 0; i < this.#pendingChunks.length; i++) {
-            out.set(this.#pendingChunks[i], offset);
-            offset += this.#pendingChunks[i].byteLength;
+            const chunk = this.#pendingChunks[i];
+            out.set(chunk, offset);
+            offset += chunk.byteLength;
         }
 
         // write the combined ArrayBuffer (uWS accepts ArrayBuffer/TypedArray)
