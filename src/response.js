@@ -155,9 +155,80 @@ module.exports = class Response extends Writable {
             }
 
             if (this.chunkedTransfer) {
-                this._handleChunked(view, callback);
+                // push view to pending as Uint8Array to simplify concat later
+                const view = new Uint8Array(arrayBufferChunk);
+                this.#pendingChunks.push(view);
+                this.#pendingSize += view.byteLength;
+
+                const now = performance.now();
+                // the first chunk is sent immediately (!this.#lastWriteChunkTime)
+                // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
+                // or if elapsed 50ms of last send (now - this.#lastWriteChunkTime > 50)
+                if (!this.#lastWriteChunkTime || this.#pendingSize >= HIGH_WATERMARK || (now - this.#lastWriteChunkTime) > 50) {
+                    this._flushPending();
+                    this.writingChunk = false;
+                    if (typeof callback === 'function') callback(null);
+                    return;
+                }
+
+                // schedule a single microtask flush per event loop tick
+                if (!this.#flushScheduled) {
+                    this.#flushScheduled = true;
+                    // queueMicrotask is ideal: runs at microtask checkpoint, cheap
+                    queueMicrotask(() => {
+                        this.#flushScheduled = false;
+                        if (!this.finished && !this.aborted) {
+                            // cork to batch syscalls but avoid nested corks in other places
+                            this._res.cork(() => this._flushPending());
+                        }
+                    });
+                }
+
+                this.writingChunk = false;
+                if (typeof callback === 'function') callback(null);
             } else {
-                this._handleTryEnd(view, callback);
+                const lastOffset = this._res.getWriteOffset();
+                const [ok, done] = this._res.tryEnd(view, this.totalSize);
+
+                if (done) {
+                    super.end();
+                    this.finished = true;
+                    this.writingChunk = false;
+                    this.#socket?.emit('close');
+                    if (typeof callback === 'function') callback(null);
+                    return;
+                }
+
+                if (!ok) {
+                    this._res.ab = view;
+                    this._res.abOffset = lastOffset;
+
+                    this._res.onWritable((offset) => {
+                        if (this.finished) return true;
+
+                        const start = offset - this._res.abOffset;
+                        const slice = this._res.ab.subarray(start); // no copy, view only
+                        const [ok2, done2] = this._res.tryEnd(slice, this.totalSize);
+
+                        if (done2) {
+                            this.finished = true;
+                            this.#socket?.emit('close');
+                            return true;
+                        }
+
+                        if (ok2) {
+                            this.writingChunk = false;
+                            if (typeof callback === 'function') callback(null);
+                            return true;
+                        }
+
+                        return false;
+                    });
+                    return;
+                }
+
+                this.writingChunk = false;
+                if (typeof callback === 'function') callback(null);
             }
         });
     }
@@ -183,40 +254,6 @@ module.exports = class Response extends Writable {
         return new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
     }
 
-    _handleChunked(arrayBufferChunk, callback) {
-        // push view to pending as Uint8Array to simplify concat later
-        const view = new Uint8Array(arrayBufferChunk);
-        this.#pendingChunks.push(view);
-        this.#pendingSize += view.byteLength;
-
-        const now = performance.now();
-        // the first chunk is sent immediately (!this.#lastWriteChunkTime)
-        // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
-        // or if elapsed 50ms of last send (now - this.#lastWriteChunkTime > 50)
-        if (!this.#lastWriteChunkTime || this.#pendingSize >= HIGH_WATERMARK || (now - this.#lastWriteChunkTime) > 50) {
-            this._flushPending();
-            this.writingChunk = false;
-            if (typeof callback === 'function') callback(null);
-            return;
-        }
-
-        // schedule a single microtask flush per event loop tick
-        if (!this.#flushScheduled) {
-            this.#flushScheduled = true;
-            // queueMicrotask is ideal: runs at microtask checkpoint, cheap
-            queueMicrotask(() => {
-                this.#flushScheduled = false;
-                if (!this.finished && !this.aborted) {
-                    // cork to batch syscalls but avoid nested corks in other places
-                    this._res.cork(() => this._flushPending());
-                }
-            });
-        }
-
-        this.writingChunk = false;
-        if (typeof callback === 'function') callback(null);
-    }
-
     _flushPending() {
         if (!this.#pendingChunks || this.#pendingChunks.length === 0) return;
 
@@ -240,51 +277,6 @@ module.exports = class Response extends Writable {
         this.#pendingChunks.length = 0;
         this.#pendingSize = 0;
         this.#lastWriteChunkTime = performance.now();
-    }
-
-    _handleTryEnd(view, callback) {
-        const lastOffset = this._res.getWriteOffset();
-        const [ok, done] = this._res.tryEnd(view, this.totalSize);
-
-        if (done) {
-            super.end();
-            this.finished = true;
-            this.writingChunk = false;
-            this.#socket?.emit('close');
-            if (typeof callback === 'function') callback(null);
-            return;
-        }
-
-        if (!ok) {
-            this._res.ab = view;
-            this._res.abOffset = lastOffset;
-
-            this._res.onWritable((offset) => {
-                if (this.finished) return true;
-
-                const start = offset - this._res.abOffset;
-                const slice = this._res.ab.subarray(start); // no copy, view only
-                const [ok2, done2] = this._res.tryEnd(slice, this.totalSize);
-
-                if (done2) {
-                    this.finished = true;
-                    this.#socket?.emit('close');
-                    return true;
-                }
-
-                if (ok2) {
-                    this.writingChunk = false;
-                    if (typeof callback === 'function') callback(null);
-                    return true;
-                }
-
-                return false;
-            });
-            return;
-        }
-
-        this.writingChunk = false;
-        if (typeof callback === 'function') callback(null);
     }
 
     writeHead(statusCode, statusMessage, headers) {
