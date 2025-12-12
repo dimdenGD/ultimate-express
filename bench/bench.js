@@ -1,51 +1,70 @@
-'use strict'
+"use strict";
 
-const path = require('path')
-const { Worker } = require('worker_threads')
-
-const BENCH_THREAD_PATH = path.join(__dirname, 'bench-thread.js')
+const Benchmark = require("benchmark");
+const express = require("../src/index");
 
 const benchmarks = [
   {
-    name: 'short string',
-    input: 'hello'
+    name: "short string",
+    response: "hello",
   },
   {
-    name: 'long string',
-    input: 'hello'.repeat(20_000)
-  }
-]
+    name: "long string",
+    response: "hello".repeat(10_000),
+  },
+];
 
-async function runBenchmark (benchmark) {
-  const worker = new Worker(BENCH_THREAD_PATH, { workerData: benchmark })
-
+async function runBenchmark(benchmark) {
   return new Promise((resolve, reject) => {
-    let result = null
-    worker.on('error', reject)
-    worker.on('message', (benchResult) => {
-      result = benchResult
-    })
-    worker.on('exit', (code) => {
-      if (code === 0) {
-        resolve(result)
-      } else {
-        reject(new Error(`Worker stopped with exit code ${code}`))
-      }
-    })
-  })
+    Benchmark.options.minSamples = 100;
+
+    const suite = Benchmark.Suite();
+
+    const app = express();
+
+    app.set("etag", false);
+    app.set("declarative responses", false);
+
+    app.all(benchmark.path ?? "/", (req, res) => {
+      res.send(benchmark.response ?? "Hello world");
+    });
+
+    const server = app.listen(3000, () => {
+      suite
+        .add(benchmark.name, {
+          defer: true,
+          fn: async (deferred) => {
+            await fetch(`http://localhost:3000${benchmark.path ?? "/"}`, {
+              method: benchmark.method ?? "GET",
+              body: benchmark.body ?? undefined,
+              headers: benchmark.headers ?? {},
+              keepalive: true,
+            });
+            deferred.resolve();
+          },
+        })
+        .on("cycle", (event) => {
+          resolve(String(event.target));
+        })
+        .on("complete", () => {
+            server.close()
+        })
+        .run();
+    });
+  });
 }
 
-async function runBenchmarks () {
-  let maxNameLength = 0
+async function runBenchmarks() {
+  let maxNameLength = 0;
   for (const benchmark of benchmarks) {
-    maxNameLength = Math.max(benchmark.name.length, maxNameLength)
+    maxNameLength = Math.max(benchmark.name.length, maxNameLength);
   }
 
   for (const benchmark of benchmarks) {
-    benchmark.name = benchmark.name.padEnd(maxNameLength, '.')
-    const resultMessage = await runBenchmark(benchmark)
-    console.log(resultMessage)
+    benchmark.name = benchmark.name.padEnd(maxNameLength, ".");
+    const resultMessage = await runBenchmark(benchmark);
+    console.log(resultMessage);
   }
 }
 
-runBenchmarks()
+runBenchmarks();
