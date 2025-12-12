@@ -22,6 +22,9 @@ function runServer(benchmark) {
 
     app.set("etag", false);
     app.set("declarative responses", false);
+    app.set("catch async errors", true);
+    
+    app.use(express.json());
 
     app.all(benchmark.path ?? '/', (req, res) => {
       res.send(benchmark.response ?? '');
