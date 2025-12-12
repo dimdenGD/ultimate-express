@@ -27,9 +27,11 @@ function runServer(benchmark) {
       res.send(benchmark.response ?? '');
     });
 
-    let server;
-    server = app.listen(3000, () => resolve(server));
-    server.on("error", reject);
+    app.listen(3000, () => resolve(app));
+    server.on("error", (err) => {
+        console.error("Server error:", err);
+        reject(err);
+    });
   });
 }
 
@@ -39,7 +41,7 @@ async function runBenchmark(benchmark) {
   return new Promise((resolve) => {
     const instance = autocannon(
       {
-        url: "http://localhost:3000" + benchmark.path ?? '/',
+        url: "http://localhost:3000" + (benchmark.path ?? '/'),
         connections: 50,
         duration: 5,
         pipelining: 1,
@@ -47,7 +49,7 @@ async function runBenchmark(benchmark) {
         method: benchmark.method ?? "GET",
       },
       (err, result) => {
-        server?.close();
+        server.uwsApp.close();
         resolve(result);
       }
     );
