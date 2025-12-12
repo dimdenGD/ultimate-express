@@ -237,18 +237,14 @@ module.exports = class Response extends Writable {
 
     _normalizeToUint8Array(chunk) {
         if (chunk instanceof Uint8Array) return chunk;
-        if (ArrayBuffer.isView(chunk)) {
-            // Buffer is a subclass of Uint8Array in Node, so this covers Buffer and other TypedArrays
-            return chunk;
+        if (ArrayBuffer.isView(chunk) || Buffer.isBuffer(chunk)) {
+            return new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength);
         }
         if (chunk instanceof ArrayBuffer) {
             return new Uint8Array(chunk);
         }
         if (typeof chunk === 'string') {
             return textEncoder.encode(chunk);
-        }
-        if (Buffer.isBuffer(chunk)) {
-            return new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength);
         }
         // fallback: stringify then buffer
         return textEncoder.encode(String(chunk));
@@ -269,7 +265,7 @@ module.exports = class Response extends Writable {
 
         // write the combined ArrayBuffer (uWS accepts ArrayBuffer/TypedArray)
         try {
-            this._res.write(out.buffer);
+            this._res.write(out);
         } catch (err) {
             // on rare errors, emit and attempt to close
             this.emit('error', err);
