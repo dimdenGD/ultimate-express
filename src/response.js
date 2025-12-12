@@ -75,11 +75,6 @@ module.exports = class Response extends Writable {
     #lastWriteChunkTime = 0;
     #flushScheduled = false;
 
-    // single reusable errors/status
-    _abortError = null;
-    _alreadyFinishedError = null;
-    _statusLine = null;
-
     constructor(res, req, app) {
         super();
         this._req = req;
@@ -137,17 +132,28 @@ module.exports = class Response extends Writable {
     }
 
     _write(chunk, encoding, callback) {
-        if (this.aborted) return this._destroyAbort(callback);
-        if (this.finished) return this._destroyAlreadyFinished(callback);
+         if (this.aborted) {
+            const err = new Error('Request aborted');
+            err.code = 'ECONNABORTED';
+            return this.destroy(err);
+        }
+        if (this.finished) {
+            const err = new Error('Response already finished');
+            return this.destroy(err);
+        }
 
         this.writingChunk = true;
 
-        // normalize chunk -> prefer Uint8Array view (no copy when possible)
         const view = this._normalizeToUint8Array(chunk);
 
         // single cork per logical write
         this._res.cork(() => {
-            if (!this.headersSent) this._writeHeadersOnce(typeof chunk === 'string');
+            if (!this.headersSent) {
+                this.writeHead(this.statusCode);
+                const statusMessage = this.statusText ?? statuses.message[this.statusCode] ?? '';
+                this._res.writeStatus(`${this.statusCode} ${statusMessage}`.trim());
+                this.writeHeaders(typeof chunk === 'string');
+            }
 
             if (this.chunkedTransfer) {
                 this._handleChunked(view, callback);
@@ -155,22 +161,6 @@ module.exports = class Response extends Writable {
                 this._handleTryEnd(view, callback);
             }
         });
-    }
-
-    _destroyAbort(callback) {
-        if (!this._abortError) {
-            const e = new Error('Request aborted');
-            e.code = 'ECONNABORTED';
-            this._abortError = e;
-        }
-        this.destroy(this._abortError);
-        if (typeof callback === 'function') callback(this._abortError);
-    }
-
-    _destroyAlreadyFinished(callback) {
-        const err = this._alreadyFinishedError ??= new Error('Response already finished');
-        this.destroy(err);
-        if (typeof callback === 'function') callback(err);
     }
 
     _normalizeToUint8Array(chunk) {
@@ -192,18 +182,6 @@ module.exports = class Response extends Writable {
         // fallback: stringify then buffer
         const b = Buffer.from(String(chunk));
         return new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
-    }
-
-    _writeHeadersOnce(isStringChunk) {
-        // precompute status line once per response
-        if (!this.headersSent) {
-            const statusMessage = this.statusText ?? statuses?.message?.[this.statusCode] ?? '';
-            this._statusLine = this._statusLine ?? `${this.statusCode} ${statusMessage}`.trim();
-            this.writeHead(this.statusCode);
-            this._res.writeStatus(this._statusLine);
-            this.writeHeaders(isStringChunk);
-            this.headersSent = true;
-        }
     }
 
     _handleChunked(arrayBufferChunk, callback) {
@@ -268,11 +246,11 @@ module.exports = class Response extends Writable {
     }
 
     _handleTryEnd(view, callback) {
-        const lastOffset = this._res.getWriteOffset?.() ?? 0;
+        const lastOffset = this._res.getWriteOffset();
         const [ok, done] = this._res.tryEnd(view, this.totalSize);
 
         if (done) {
-            super.end?.();
+            super.end();
             this.finished = true;
             this.writingChunk = false;
             this.#socket?.emit('close');
