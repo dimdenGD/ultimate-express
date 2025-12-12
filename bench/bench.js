@@ -1,70 +1,71 @@
 "use strict";
 
-const Benchmark = require("benchmark");
+const autocannon = require("autocannon");
 const express = require("../src/index");
 
 const benchmarks = [
   {
     name: "short string",
+    path: "/",
     response: "hello",
   },
   {
     name: "long string",
+    path: "/long",
     response: "hello".repeat(10_000),
   },
 ];
 
-async function runBenchmark(benchmark) {
+function runServer(benchmark) {
   return new Promise((resolve, reject) => {
-    Benchmark.options.minSamples = 100;
-
-    const suite = Benchmark.Suite();
-
     const app = express();
 
     app.set("etag", false);
     app.set("declarative responses", false);
 
-    app.all(benchmark.path ?? "/", (req, res) => {
-      res.send(benchmark.response ?? "Hello world");
+    app.all(benchmark.path ?? '/', (req, res) => {
+      res.send(benchmark.response ?? '');
     });
 
-    const server = app.listen(3000, () => {
-      suite
-        .add(benchmark.name, {
-          defer: true,
-          fn: async (deferred) => {
-            await fetch(`http://localhost:3000${benchmark.path ?? "/"}`, {
-              method: benchmark.method ?? "GET",
-              body: benchmark.body ?? undefined,
-              headers: benchmark.headers ?? {},
-              keepalive: true,
-            });
-            deferred.resolve();
-          },
-        })
-        .on("cycle", (event) => {
-          resolve(String(event.target));
-        })
-        .on("complete", () => {
-            server.close()
-        })
-        .run();
-    });
+    let server;
+    server = app.listen(3000, () => resolve(server));
+    server.on("error", reject);
   });
 }
 
-async function runBenchmarks() {
-  let maxNameLength = 0;
-  for (const benchmark of benchmarks) {
-    maxNameLength = Math.max(benchmark.name.length, maxNameLength);
-  }
+async function runBenchmark(benchmark) {
+  const server = await runServer(benchmark);
 
-  for (const benchmark of benchmarks) {
-    benchmark.name = benchmark.name.padEnd(maxNameLength, ".");
-    const resultMessage = await runBenchmark(benchmark);
-    console.log(resultMessage);
-  }
+  return new Promise((resolve) => {
+    const instance = autocannon(
+      {
+        url: "http://localhost:3000" + benchmark.path ?? '/',
+        connections: 50,
+        duration: 5,
+        pipelining: 1,
+        headers: benchmark.headers ?? {},
+        method: benchmark.method ?? "GET",
+      },
+      (err, result) => {
+        server?.close();
+        resolve(result);
+      }
+    );
+
+    autocannon.track(instance, { renderProgressBar: false });
+  });
 }
 
-runBenchmarks();
+(async () => {
+  let maxName = 0;
+  for (const b of benchmarks) maxName = Math.max(maxName, b.name.length);
+
+  for (const b of benchmarks) {
+    const result = await runBenchmark(b);
+
+    const ops = (result.requests.average).toFixed(0);
+    const msg = b.name.padEnd(maxName, ".") + ` x ${ops} req/sec`;
+
+    console.log(msg);
+  }
+})();

@@ -69,7 +69,7 @@
   },
   "devDependencies": {
     "@codechecks/client": "^0.1.12",
-    "benchmark": "^2.1.4",
+    "autocannon": "^8.0.0",
     "better-sse": "^0.14.1",
     "body-parser": "^2.2.0",
     "cli-select": "^1.1.2",
