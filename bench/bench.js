@@ -102,7 +102,7 @@ async function runBenchmark(benchmark) {
         } else {
           server.close();
         }
-        resolve(result);
+        resolve(result.requests.average);
       }
     );
 
@@ -124,12 +124,12 @@ function median(values) {
 
   for (const b of benchmarks) {
     const results = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 3; i++) {
       const result = await runBenchmark(b);
       results.push(result);
     }
     const alignedName = b.name.padEnd(maxName, ".");
     const m = median(results);
-    console.log(`${alignedName} x ${m} req/sec`);
+    console.log(`${alignedName} x ${m.toFixed(0)} req/sec`);
   }
 })();
