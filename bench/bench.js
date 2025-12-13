@@ -25,6 +25,10 @@ const benchmarks = [
   },
 ];
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 function runServer() {
   return new Promise((resolve, reject) => {
     const app = express();
@@ -125,6 +129,7 @@ function median(values) {
       const result = await runBenchmark(b);
       if (i === 0) continue; // discard first run for warmup
       results.push(result);
+      await sleep(1000); // add small delay between runs for free resources
     }
     const alignedName = b.name.padEnd(maxName, ".");
     const m = median(results);
