@@ -2,6 +2,7 @@
 
 const autocannon = require("autocannon");
 const express = require("../src/index");
+const path = require("path");
 
 const benchmarks = [
   {
@@ -38,10 +39,10 @@ function runServer(benchmark) {
     app.use(express.urlencoded());
     app.use(express.text());
     app.use(express.raw());
-    app.use("/static", express.static("../tests/parts"));
+    app.use("/static", express.static(path.join(__dirname, "../tests/parts")));
 
     app.get("/send-file/:file", (req, res) => {
-      res.sendFile("../tests/parts/" + req.params.file, {
+      res.sendFile(path.join(__dirname, "../tests/parts", req.params.file), {
         root: ".",
       });
     });
