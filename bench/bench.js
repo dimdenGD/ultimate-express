@@ -68,7 +68,10 @@ async function runBenchmark(benchmark) {
         duration: 30,
         connections: 20,
         pipelining: 1,
-        headers: benchmark.headers ?? {},
+        headers: {
+          "accept-encoding": "identity",
+          ...(benchmark.headers ?? {})
+        },
         method: benchmark.method ?? "GET",
         body: benchmark.body ?? undefined,
         workers,
