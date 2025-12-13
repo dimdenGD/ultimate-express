@@ -62,6 +62,7 @@ function runServer(benchmark) {
     });
 
     app.use((err, req, res) => {
+      console.log("500:", req.method, req.url.toString(), err);
       res.status(500).json({
         message: err.message,
         method: req.method,
