@@ -85,7 +85,7 @@ function runServer() {
 async function runBenchmark(benchmark) {
   if (global.gc) global.gc();
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const instance = autocannon(
       {
         url: "http://localhost:3000" + benchmark.path,
@@ -97,6 +97,7 @@ async function runBenchmark(benchmark) {
         body: benchmark.body ?? undefined,
       },
       (err, result) => {
+        if (err) return reject(err);
         resolve(result.requests.average);
       }
     );
