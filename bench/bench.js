@@ -1,10 +1,13 @@
 "use strict";
 
 const autocannon = require("autocannon");
-const express = require("../src/index");
+const { spawn } = require("child_process");
 const path = require("path");
 
-const LONG_STRING = "hello".repeat(10_000);
+const os = require("os");
+const cores = os.cpus().length;
+
+const workers = Math.max(1, Math.min(cores - 1, 4));
 
 const benchmarks = [
   {
@@ -26,61 +29,30 @@ const benchmarks = [
 ];
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function runServer() {
   return new Promise((resolve, reject) => {
-    const app = express();
-
-    app.set("etag", false);
-    app.set("declarative responses", false);
-    app.set("catch async errors", true);
-
-    app.use(express.json());
-    app.use(express.urlencoded());
-    app.use(express.text());
-    app.use(express.raw());
-    app.use("/static", express.static(path.join(__dirname, "../tests/parts")));
-
-    app.get("/send-file/:file", (req, res) =>
-      res.sendFile(path.join(__dirname, "../tests/parts", req.params.file))
+    const server = spawn(
+      process.execPath,
+      ["--expose-gc", path.join(__dirname, "server.js")],
+      {
+        stdio: ["ignore", "pipe", "pipe"],
+        env: {
+          ...process.env,
+          NODE_ENV: "production",
+        },
+      }
     );
 
-    app.get("/short-string", (req, res) => {
-      res.send("hello");
+    server.stdout.on("data", (data) => {
+      if (data.toString().includes("SERVER_READY")) {
+        resolve(server);
+      }
     });
-
-    app.get("/long-string", (req, res) => {
-      res.send(LONG_STRING);
-    });
-
-    app.use((req, res) => {
-      console.error("404:", req.method, req.url.toString());
-      res.status(404).json({
-        message: "NOT FOUND",
-        method: req.method,
-        url: req.url,
-        headers: req.headers,
-        query: req.query,
-      });
-    });
-
-    app.use((err, req, res, _next) => {
-      console.error("500:", req.method, req.url.toString(), err);
-      res.status(500).json({
-        message: err.message,
-        method: req.method,
-        url: req.url,
-        headers: req.headers,
-        query: req.query,
-      });
-    });
-
-    const server = app.listen(3000, () => resolve(app));
 
     server.on("error", (err) => {
-      console.error("Server error:", err);
       reject(err);
     });
   });
@@ -99,6 +71,7 @@ async function runBenchmark(benchmark) {
         headers: benchmark.headers ?? {},
         method: benchmark.method ?? "GET",
         body: benchmark.body ?? undefined,
+        workers,
       },
       (err, result) => {
         if (err) return reject(err);
@@ -106,7 +79,7 @@ async function runBenchmark(benchmark) {
       }
     );
 
-    // autocannon.track(instance, { renderProgressBar: false });
+    // autocannon.track(instance, { renderProgressBar: true });
   });
 }
 
@@ -119,7 +92,7 @@ function median(values) {
 (async () => {
   let maxName = 0;
 
-  const app = await runServer();
+  const server = await runServer();
 
   for (const b of benchmarks) maxName = Math.max(maxName, b.name.length);
 
@@ -136,11 +109,7 @@ function median(values) {
     console.log(`${alignedName} x ${m.toFixed(0)} req/sec`);
   }
 
-  if (app.uwsApp) {
-    app.uwsApp.close();
-  } else {
-    app.close();
-  }
+  server.kill("SIGTERM");
 })().catch((err) => {
   console.error("Fatal error:", err);
 });
