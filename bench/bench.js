@@ -114,7 +114,7 @@ function median(values) {
 (async () => {
   let maxName = 0;
 
-  const server = await runServer(benchmark);
+  const app = await runServer(benchmark);
 
   for (const b of benchmarks) maxName = Math.max(maxName, b.name.length);
 
@@ -129,6 +129,10 @@ function median(values) {
     const m = median(results);
     console.log(`${alignedName} x ${m.toFixed(0)} req/sec`);
   }
-  
-  server.close();
+
+  if (app.uwsApp) {
+    app.uwsApp.close();
+  } else {
+    app.close();
+  }
 })();
