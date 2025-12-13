@@ -19,11 +19,11 @@ const benchmarks = [
   },
   {
     name: "static big.jpg",
-    path: " /static/big.jpg",
+    path: "/static/big.jpg",
   },
   {
     name: "send-file big.jpg",
-    path: " /send-file/big.jpg",
+    path: "/send-file/big.jpg",
   },
 ];
 
@@ -41,11 +41,7 @@ function runServer(benchmark) {
     app.use(express.raw());
     app.use("/static", express.static(path.join(__dirname, "../tests/parts")));
 
-    app.get("/send-file/:file", (req, res) => {
-      res.sendFile(path.join(__dirname, "../tests/parts", req.params.file), {
-        root: ".",
-      });
-    });
+    app.get("/send-file/:file", (req, res) => res.sendFile(path.join(__dirname, "../tests/parts", req.params.file)));
 
     app.all(benchmark.path ?? "/", (req, res) => {
       res.send(benchmark.response ?? "");
@@ -73,7 +69,7 @@ function runServer(benchmark) {
       });
     });
 
-    app.listen(3000, () => resolve(app));
+    const server = app.listen(3000, () => resolve(app));
 
     server.on("error", (err) => {
       console.error("Server error:", err);
@@ -96,7 +92,11 @@ async function runBenchmark(benchmark) {
         method: benchmark.method ?? "GET",
       },
       (err, result) => {
-        server.uwsApp.close();
+        if (server.uwsApp) {
+          server.uwsApp.close();
+        } else {
+          server.close();
+        }
         resolve(result);
       }
     );
