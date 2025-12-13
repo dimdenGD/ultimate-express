@@ -7,11 +7,13 @@ const benchmarks = [
   {
     name: "short string",
     path: "/",
+    method: "GET",
     response: "hello",
   },
   {
     name: "long string",
     path: "/long",
+    method: "GET",
     response: "hello".repeat(10_000),
   },
   {
