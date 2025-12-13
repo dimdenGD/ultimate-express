@@ -73,7 +73,7 @@ function runServer(benchmark) {
       });
     });
 
-    const server = app.listen(3000, () => resolve(app));
+    const server = app.listen(3000, () => resolve(server));
 
     server.on("error", (err) => {
       console.error("Server error:", err);
@@ -114,7 +114,7 @@ function median(values) {
 (async () => {
   let maxName = 0;
 
-  const app = await runServer(benchmark);
+  const server = await runServer(benchmark);
 
   for (const b of benchmarks) maxName = Math.max(maxName, b.name.length);
 
@@ -129,9 +129,6 @@ function median(values) {
     const m = median(results);
     console.log(`${alignedName} x ${m.toFixed(0)} req/sec`);
   }
-  if (app.uwsApp) {
-    app.uwsApp.close();
-  } else {
-    app.close();
-  }
+  
+  server.close();
 })();
