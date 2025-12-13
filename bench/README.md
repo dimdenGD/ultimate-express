@@ -42,3 +42,11 @@ Select the branch you want to compare (feature branch):
     - Neutral values are shown without color
 
 At the end, it automatically switches back to the original branch.
+
+# With Docker
+
+```
+docker-compose up -d
+docker exec -it express-bench-env bash
+npm run bench:cmp
+```
