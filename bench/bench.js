@@ -62,7 +62,7 @@ function runServer() {
       });
     });
 
-    app.use((err, req, res) => {
+    app.use((err, req, res, _next) => {
       console.error("500:", req.method, req.url.toString(), err);
       res.status(500).json({
         message: err.message,
