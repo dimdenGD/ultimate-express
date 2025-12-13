@@ -41,7 +41,9 @@ function runServer(benchmark) {
     app.use(express.raw());
     app.use("/static", express.static(path.join(__dirname, "../tests/parts")));
 
-    app.get("/send-file/:file", (req, res) => res.sendFile(path.join(__dirname, "../tests/parts", req.params.file)));
+    app.get("/send-file/:file", (req, res) =>
+      res.sendFile(path.join(__dirname, "../tests/parts", req.params.file))
+    );
 
     app.all(benchmark.path ?? "/", (req, res) => {
       res.send(benchmark.response ?? "");
@@ -79,14 +81,17 @@ function runServer(benchmark) {
 }
 
 async function runBenchmark(benchmark) {
+  
+  if (global.gc) global.gc();
+
   const server = await runServer(benchmark);
 
   return new Promise((resolve) => {
     const instance = autocannon(
       {
         url: "http://localhost:3000" + (benchmark.path ?? "/"),
-        connections: 50,
-        duration: 5,
+        duration: 15,
+        connections: 20,
         pipelining: 1,
         headers: benchmark.headers ?? {},
         method: benchmark.method ?? "GET",
