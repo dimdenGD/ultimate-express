@@ -25,12 +25,38 @@ function runServer(benchmark) {
     app.set("catch async errors", true);
     
     app.use(express.json());
+    app.use(express.urlencoded());
+    app.use(express.text());
+    app.use(express.raw());
+    app.use('/static', express.static('../tests/parts'));
 
     app.all(benchmark.path ?? '/', (req, res) => {
       res.send(benchmark.response ?? '');
     });
 
+    app.use((req, res) => {
+      console.log('404:', req.method, req.url.toString());
+      res.status(404).json({
+        message: 'NOT FOUND',
+        method: req.method,
+        url: req.url,
+        headers: req.headers,
+        query: req.query
+      });
+    });
+    
+    app.use((err, req, res) => {
+      res.status(500).json({
+        message: err.message,
+        method: req.method,
+        url: req.url,
+        headers: req.headers,
+        query: req.query
+      });
+    });
+
     app.listen(3000, () => resolve(app));
+
     server.on("error", (err) => {
         console.error("Server error:", err);
         reject(err);
