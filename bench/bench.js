@@ -73,7 +73,7 @@ function runServer(benchmark) {
       });
     });
 
-    const server = app.listen(3000, () => resolve(server));
+    const server = app.listen(3000, () => resolve(app));
 
     server.on("error", (err) => {
       console.error("Server error:", err);
