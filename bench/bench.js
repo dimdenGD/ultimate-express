@@ -135,4 +135,6 @@ function median(values) {
   } else {
     app.close();
   }
-})();
+})().catch((err) => {
+  console.error("Fatal error:", err);
+});
