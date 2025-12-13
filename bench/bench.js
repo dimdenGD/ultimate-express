@@ -4,18 +4,16 @@ const autocannon = require("autocannon");
 const express = require("../src/index");
 const path = require("path");
 
+const LONG_STRING = "hello".repeat(10_000);
+
 const benchmarks = [
   {
     name: "short string",
-    path: "/",
-    method: "GET",
-    response: "hello",
+    path: "/short-string",
   },
   {
     name: "long string",
-    path: "/long",
-    method: "GET",
-    response: "hello".repeat(10_000),
+    path: "/long-string",
   },
   {
     name: "static big.jpg",
@@ -45,8 +43,12 @@ function runServer(benchmark) {
       res.sendFile(path.join(__dirname, "../tests/parts", req.params.file))
     );
 
-    app.all(benchmark.path ?? "/", (req, res) => {
-      res.send(benchmark.response ?? "");
+    app.get("/short-string", (req, res) => {
+      res.send("hello");
+    });
+
+    app.get("/long-string", (req, res) => {
+      res.send(LONG_STRING);
     });
 
     app.use((req, res) => {
@@ -81,27 +83,20 @@ function runServer(benchmark) {
 }
 
 async function runBenchmark(benchmark) {
-  
   if (global.gc) global.gc();
-
-  const server = await runServer(benchmark);
 
   return new Promise((resolve) => {
     const instance = autocannon(
       {
-        url: "http://localhost:3000" + (benchmark.path ?? "/"),
+        url: "http://localhost:3000" + benchmark.path,
         duration: 15,
         connections: 20,
         pipelining: 1,
         headers: benchmark.headers ?? {},
         method: benchmark.method ?? "GET",
+        body: benchmark.body ?? undefined,
       },
       (err, result) => {
-        if (server.uwsApp) {
-          server.uwsApp.close();
-        } else {
-          server.close();
-        }
         resolve(result.requests.average);
       }
     );
@@ -113,23 +108,30 @@ async function runBenchmark(benchmark) {
 function median(values) {
   const sorted = [...values].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2
-    ? sorted[mid]
-    : (sorted[mid - 1] + sorted[mid]) / 2;
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
 (async () => {
   let maxName = 0;
+
+  const app = await runServer(benchmark);
+
   for (const b of benchmarks) maxName = Math.max(maxName, b.name.length);
 
   for (const b of benchmarks) {
     const results = [];
     for (let i = 0; i < 3; i++) {
       const result = await runBenchmark(b);
+      if (i === 0) continue; // discard first run for warmup
       results.push(result);
     }
     const alignedName = b.name.padEnd(maxName, ".");
     const m = median(results);
     console.log(`${alignedName} x ${m.toFixed(0)} req/sec`);
+  }
+  if (app.uwsApp) {
+    app.uwsApp.close();
+  } else {
+    app.close();
   }
 })();
