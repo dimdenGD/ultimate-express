@@ -39,7 +39,7 @@ function runServer(benchmark) {
     app.use("/static", express.static("../tests/parts"));
 
     app.get("/send-file/:file", (req, res) => {
-      res.sendFile("tests/parts/" + req.params.file, {
+      res.sendFile("../tests/parts/" + req.params.file, {
         root: ".",
       });
     });
