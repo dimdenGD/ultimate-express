@@ -65,7 +65,7 @@ async function runBenchmark(benchmark) {
     const instance = autocannon(
       {
         url: "http://localhost:3000" + benchmark.path,
-        duration: 15,
+        duration: 30,
         connections: 20,
         pipelining: 1,
         headers: benchmark.headers ?? {},
@@ -98,7 +98,7 @@ function median(values) {
 
   for (const b of benchmarks) {
     const results = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 5; i++) {
       const result = await runBenchmark(b);
       if (i === 0) continue; // discard first run for warmup
       results.push(result);
