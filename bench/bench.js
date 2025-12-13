@@ -25,7 +25,7 @@ const benchmarks = [
   },
 ];
 
-function runServer(benchmark) {
+function runServer() {
   return new Promise((resolve, reject) => {
     const app = express();
 
@@ -114,7 +114,7 @@ function median(values) {
 (async () => {
   let maxName = 0;
 
-  const app = await runServer(benchmark);
+  const app = await runServer();
 
   for (const b of benchmarks) maxName = Math.max(maxName, b.name.length);
 
