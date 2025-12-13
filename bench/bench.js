@@ -75,6 +75,7 @@ async function runBenchmark(benchmark) {
         method: benchmark.method ?? "GET",
         body: benchmark.body ?? undefined,
         workers,
+        socketPath: (process.platform === "linux") ? "/tmp/express-bench.sock" : undefined,
       },
       (err, result) => {
         if (err) return reject(err);

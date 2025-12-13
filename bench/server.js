@@ -54,6 +54,6 @@ app.use((err, req, res, _next) => {
   });
 });
 
-app.listen(3000, () => {
+app.listen((process.platform === "linux") ? "/tmp/express-bench.sock" : 3000, () => {
     console.log("SERVER_READY");
 });
