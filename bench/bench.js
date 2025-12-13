@@ -110,16 +110,26 @@ async function runBenchmark(benchmark) {
   });
 }
 
+function median(values) {
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2
+    ? sorted[mid]
+    : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
 (async () => {
   let maxName = 0;
   for (const b of benchmarks) maxName = Math.max(maxName, b.name.length);
 
   for (const b of benchmarks) {
-    const result = await runBenchmark(b);
-
-    const ops = result.requests.average.toFixed(0);
+    const results = [];
+    for (let i = 0; i < 5; i++) {
+      const result = await runBenchmark(b);
+      results.push(result);
+    }
     const alignedName = b.name.padEnd(maxName, ".");
-
-    console.log(`${alignedName} x ${ops} req/sec`);
+    const m = median(results);
+    console.log(`${alignedName} x ${m} req/sec`);
   }
 })();
