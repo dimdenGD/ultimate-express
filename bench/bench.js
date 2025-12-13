@@ -51,7 +51,7 @@ function runServer(benchmark) {
     });
 
     app.use((req, res) => {
-      console.log("404:", req.method, req.url.toString());
+      console.error("404:", req.method, req.url.toString());
       res.status(404).json({
         message: "NOT FOUND",
         method: req.method,
@@ -62,7 +62,7 @@ function runServer(benchmark) {
     });
 
     app.use((err, req, res) => {
-      console.log("500:", req.method, req.url.toString(), err);
+      console.error("500:", req.method, req.url.toString(), err);
       res.status(500).json({
         message: err.message,
         method: req.method,
