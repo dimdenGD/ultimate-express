@@ -14,6 +14,14 @@ const benchmarks = [
     path: "/long",
     response: "hello".repeat(10_000),
   },
+  {
+    name: "static big.jpg",
+    path: " /static/big.jpg",
+  },
+  {
+    name: "send-file big.jpg",
+    path: " /send-file/big.jpg",
+  },
 ];
 
 function runServer(benchmark) {
@@ -23,43 +31,49 @@ function runServer(benchmark) {
     app.set("etag", false);
     app.set("declarative responses", false);
     app.set("catch async errors", true);
-    
+
     app.use(express.json());
     app.use(express.urlencoded());
     app.use(express.text());
     app.use(express.raw());
-    app.use('/static', express.static('../tests/parts'));
+    app.use("/static", express.static("../tests/parts"));
 
-    app.all(benchmark.path ?? '/', (req, res) => {
-      res.send(benchmark.response ?? '');
+    app.get("/send-file/:file", (req, res) => {
+      res.sendFile("tests/parts/" + req.params.file, {
+        root: ".",
+      });
+    });
+
+    app.all(benchmark.path ?? "/", (req, res) => {
+      res.send(benchmark.response ?? "");
     });
 
     app.use((req, res) => {
-      console.log('404:', req.method, req.url.toString());
+      console.log("404:", req.method, req.url.toString());
       res.status(404).json({
-        message: 'NOT FOUND',
+        message: "NOT FOUND",
         method: req.method,
         url: req.url,
         headers: req.headers,
-        query: req.query
+        query: req.query,
       });
     });
-    
+
     app.use((err, req, res) => {
       res.status(500).json({
         message: err.message,
         method: req.method,
         url: req.url,
         headers: req.headers,
-        query: req.query
+        query: req.query,
       });
     });
 
     app.listen(3000, () => resolve(app));
 
     server.on("error", (err) => {
-        console.error("Server error:", err);
-        reject(err);
+      console.error("Server error:", err);
+      reject(err);
     });
   });
 }
@@ -70,7 +84,7 @@ async function runBenchmark(benchmark) {
   return new Promise((resolve) => {
     const instance = autocannon(
       {
-        url: "http://localhost:3000" + (benchmark.path ?? '/'),
+        url: "http://localhost:3000" + (benchmark.path ?? "/"),
         connections: 50,
         duration: 5,
         pipelining: 1,
@@ -96,7 +110,7 @@ async function runBenchmark(benchmark) {
 
     const ops = result.requests.average.toFixed(0);
     const alignedName = b.name.padEnd(maxName, ".");
-    
+
     console.log(`${alignedName} x ${ops} req/sec`);
   }
 })();
