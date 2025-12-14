@@ -35,8 +35,11 @@ function runServer() {
     );
 
     server.stdout.on("data", (data) => {
-      if (data.toString().includes("SERVER_READY")) {
+      const message = data.toString();  
+      if (message.includes("SERVER_READY")) {
         resolve(server);
+      } else if (message.includes("SERVER_ERROR")) {
+        reject(new Error("SERVER_ERROR"));
       }
     });
 

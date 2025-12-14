@@ -40,6 +40,10 @@ app.use((err, req, res, _next) => {
   });
 });
 
-app.listen((process.platform === "linux" || process.platform === "darwin") ? "/tmp/express-bench.sock" : 3000, () => {
-    console.log("SERVER_READY");
-});
+try {
+  app.listen((process.platform === "linux" || process.platform === "darwin") ? "/tmp/express-bench.sock" : 3000, () => {
+      console.log("SERVER_READY");
+  });
+} catch (err) {
+  console.error("SERVER_ERROR", err);
+}
