@@ -4,7 +4,6 @@ const { spawn } = require('child_process')
 
 const cliSelect = require('cli-select')
 const simpleGit = require('simple-git')
-const os = require("os");
 
 const git = simpleGit(process.cwd())
 
@@ -108,7 +107,7 @@ function compareResults (featureBranch, mainBranch) {
 
   console.log(`Node ${process.version} on ${process.platform}/${process.arch}`);
   console.log(`CPU ${require("os").cpus()[0].model} (${require("os").cpus().length} cores) RAM ${(require("os").totalmem() / 1024 ** 3).toFixed(1)} GB`);
-
+  console.log()
 
   try {
     debugger;
