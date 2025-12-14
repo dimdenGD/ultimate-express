@@ -4,6 +4,7 @@ const { spawn } = require('child_process')
 
 const cliSelect = require('cli-select')
 const simpleGit = require('simple-git')
+const os = require("os");
 
 const git = simpleGit(process.cwd())
 
@@ -90,8 +91,6 @@ function compareResults (featureBranch, mainBranch) {
   const branches = await git.branch()
   const currentBranch = branches.branches[branches.current]
 
-  
-
   let featureBranch = process.argv[2] ?? null
   let mainBranch = process.argv[3] ?? null
 
@@ -106,6 +105,10 @@ function compareResults (featureBranch, mainBranch) {
   if (!mainBranch) {
     mainBranch = await selectBranchName('Select the main branch to compare against:', branches.all.filter(b => b !== featureBranch))
   }
+
+  console.log(`Node ${process.version} on ${process.platform}/${process.arch}`);
+  console.log(`CPU ${require("os").cpus()[0].model} (${require("os").cpus().length} cores) RAM ${(require("os").totalmem() / 1024 ** 3).toFixed(1)} GB`);
+
 
   try {
     debugger;
