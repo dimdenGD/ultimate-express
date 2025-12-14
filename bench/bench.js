@@ -11,21 +11,9 @@ const workers = Math.max(1, Math.min(cores - 1, 4));
 
 const benchmarks = [
   {
-    name: "short string",
-    path: "/short-string",
-  },
-  {
     name: "long string",
     path: "/long-string",
-  },
-  {
-    name: "static big.jpg",
-    path: "/static/big.jpg",
-  },
-  {
-    name: "send-file big.jpg",
-    path: "/send-file/big.jpg",
-  },
+  }
 ];
 
 function sleep(ms) {

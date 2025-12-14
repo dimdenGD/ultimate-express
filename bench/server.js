@@ -1,7 +1,6 @@
 "use strict";
 
 const express = require("../src/index");
-const path = require("path");
 
 const LONG_STRING = "hello".repeat(10_000);
 
@@ -11,21 +10,8 @@ app.set("etag", false);
 app.set("declarative responses", false);
 app.set("catch async errors", true);
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
 app.get("/", (req, res) => {
   res.send("ok");
-});
-
-app.use("/static", express.static(path.join(__dirname, "../tests/parts")));
-
-app.get("/send-file/:file", (req, res) =>
-  res.sendFile(path.join(__dirname, "../tests/parts", req.params.file))
-);
-
-app.get("/short-string", (req, res) => {
-  res.send("hello");
 });
 
 app.get("/long-string", (req, res) => {
