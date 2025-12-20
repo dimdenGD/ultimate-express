@@ -110,7 +110,6 @@ function compareResults (featureBranch, mainBranch) {
   console.log()
 
   try {
-    debugger;
     const featureBranchResult = await executeCommandOnBranch(COMMAND, featureBranch)
     const mainBranchResult = await executeCommandOnBranch(COMMAND, mainBranch)
     compareResults(featureBranchResult, mainBranchResult)
