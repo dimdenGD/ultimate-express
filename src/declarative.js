@@ -31,7 +31,7 @@ module.exports = function compileDeclarative(cb, app) {
 
         const tokens = [...acorn.tokenizer(code, { ecmaVersion: "latest" })];
 
-        if(tokens.some(token => ['throw', 'new', 'await', 'return'].includes(token.value))) {
+        if(tokens.some(token => ['throw', 'new', 'await', 'return', 'try', 'catch', 'finally', 'if', 'else', 'switch', 'case', 'default', 'for', 'while', 'do', 'var', 'let', 'const'].includes(token.value))) {
             return false;
         }
 
