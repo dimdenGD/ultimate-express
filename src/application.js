@@ -28,6 +28,54 @@ const cpuCount = os.cpus().length;
 let workers = [];
 let taskKey = 0;
 const workerTasks = new NullObject();
+class Server {
+    constructor(app) {
+        this.app = app;
+        this.socket = null;
+        this.listening = false;
+        this._handlers = {};
+    }
+
+    on(event, cb) {
+        if(!this._handlers[event]) {
+            this._handlers[event] = [];
+        }
+        this._handlers[event].push(cb);
+    }
+
+    emit(event, ...args) {
+        if(this._handlers[event]) {
+            this._handlers[event].forEach(cb => cb(...args));
+        }
+    }
+
+    address() {
+        if(this.listening) {
+            return { port: this.app.port, family: 'IPv4', address: '127.0.0.1' };
+        }
+        return null;
+    }
+
+    ref() {
+        // Not implemented
+    }
+
+    unref() {
+        // Not implemented
+    }
+
+    close(cb) {
+        if(this.listening && this.socket) {
+            uWS.us_listen_socket_close(this.socket);
+            this.listening = false;
+            this.socket = null;
+            this.emit('close');
+            if(cb) cb();
+        } else if(cb) {
+            cb(new Error('Server is not running'));
+        }
+    }
+}
 
 class FSWorker {
     constructor() {
@@ -220,12 +268,16 @@ class Application extends Router {
             callback = host;
             host = undefined;
         }
+        const server = new Server(this);
         const onListen = socket => {
             if(!socket) {
                 let err = new Error('Failed to listen on port ' + port + '. No permission or address already in use.');
                 throw err;
             }
             this.port = uWS.us_socket_local_port(socket);
+            server.socket = socket;
+            server.listening = true;
+            server.emit('listening');
             if(callback) callback(this.port);
         };
         let fn = 'listen';
@@ -249,7 +301,7 @@ class Application extends Router {
         }
         this.listenCalled = true;
         this.uwsApp[fn](...args);
-        return this.uwsApp;
+        return server;
     }
 
     address() {
