@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  bench-env:
+    build:
+      context: ..
+      dockerfile: bench/Dockerfile
+    container_name: express-bench-env
+    tty: true
+    stdin_open: true
+    volumes:
+      - ..:/app
+    working_dir: /app/bench
