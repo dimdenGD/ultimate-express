@@ -104,11 +104,11 @@ module.exports = class Router extends EventEmitter {
         return fullMountpath;
     }
 
-    _pathMatches(route, req) {
+    _pathMatches(route, req, strictRouting) {
         let path = req._opPath;
         let pattern = route.pattern;
 
-        if(req.endsWithSlash && path.endsWith('/') && !this.get('strict routing')) {
+        if(req.endsWithSlash && path.endsWith('/') && !strictRouting) {
             path = path.slice(0, -1);
         }
 
@@ -458,7 +458,8 @@ module.exports = class Router extends EventEmitter {
     }
 
     async _routeRequest(req, res, startIndex = 0, routes = this._routes, skipCheck = false, skipUntil) {
-        let routeIndex = skipCheck ? startIndex : findIndexStartingFrom(routes, r => (r.all || r.method === req.method || req._isOptions || (r.gettable && req._isHead)) && this._pathMatches(r, req), startIndex);
+        const strictRouting = this.get('strict routing');
+        let routeIndex = skipCheck ? startIndex : findIndexStartingFrom(routes, r => (r.all || r.method === req.method || req._isOptions || (r.gettable && req._isHead)) && this._pathMatches(r, req, strictRouting), startIndex);
         const route = routes[routeIndex];
         if(!route) {
             if(!skipCheck) {
@@ -475,8 +476,7 @@ module.exports = class Router extends EventEmitter {
         // so call it as async when the request has been through every 300 routes to reset it
         const continueRoute = this._paramCallbacks.size === 0 && req.routeCount % 300 !== 0 ? 
             this._preprocessRequest(req, res, route) : await this._preprocessRequest(req, res, route);
-        
-        const strictRouting = this.get('strict routing');
+
         if(route.use) {
             req._stack.push(route.path);
             const fullMountpath = this.getFullMountpath(req);
@@ -496,13 +496,24 @@ module.exports = class Router extends EventEmitter {
             }
         }
         return new Promise((resolve) => {
-            const next = async (thingamabob) => {
+            const self = this;
+            function next(thingamabob) {
                 if(thingamabob) {
                     if(thingamabob === 'route' || thingamabob === 'skipPop') {
                         if(route.use && thingamabob !== 'skipPop') {
-                            req._stack.pop();
-                            
-                            req._opPath = req._stack.length > 0 ? req._originalPath.replace(this.getFullMountpath(req), '') : req._originalPath;
+                            if(req._stack.length > 1){
+                                req._stack.pop();
+                                const fullMountpath = self.getFullMountpath(req);
+                                if (fullMountpath !== EMPTY_REGEX){
+                                    req._opPath = req._originalPath.replace(fullMountpath, '');
+                                } else {
+                                    req._opPath = req._originalPath;
+                                }
+                            } else {
+                                req._stack = [];
+                                req._opPath = req._originalPath;
+                            }
+                        
                             if(strictRouting) {
                                 if(req.endsWithSlash && req._opPath[req._opPath.length - 1] !== '/') {
                                     req._opPath += '/';
@@ -522,7 +533,7 @@ module.exports = class Router extends EventEmitter {
                             }
                         }
                         req.routeCount++;
-                        return resolve(this._routeRequest(req, res, routeIndex + 1, routes, skipCheck, skipUntil));
+                        return resolve(self._routeRequest(req, res, routeIndex + 1, routes, skipCheck, skipUntil));
                     } else {
                         req._error = thingamabob;
                         req._errorKey = route.routeKey;
@@ -532,7 +543,7 @@ module.exports = class Router extends EventEmitter {
                 if(!callback) {
                     return next('route');
                 }
-                if(callback instanceof Router) {
+                if(typeof callback._routeRequest === 'function') {
                     if(callback.constructor.name === 'Application') {
                         req.app = callback;
                     }
@@ -542,26 +553,45 @@ module.exports = class Router extends EventEmitter {
                     if(callback.settings['strict routing'] && req.endsWithSlash && req._opPath[req._opPath.length - 1] !== '/') {
                         req._opPath += '/';
                     }
-                    const routed = await callback._routeRequest(req, res, 0);
-                    if (req._error) {
-                        req._errorKey = route.routeKey;
+                    const routed = callback._routeRequest(req, res, 0);
+                    if (routed && typeof routed.then === 'function') {
+                        routed.then(routed => {
+                            // This code has been duplicated in two places, please keep it aligned
+                            // BEGIN: @routed
+                            if (req._error) {
+                                req._errorKey = route.routeKey;
+                            }
+                            if (routed) return resolve(true);
+                            else if (req._isOptions && req._matchedMethods.size) {
+                                // OPTIONS routing is different, it stops in the router if matched
+                                return resolve(false);
+                            }
+                            next();
+                            // END: @routed
+                        });
+                    } else {
+                        // This code has been duplicated in two places, please keep it aligned
+                        // BEGIN: @routed
+                        if (req._error) {
+                            req._errorKey = route.routeKey;
+                        }
+                        if(routed) return resolve(true);
+                        else if(req._isOptions && req._matchedMethods.size) {
+                            // OPTIONS routing is different, it stops in the router if matched
+                            return resolve(false);
+                        }
+                        next();
+                        // END: @routed
                     }
-                    if(routed) return resolve(true);
-                    else if(req._isOptions && req._matchedMethods.size) {
-                        // OPTIONS routing is different, it stops in the router if matched
-                        return resolve(false);
-                    }
-                    next();
                 } else {
                     // handle errors and error handlers
                     if(req._error || callback.length === 4) {
                         if(req._error && callback.length === 4 && route.routeKey >= req._errorKey) {
-                            return this._handleError(req._error, callback, req, res);
+                            return self._handleError(req._error, callback, req, res);
                         } else {
                             return next();
                         }
                     }
-                    
                     try {
                         // handling OPTIONS method
                         if(req._isOptions && !route.all && route.method !== 'OPTIONS') {
@@ -577,9 +607,9 @@ module.exports = class Router extends EventEmitter {
                             return next();
                         }
                         const out = callback(req, res, next);
-                        if(out instanceof Promise) {
+                        if(out && typeof out.then === 'function') {
                             out.catch(err => {
-                                if(this.get("catch async errors")) {
+                                if(self.get("catch async errors")) {
                                     req._error = err;
                                     req._errorKey = route.routeKey;
                                     return next();
