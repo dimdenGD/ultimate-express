@@ -366,7 +366,7 @@ module.exports = class Router extends EventEmitter {
         }
         let match = pattern.exec(path);
         const obj = new NullObject();
-        if(match.groups) {
+        if(match?.groups) {
             for(let name in match.groups) {
                 if(name.startsWith('_wc')) {
                     obj[name.slice(3)] = match.groups[name];
