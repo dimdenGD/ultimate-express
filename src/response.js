@@ -39,6 +39,9 @@ const outgoingMessage = new http.OutgoingMessage();
 const symbols = Object.getOwnPropertySymbols(outgoingMessage);
 const kOutHeaders = symbols.find(s => s.toString() === 'Symbol(kOutHeaders)');
 const HIGH_WATERMARK = 256 * 1024;
+const MAX_BATCH_SIZE = 64 * 1024 * 1024; // or configurable
+
+const textEncoder = new TextEncoder();
 
 class Socket extends EventEmitter {
     constructor(response) {
@@ -71,8 +74,10 @@ module.exports = class Response extends Writable {
     #socket = null;
     #ended = false;
     #pendingChunks = [];
+    #pendingSize = 0;
     #lastWriteChunkTime = 0;
-    #writeTimeout = null;
+    #flushScheduled = false;
+
     constructor(res, req, app) {
         super();
         this._req = req;
@@ -141,6 +146,9 @@ module.exports = class Response extends Writable {
         }
 
         this.writingChunk = true;
+
+        const view = this._normalizeToUint8Array(chunk);
+
         this._res.cork(() => {
             if (!this.headersSent) {
                 this.writeHead(this.statusCode);
@@ -148,77 +156,129 @@ module.exports = class Response extends Writable {
                 this._res.writeStatus(`${this.statusCode} ${statusMessage}`.trim());
                 this.writeHeaders(typeof chunk === 'string');
             }
-    
-            if (!Buffer.isBuffer(chunk) && !(chunk instanceof ArrayBuffer)) {
-                chunk = Buffer.from(chunk);
-                chunk = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
-            }
-    
+
             if (this.chunkedTransfer) {
-                this.#pendingChunks.push(chunk);
-                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
+                this.#pendingChunks.push(view);
+                this.#pendingSize += view.byteLength;
+
                 const now = performance.now();
                 // the first chunk is sent immediately (!this.#lastWriteChunkTime)
                 // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
                 // or if elapsed 50ms of last send (now - this.#lastWriteChunkTime > 50)
-                if (!this.#lastWriteChunkTime || size >= HIGH_WATERMARK || now - this.#lastWriteChunkTime > 50) {
-                    this._res.write(Buffer.concat(this.#pendingChunks, size));
-                    this.#pendingChunks = [];
-                    this.#lastWriteChunkTime = now;
-                    if(this.#writeTimeout) {
-                        clearTimeout(this.#writeTimeout);
-                        this.#writeTimeout = null;
-                    }
-                } else if(!this.#writeTimeout) {
-                    this.#writeTimeout = setTimeout(() => {
-                        this.#writeTimeout = null;
-                        if(!this.finished && !this.aborted) this._res.cork(() => {
-                            if(this.#pendingChunks.length) {
-                                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-                                this._res.write(Buffer.concat(this.#pendingChunks, size));
-                                this.#pendingChunks = [];
-                                this.#lastWriteChunkTime = performance.now();
-                            }
-                        });
-                    }, 50);
-                    this.#writeTimeout.unref();
+                // or if pending size is very large (to avoid excessive memory use)
+                if (!this.#lastWriteChunkTime || this.#pendingSize >= HIGH_WATERMARK || (now - this.#lastWriteChunkTime) > 50 || this.#pendingSize >= MAX_BATCH_SIZE) {
+                    this._flushPending();
+                    this.writingChunk = false;
+                    callback(null);
+                    return;
                 }
+
+                // schedule a single microtask flush per event loop tick
+                if (!this.#flushScheduled) {
+                    this.#flushScheduled = true;
+                    // queueMicrotask is ideal: runs at microtask checkpoint, cheap
+                    queueMicrotask(() => {
+                        this.#flushScheduled = false;
+                        if (!this.finished && !this.aborted) {
+                            // cork to batch syscalls but avoid nested corks in other places
+                            this._res.cork(() => this._flushPending());
+                        }
+                    });
+                }
+
                 this.writingChunk = false;
                 callback(null);
             } else {
                 const lastOffset = this._res.getWriteOffset();
-                const [ok, done] = this._res.tryEnd(chunk, this.totalSize);
+                const [ok, done] = this._res.tryEnd(view, this.totalSize);
                 if (done) {
                     super.end();
                     this.finished = true;
                     this.writingChunk = false;
                     this.#socket?.emit('close');
                     callback(null);
-                } else if (!ok) {
-                    this._res.ab = chunk;
+                    return;
+                }
+
+                if (!ok) {
+                    this._res.ab = view;
                     this._res.abOffset = lastOffset;
-                    let handlerUsed = false;
+
                     this._res.onWritable((offset) => {
-                        if (this.finished || handlerUsed) return true;
-                        const [ok, done] = this._res.tryEnd(this._res.ab.slice(offset - this._res.abOffset), this.totalSize);
-                        if (done) {
+                        if (this.finished) return true;
+
+                        const start = offset - this._res.abOffset;
+                        if (offset <= this._res.abOffset) return true; // nothing to do
+                        const slice = this._res.ab.subarray(start); // no copy, view only
+                        const [ok2, done2] = this._res.tryEnd(slice, this.totalSize);
+
+                        if (done2) {
                             this.finished = true;
                             this.#socket?.emit('close');
+                            return true;
                         }
-                        if (ok) {
+
+                        if (ok2) {
                             this.writingChunk = false;
-                            handlerUsed = true;
                             callback(null);
+                            return true;
                         }
-                        return ok;
+
+                        return false;
                     });
-                } else {
-                    this.writingChunk = false;
-                    callback(null);
+                    return;
                 }
+
+                this.writingChunk = false;
+                callback(null);
             }
         });
     }
+
+    _normalizeToUint8Array(chunk) {
+        if (chunk instanceof Uint8Array) return chunk;
+        if (ArrayBuffer.isView(chunk) || Buffer.isBuffer(chunk)) {
+            return new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength);
+        }
+        if (chunk instanceof ArrayBuffer) {
+            return new Uint8Array(chunk);
+        }
+        if (typeof chunk === 'string') {
+            return textEncoder.encode(chunk);
+        }
+        // fallback: stringify then buffer
+        return textEncoder.encode(String(chunk));
+    }
+
+    _flushPending() {
+        if (!this.#pendingChunks || this.#pendingChunks.length === 0) return;
+
+        const total = this.#pendingSize;
+        // allocate single buffer
+        const out = new Uint8Array(total);
+        let offset = 0;
+        for (let i = 0; i < this.#pendingChunks.length; i++) {
+            const chunk = this.#pendingChunks[i];
+            out.set(chunk, offset);
+            offset += chunk.byteLength;
+        }
+
+        // write the combined ArrayBuffer (uWS accepts ArrayBuffer/TypedArray)
+        try {
+            this._res.write(out);
+        } catch (err) {
+            // on rare errors, emit and attempt to close
+            this.emit('error', err);
+            this._res.close();
+            this.finished = true;
+            this.#socket?.emit('close');
+        }
+
+        this.#pendingChunks.length = 0;
+        this.#pendingSize = 0;
+        this.#lastWriteChunkTime = performance.now();
+    }
+
     writeHead(statusCode, statusMessage, headers) {
         this.statusCode = statusCode;
         if(typeof statusMessage === 'string') {
@@ -306,15 +366,35 @@ module.exports = class Response extends Writable {
                     return;
                 }
             }
+
             const contentLength = this.headers['content-length'];
             if(!data && contentLength) {
                 this._res.endWithoutBody(contentLength.toString());
             } else {
+                // if there are pending chunks flush them using the efficient single-allocation flush
                 if(this.#pendingChunks.length) {
-                    this._res.write(Buffer.concat(this.#pendingChunks));
-                    this.#pendingChunks = [];
-                    this.lastWriteChunkTime = 0;
+                    // reuse _flushPending logic but ensure we pass ArrayBuffer to _res.end if needed
+                    const total = this.#pendingSize;
+                    const out = new Uint8Array(total);
+                    let offset = 0;
+                    for (let i = 0; i < this.#pendingChunks.length; i++) {
+                        const chunk = this.#pendingChunks[i];
+                        out.set(chunk, offset);
+                        offset += chunk.byteLength;
+                    }
+                    // reset pending
+                    this.#pendingChunks.length = 0;
+                    this.#pendingSize = 0;
+                    this.#lastWriteChunkTime = performance.now();
+                    // write the combined buffer
+                    if(this.req.method === 'HEAD') {
+                        // HEAD must not send body; only set length
+                        this._res.endWithoutBody(out.byteLength.toString());
+                    } else {
+                        this._res.write(out);
+                    }
                 }
+
                 if(data instanceof Buffer) {
                     data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
                 }
