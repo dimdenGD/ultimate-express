@@ -45,7 +45,14 @@ declare module "ultimate-express" {
     export import Send = e.Send;
   }
 
-  function express(settings?: Settings): e.Express & {readonly uwsApp: uWS.TemplatedApp};
+  type UltimateExpress = Omit<e.Express, 'listen'> & {
+    readonly uwsApp: uWS.TemplatedApp;
+    listen(port: number, callback?: (token: any) => void): uWS.TemplatedApp;
+    listen(host: string, port: number, callback?: (token: any) => void): uWS.TemplatedApp;
+    listen(callback: (token: any) => void): uWS.TemplatedApp;
+  };
+
+  function express(settings?: Settings): UltimateExpress;
 
   export = express;
 }
