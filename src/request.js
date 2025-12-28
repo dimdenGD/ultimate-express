@@ -40,6 +40,11 @@ module.exports = class Request extends Readable {
     #needsData = false;
     #doneReadingData = false;
     #bufferedData = null;
+    body;
+    res;
+    optimizedParams;
+    _error;
+    noEtag;
     constructor(req, res, app) {
         super();
         this._res = res;
@@ -143,7 +148,7 @@ module.exports = class Request extends Readable {
     }
 
     set baseUrl(x) {
-        return this._originalPath = x;
+        this._originalPath = x;
     }
 
     get #host() {
@@ -222,7 +227,7 @@ module.exports = class Request extends Readable {
     }
 
     set query(query) {
-        return this.#cachedQuery = query;
+        this.#cachedQuery = query;
     }
     get query() {
         if(this.#cachedQuery) {

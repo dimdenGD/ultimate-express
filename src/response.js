@@ -73,6 +73,7 @@ module.exports = class Response extends Writable {
     #pendingChunks = [];
     #lastWriteChunkTime = 0;
     #writeTimeout = null;
+    req;
     constructor(res, req, app) {
         super();
         this._req = req;

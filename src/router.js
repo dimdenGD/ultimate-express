@@ -40,6 +40,9 @@ const supportedUwsMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS',
 const regExParam = /:(\w+)/g;
 
 module.exports = class Router extends EventEmitter {
+    parent;
+    listenCalled;
+    uwsApp;
     constructor(settings = {}) {
         super();
 
