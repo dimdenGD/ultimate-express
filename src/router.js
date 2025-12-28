@@ -40,6 +40,9 @@ const supportedUwsMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS',
 const regExParam = /:(\w+)/g;
 
 module.exports = class Router extends EventEmitter {
+    parent;
+    listenCalled;
+    uwsApp;
     constructor(settings = {}) {
         super();
 
@@ -112,7 +115,7 @@ module.exports = class Router extends EventEmitter {
             path = path.slice(0, -1);
         }
 
-        if (typeof pattern === 'string') {
+        if(typeof pattern === 'string') {
             if(pattern === '/*') {
                 return true;
             }
@@ -125,7 +128,7 @@ module.exports = class Router extends EventEmitter {
             }
             return pattern === path;
         }
-        if (pattern === EMPTY_REGEX){
+        if(pattern === EMPTY_REGEX) {
             return true;
         }
         return pattern.test(path);
@@ -365,12 +368,15 @@ module.exports = class Router extends EventEmitter {
             path = path.slice(0, -1);
         }
         let match = pattern.exec(path);
-        if( match?.groups ){
-            return match.groups;
-        }
         const obj = new NullObject();
-        for(let i = 1; i < match.length; i++) {
-            obj[i - 1] = match[i];
+        if(match?.groups) {
+            for(let name in match.groups) {
+                if(name.startsWith('_wc')) {
+                    obj[name.slice(3)] = match.groups[name];
+                } else {
+                    obj[name] = match.groups[name];
+                }
+            }
         }
         return obj;
     }
@@ -383,7 +389,7 @@ module.exports = class Router extends EventEmitter {
             let path = req._originalPath;
             if(req._stack.length > 0) {
                 const fullMountpath = this.getFullMountpath(req);
-                if (fullMountpath !== EMPTY_REGEX){
+                if(fullMountpath !== EMPTY_REGEX) {
                     path = path.replace(fullMountpath, '');
                 } 
             }
@@ -543,7 +549,7 @@ module.exports = class Router extends EventEmitter {
                         req._opPath += '/';
                     }
                     const routed = await callback._routeRequest(req, res, 0);
-                    if (req._error) {
+                    if(req._error) {
                         req._errorKey = route.routeKey;
                     }
                     if(routed) return resolve(true);

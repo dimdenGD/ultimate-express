@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "ES2022",
+        "allowJs": true,
+        "checkJs": true,
+        "strict": false,
+        "baseUrl": "./",
+        "paths": {
+            "*": [
+                "node_modules/*"
+            ]
+        }
+    },
+    "include": [
+        "src/**/*",
+        "tests/**/*",
+        "demo/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "coverage"
+    ]
+}

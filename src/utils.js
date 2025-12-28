@@ -51,10 +51,11 @@ function patternToRegex(pattern, isPrefix = false) {
         return EMPTY_REGEX;
     }
 
+    let wildcardIndex = 0;
     let regexPattern = pattern
         .replaceAll('.', '\\.')
         .replaceAll('-', '\\-')
-        .replaceAll('*', '(.*)') // Convert * to .*
+        .replaceAll(/(\*|\(.*?\))/g, (match) => `(?<_wc${wildcardIndex++}>${match.startsWith('(') ? match.slice(1, -1) : match.replaceAll('*', '.*')})`) // Convert * to .* and stuff in parentheses to capture group
         .replace(/\/:(\w+)(\(.+?\))?\??/g, (match, param, regex) => {
             const optional = match.endsWith('?');
             return `\\/${optional ? '?' : ''}(?<${param}>${regex ? regex + '($|\\/)' : '[^/]+'})${optional ? '?' : ''}`;
@@ -67,10 +68,7 @@ function needsConversionToRegex(pattern) {
     if(pattern instanceof RegExp) {
         return false;
     }
-    if(pattern === '/*') {
-        return false;
-    }
-
+    
     return pattern.includes('*') ||
         pattern.includes('?') ||
         pattern.includes('+') ||
