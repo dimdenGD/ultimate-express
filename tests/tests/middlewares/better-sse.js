@@ -1,14 +1,15 @@
 // must support server-sent events
 
 const express = require("express");
-const { createSession } = require("better-sse");
+const { createSession, NodeHttp1Connection } = require("better-sse");
 const { EventSource } = require("eventsource");
 
 const app = express();
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 app.get('/sse', async (req, res) => {
-    const session = await createSession(req, res);
+    const connection = new NodeHttp1Connection(req, res);
+    const session = await createSession(connection);
     session.push('hello');
     await sleep(50);
     session.push('world');
