@@ -39,8 +39,7 @@ const outgoingMessage = new http.OutgoingMessage();
 const symbols = Object.getOwnPropertySymbols(outgoingMessage);
 const kOutHeaders = symbols.find(s => s.toString() === 'Symbol(kOutHeaders)');
 const HIGH_WATERMARK = 256 * 1024;
-const MAX_BATCH_SIZE = 64 * 1024 * 1024; // or configurable
-
+const MAX_BATCH_SIZE = 64 * 1024 * 1024;
 const textEncoder = new TextEncoder();
 
 class Socket extends EventEmitter {
@@ -160,7 +159,6 @@ module.exports = class Response extends Writable {
             if (this.chunkedTransfer) {
                 this.#pendingChunks.push(view);
                 this.#pendingSize += view.byteLength;
-
                 const now = performance.now();
                 // the first chunk is sent immediately (!this.#lastWriteChunkTime)
                 // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
@@ -203,7 +201,6 @@ module.exports = class Response extends Writable {
                 if (!ok) {
                     this._res.ab = view;
                     this._res.abOffset = lastOffset;
-
                     this._res.onWritable((offset) => {
                         if (this.finished) return true;
 
@@ -223,7 +220,6 @@ module.exports = class Response extends Writable {
                             callback(null);
                             return true;
                         }
-
                         return false;
                     });
                     return;
@@ -366,7 +362,6 @@ module.exports = class Response extends Writable {
                     return;
                 }
             }
-
             const contentLength = this.headers['content-length'];
             if(!data && contentLength) {
                 this._res.endWithoutBody(contentLength.toString());
@@ -394,7 +389,6 @@ module.exports = class Response extends Writable {
                         this._res.write(out);
                     }
                 }
-
                 if(data instanceof Buffer) {
                     data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
                 }
