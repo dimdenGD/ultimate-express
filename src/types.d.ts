@@ -7,6 +7,7 @@ declare module "ultimate-express" {
     threads?: number;
     http3?: boolean;
     uwsApp?: uWS.TemplatedApp;
+    silent?: boolean;
   };
 
   namespace express {

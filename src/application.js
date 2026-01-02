@@ -59,6 +59,9 @@ class Application extends Router {
         if(typeof settings.threads !== 'number') {
             settings.threads = cpuCount > 1 ? 1 : 0;
         }
+        if(settings.uwsOptions.silent) {
+            uWS._cfg('silent');
+        }
         if(settings.uwsApp) {
             this.uwsApp = settings.uwsApp;
         } else if(settings.http3) {
