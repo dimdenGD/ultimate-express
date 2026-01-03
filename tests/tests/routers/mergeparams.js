@@ -3,8 +3,8 @@
 const express = require("express");
 
 const app = express();
-const router = new express.Router({ mergeParams: true });
-const router2 = new express.Router({ mergeParams: true });
+const router = express.Router({ mergeParams: true });
+const router2 = express.Router({ mergeParams: true });
 
 app.use('/:param1', router);
 router.use('/:param2', router2);
