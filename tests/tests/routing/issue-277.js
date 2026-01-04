@@ -7,7 +7,11 @@ const app = express();
 app.set("catch async errors", true);
 
 const dynamicRouter = async (req, res, next) => {
-  throw new Error("error");
+  try {
+    throw new Error("error");
+  } catch (error) {
+    next(error);
+  }
 };
 app.use(dynamicRouter); // load routes
 
@@ -29,10 +33,15 @@ const generalHandler = (err, _req, res, _next) => {
 app.use(zodHandler);
 app.use(generalHandler);
 
+app.get("/", async (req, res) => {
+  res.send("ok");
+});
+
+
 app.listen(13333, async () => {
   console.log("Server is running at http://localhost:13333");
   console.log(
     await fetch("http://localhost:13333/").then((res) => res.text()).catch((err) => err.message)
   );
-  // process.exit(0);
+  process.exit(0);
 });
