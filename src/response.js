@@ -73,6 +73,7 @@ module.exports = class Response extends Writable {
     #pendingChunks = [];
     #lastWriteChunkTime = 0;
     #writeTimeout = null;
+    req;
     constructor(res, req, app) {
         super();
         this._req = req;
@@ -854,7 +855,7 @@ module.exports = class Response extends Writable {
     vary(field) {
         // checks for back-compat
         if (!field || (Array.isArray(field) && !field.length)) {
-            deprecate('res.vary(): Provide a field name');
+            deprecated('res.vary(): Provide a field name');
             return this;
         }
         vary(this, field);
