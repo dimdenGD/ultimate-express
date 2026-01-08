@@ -38,7 +38,7 @@ const etag = require("etag");
 const outgoingMessage = new http.OutgoingMessage();
 const symbols = Object.getOwnPropertySymbols(outgoingMessage);
 const kOutHeaders = symbols.find(s => s.toString() === 'Symbol(kOutHeaders)');
-const HIGH_WATERMARK = 256 * 1024;
+const HIGH_WATERMARK = 128 * 1024;
 
 class Socket extends EventEmitter {
     constructor(response) {
