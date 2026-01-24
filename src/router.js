@@ -350,10 +350,10 @@ module.exports = class Router extends EventEmitter {
 
     _handleError(err, handler, request, response) {
         if(handler) {
-            return handler(err, request, response, () => {
+            return handler(err, request, response, (pass) => {
                 delete request._error;
                 delete request._errorKey;
-                return request.next();
+                return request.next(pass);
             });
         }
         console.error(err);
