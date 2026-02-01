@@ -22,61 +22,71 @@ app.get('/abc', (req, res) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    // sent with pipe
-    let response = await fetch('http://localhost:13333/large-file.json', {
-        method: 'GET',
-        headers: {
-            'Accept-Encoding': 'gzip',
-        },
-    });
-    
-    console.log(response.headers.get('content-encoding'), response.headers.get('content-encoding') === 'gzip');
-    console.log(response.headers.get('transfer-encoding'));
-    console.log(response.headers.get('Etag'));
-    console.log(response.headers.get('content-type').toLowerCase());
-    console.log(await response.json());
+    const [response1, response2, response3, response4] = await Promise.all([
+        // sent with pipe
+        fetch('http://localhost:13333/large-file.json', {
+            method: 'GET',
+            headers: {
+                'Accept-Encoding': 'gzip',
+            },
+            keepalive: true,
+        }),
+        // sent with pipe
+        fetch('http://localhost:13333/medium-file.json', {
+            method: 'GET',
+            headers: {
+                'Accept-Encoding': 'gzip',
+            },
+            keepalive: true,
+        }),
+        // sent with worker
+        fetch('http://localhost:13333/small-file.json', {
+            method: 'GET',
+            headers: {
+                'Accept-Encoding': 'gzip',
+            },
+            keepalive: true,
+        }),
+        // sent with res.sendFile
+        fetch('http://localhost:13333/test', {
+            method: 'GET',
+            headers: {
+                'Accept-Encoding': 'gzip',
+            },
+            keepalive: true,
+        }),
+    ]);
 
-    // sent with pipe
-    response = await fetch('http://localhost:13333/medium-file.json', {
-        method: 'GET',
-        headers: {
-            'Accept-Encoding': 'gzip',
-        },
-    });
-    
-    console.log(response.headers.get('content-encoding'), response.headers.get('content-encoding') === 'gzip');
-    console.log(response.headers.get('transfer-encoding'));
-    console.log(response.headers.get('Etag'));
-    console.log(response.headers.get('content-type').toLowerCase());
-    console.log(await response.json());
+    const [data1, data2, data3, data4] = await Promise.all([
+        response1.text(),
+        response2.text(),
+        response3.text(),
+        response4.text(),
+    ]);
 
-    // sent with worker
-    response = await fetch('http://localhost:13333/small-file.json', {
-        method: 'GET',
-        headers: {
-            'Accept-Encoding': 'gzip',
-        },
-    });
-    
-    console.log(response.headers.get('content-encoding'), response.headers.get('content-encoding') === 'gzip');
-    console.log(response.headers.get('transfer-encoding'));
-    console.log(response.headers.get('Etag'));
-    console.log(response.headers.get('content-type').toLowerCase());
-    console.log(await response.json());
+    console.log(response1.headers.get('content-encoding'), response1.headers.get('content-encoding') === 'gzip');
+    console.log(response1.headers.get('transfer-encoding'));
+    console.log(response1.headers.get('Etag'));
+    console.log(response1.headers.get('content-type').toLowerCase());
+    console.log(data1);
 
-    // sent with res.sendFile
-    response = await fetch('http://localhost:13333/test', {
-        method: 'GET',
-        headers: {
-            'Accept-Encoding': 'gzip',
-        },
-    });
-    
-    console.log(response.headers.get('content-encoding'), response.headers.get('content-encoding') === 'gzip');
-    console.log(response.headers.get('transfer-encoding'));
-    console.log(response.headers.get('Etag'));
-    console.log(response.headers.get('content-type').toLowerCase());
-    console.log(await response.json());
+    console.log(response2.headers.get('content-encoding'), response2.headers.get('content-encoding') === 'gzip');
+    console.log(response2.headers.get('transfer-encoding'));
+    console.log(response2.headers.get('Etag'));
+    console.log(response2.headers.get('content-type').toLowerCase());
+    console.log(data2);
+
+    console.log(response3.headers.get('content-encoding'), response3.headers.get('content-encoding') === 'gzip');
+    console.log(response3.headers.get('transfer-encoding'));
+    console.log(response3.headers.get('Etag'));
+    console.log(response3.headers.get('content-type').toLowerCase());
+    console.log(data3);
+
+    console.log(response4.headers.get('content-encoding'), response4.headers.get('content-encoding') === 'gzip');
+    console.log(response4.headers.get('transfer-encoding'));
+    console.log(response4.headers.get('Etag'));
+    console.log(response4.headers.get('content-type').toLowerCase());
+    console.log(data4);
 
     process.exit(0);
 

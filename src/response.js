@@ -481,7 +481,11 @@ module.exports = class Response extends Writable {
 
         // headers
         if(!this.headers['content-type']) {
-            const m = mime.lookup(fullpath);
+            let m = mime.lookup(fullpath);
+            // normalize mime-types v3 changes for compatibility
+            if(m === 'text/javascript') {
+                m = 'application/javascript';
+            }
             if(m) this.type(m);
             else this.type('application/octet-stream');
         }
@@ -847,7 +851,10 @@ module.exports = class Response extends Writable {
         let ct = type.indexOf('/') === -1
             ? (mime.contentType(type) || 'application/octet-stream')
             : type;
-
+        // normalize mime-types v3 changes for compatibility
+        if(ct === 'text/javascript; charset=utf-8') {
+            ct = 'application/javascript; charset=utf-8';
+        }
         return this.set('content-type', ct);
     }
     contentType = this.type;

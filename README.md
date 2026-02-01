@@ -2,7 +2,7 @@
 
 The *Ultimate* Express. Fastest http server with **full** Express compatibility, based on µWebSockets.
 
-This library is a very fast re-implementation of Express.js 4.
+This library is a very fast re-implementation of Express.js 5.
 It is designed to be a drop-in replacement for Express.js, with the same API and functionality, while being much faster. It is not a fork of Express.js.  
 To make sure µExpress matches behavior of Express in all cases, we run all tests with Express first, and then with µExpress and compare results to make sure they match.  
 
@@ -146,7 +146,7 @@ const app = express({
 
 ## Compatibility
 
-In general, basically all features and options are supported. Use [Express 4.x documentation](https://expressjs.com/en/4x/api.html) for API reference.
+In general, basically all features and options are supported. Use [Express 5.x documentation](https://expressjs.com/en/5x/api.html) for API reference.
 
 ✅ - Full support (all features and options are supported)  
 🚧 - Partial support (some options are not supported)  
