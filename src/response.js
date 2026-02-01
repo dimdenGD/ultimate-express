@@ -851,7 +851,10 @@ module.exports = class Response extends Writable {
         let ct = type.indexOf('/') === -1
             ? (mime.contentType(type) || 'application/octet-stream')
             : type;
-
+        // normalize mime-types v3 changes for compatibility
+        if(ct === 'text/javascript; charset=utf-8') {
+            ct = 'application/javascript; charset=utf-8';
+        }
         return this.set('content-type', ct);
     }
     contentType = this.type;
