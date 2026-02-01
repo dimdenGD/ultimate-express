@@ -481,7 +481,11 @@ module.exports = class Response extends Writable {
 
         // headers
         if(!this.headers['content-type']) {
-            const m = mime.lookup(fullpath);
+            let m = mime.lookup(fullpath);
+            // normalize mime-types v3 changes for compatibility
+            if(m === 'text/javascript') {
+                m = 'application/javascript';
+            }
             if(m) this.type(m);
             else this.type('application/octet-stream');
         }
