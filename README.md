@@ -333,6 +333,7 @@ Almost all middlewares that are compatible with Express are compatible with µEx
 - ✅ [swagger-ui-express](https://www.npmjs.com/package/swagger-ui-express)
 - ✅ [graphql-http](https://www.npmjs.com/package/graphql-http)
 - ✅ [better-sse](https://www.npmjs.com/package/better-sse)
+- ✅ [supertest](https://www.npmjs.com/package/supertest)
 
 Middlewares and modules that are confirmed to not work:
 
