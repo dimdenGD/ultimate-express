@@ -784,7 +784,7 @@ module.exports = class Response extends Writable {
 
         
         if(!this.headers['content-type']) {
-            this.headers['content-type'] = `${js ? 'application/javascript' : 'application/json'}; charset=utf-8`;
+            this.headers['content-type'] = `${js ? 'text/javascript' : 'application/json'}; charset=utf-8`;
             if(js) this.headers['X-Content-Type-Options'] = 'nosniff';
         }
 
