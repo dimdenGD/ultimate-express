@@ -4,6 +4,8 @@
   "description": "The Ultimate Express. Fastest http server with full Express compatibility, based on uWebSockets.",
   "main": "src/index.js",
   "scripts": {
+    "bench": "node --expose-gc ./bench/bench.js",
+    "bench:cmp": "node ./bench/bench-cmp-branch.js",
     "test": "node tests/index.js",
     "dev": "node --inspect=9229 demo/index.js",
     "cover": "npm run cover:unit && npm run cover:report",
@@ -67,7 +69,9 @@
   },
   "devDependencies": {
     "@codechecks/client": "^0.1.12",
+    "autocannon": "^8.0.0",
     "better-sse": "^0.16.1",
+    "cli-select": "^1.1.2",
     "body-parser": "^2.2.1",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
@@ -103,6 +107,7 @@
     "pug": "^3.0.3",
     "response-time": "^2.3.4",
     "serve-index": "^1.9.1",
+    "simple-git": "^3.30.0",
     "serve-static": "^2.2.1",
     "swagger-ui-express": "^5.0.1",
     "swig": "^1.4.2",
