@@ -253,7 +253,7 @@ class Application extends Router {
     }
 
     address() {
-        return { port: this.port };
+        return this.port ? { port: this.port } : null;
     }
 
     path() {
