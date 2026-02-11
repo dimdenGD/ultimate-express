@@ -1,7 +1,6 @@
 // must support If-Unmodified-Since header
 
 const express = require("express");
-const path = require("path");
 
 const app = express();
 

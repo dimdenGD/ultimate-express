@@ -3,8 +3,8 @@
 const express = require("express");
 
 const app = express();
-const router = new express.Router();
-const router2 = new express.Router();
+const router = express.Router();
+const router2 = express.Router();
 const router3 = express.Router();
 
 router.get('/test', (req, res) => {
