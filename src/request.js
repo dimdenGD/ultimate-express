@@ -327,6 +327,12 @@ module.exports = class Request extends Readable {
     }
 
     get(field) {
+        if(!field) {
+            throw new TypeError('name argument is required to req.get');
+        }
+        if(typeof field !== 'string') {
+            throw new TypeError('name must be a string to req.get');
+        }
         field = field.toLowerCase();
         if(field === 'referrer' || field === 'referer') {
             const res = this.headers['referrer'];

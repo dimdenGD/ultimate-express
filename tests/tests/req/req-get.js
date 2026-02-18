@@ -15,13 +15,13 @@ async function sendRequest(method, url, arrayHeaders) {
         client.connect(parseInt(port), host, () => {
             let request = `${method} ${path} HTTP/1.1\r\n`;
             request += `Host: ${host}:${port}\r\n`;
-            
+
             for (const [key, value] of arrayHeaders) {
                 request += `${key}: ${value}\r\n`;
             }
-            
+
             request += '\r\n';
-            
+
             client.write(request);
 
             setTimeout(() => {
@@ -40,6 +40,16 @@ app.get("/test", (req, res) => {
     console.log(req.get('Content-Type'));
     console.log(req.get('Set-Cookie'));
     res.send("test");
+});
+
+app.get("/validate", (req, res) => {
+    const errors = [];
+
+    try { req.get(); } catch(e) { errors.push(e.message); }
+
+    try { req.get(42); } catch(e) { errors.push(e.message); }
+
+    res.json(errors);
 });
 
 app.listen(13333, async () => {
@@ -73,6 +83,10 @@ app.listen(13333, async () => {
     headers.push(['content-type', 'text/plain']);
     headers.push(['content-type', 'application/json']);
     res = await sendRequest('GET', 'http://localhost:13333/test', headers);
+
+    // test parameter validation
+    res = await fetch('http://localhost:13333/validate');
+    console.log('validate:', await res.text());
 
     process.exit(0);
 })
