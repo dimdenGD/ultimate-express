@@ -375,13 +375,25 @@ module.exports = class Request extends Readable {
 
     param(name, defaultValue) {
         deprecated('req.param(name)', 'req.params, req.body, or req.query');
-        if(this.params[name]) {
-            return this.params[name];
+
+        if(name == null) return defaultValue;
+
+        if(this.params && Object.prototype.hasOwnProperty.call(this.params, name)) {
+            const value = this.params[name];
+            if(value != null) return value;
         }
-        if(this.body && this.body[name]) {
-            return this.body[name];
+
+        if(this.body && Object.prototype.hasOwnProperty.call(this.body, name)) {
+            const value = this.body[name];
+            if(value != null) return value;
         }
-        return this.query[name] ?? defaultValue;
+
+        if(this.query && Object.prototype.hasOwnProperty.call(this.query, name)) {
+            const value = this.query[name];
+            if(value != null) return value;
+        }
+
+        return defaultValue;
     }
 
     range(size, options) {
