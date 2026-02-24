@@ -19,6 +19,7 @@ const accepts = require("accepts");
 const typeis = require("type-is");
 const parseRange = require("range-parser");
 const proxyaddr = require("proxy-addr");
+const { isIP } = require("node:net");
 const fresh = require("fresh");
 const { Readable } = require("stream");
 
@@ -246,14 +247,23 @@ module.exports = class Request extends Readable {
         return this.protocol === 'https';
     }
 
+    #cachedSubdomains = null;
+
     get subdomains() {
-        let host = this.hostname;
-        let subdomains = host.split('.');
-        const so = this.app.get('subdomain offset');
-        if(so === 0) {
-            return subdomains.reverse();
+        if(this.#cachedSubdomains !== null) {
+            return this.#cachedSubdomains;
         }
-        return subdomains.slice(0, -so).reverse();
+
+        const hostname = this.hostname;
+        if(!hostname || isIP(hostname)) {
+            return this.#cachedSubdomains = [];
+        }
+
+        const offset = this.app.get('subdomain offset');
+        const parts = hostname.split('.');
+        const subdomains = parts.reverse().slice(offset);
+
+        return this.#cachedSubdomains = subdomains;
     }
 
     get xhr() {

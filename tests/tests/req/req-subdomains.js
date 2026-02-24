@@ -44,5 +44,8 @@ app.listen(13333, async () => {
     res = await sendRequest('GET', 'http://localhost:13333/test', 'bob.asdf.test.localhost.com');
     res = await sendRequest('GET', 'http://localhost:13333/test', 'localhost:3333');
 
+    res = await sendRequest('GET', 'http://localhost:13333/test', '127.0.0.1');
+    res = await sendRequest('GET', 'http://localhost:13333/test', '127.0.0.1:3333');
+
     process.exit(0);
-})
+});
