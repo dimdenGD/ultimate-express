@@ -372,6 +372,21 @@ module.exports = class Request extends Readable {
         return accepts(this).languages(...languages);
     }
 
+    acceptsEncoding(...args) {
+        deprecated('req.acceptsEncoding', 'req.acceptsEncodings');
+        return this.acceptsEncodings(...args);
+    }
+
+    acceptsCharset(...args) {
+        deprecated('req.acceptsCharset', 'req.acceptsCharsets');
+        return this.acceptsCharsets(...args);
+    }
+
+    acceptsLanguage(...args) {
+        deprecated('req.acceptsLanguage', 'req.acceptsLanguages');
+        return this.acceptsLanguages(...args);
+    }
+
     is(types) {
         if(Array.isArray(types)) {
             return typeis(this, types);
