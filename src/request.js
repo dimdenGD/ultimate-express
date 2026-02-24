@@ -257,7 +257,8 @@ module.exports = class Request extends Readable {
     }
 
     get xhr() {
-        return this.headers['x-requested-with'] === 'XMLHttpRequest';
+        const val = this.headers?.['x-requested-with'];
+        return typeof val === 'string' && val.toLowerCase() === 'xmlhttprequest';
     }
 
     get parsedIp() {

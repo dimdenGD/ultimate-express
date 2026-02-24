@@ -19,5 +19,11 @@ app.listen(13333, async () => {
         }
     }).then(res => res.text());
 
+    await fetch('http://localhost:13333/test', {
+        headers: {
+            'X-Requested-With': 'xmlhttprequest'
+        }
+    }).then(res => res.text());
+
     process.exit(0);
 });
