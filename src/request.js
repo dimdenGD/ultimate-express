@@ -361,8 +361,16 @@ module.exports = class Request extends Readable {
         return accepts(this).languages(...languages);
     }
 
-    is(type) {
-        return typeis(this, type);
+    is(types) {
+        if(Array.isArray(types)) {
+            return typeis(this, types);
+        }
+
+        if(arguments.length === 1) {
+            return typeis(this, [types]);
+        }
+
+        return typeis(this, [...arguments]);
     }
 
     param(name, defaultValue) {
