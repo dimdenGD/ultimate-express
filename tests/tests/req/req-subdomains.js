@@ -10,6 +10,9 @@ async function sendRequest(method, url, customHost) {
         const [host, port] = url.split('://')[1].split('/')[0].split(':');
         const path = '/' + url.split('/').slice(3).join('/');
 
+        client.on('data', () => client.end());
+        client.on('end', resolve);
+
         client.connect(parseInt(port), host, () => {
             let request = `${method} ${path} HTTP/1.1\r\n`;
             request += `Host: ${customHost}\r\n`;
@@ -17,11 +20,6 @@ async function sendRequest(method, url, customHost) {
             request += '\r\n';
             
             client.write(request);
-
-            setTimeout(() => {
-                client.destroy();
-                resolve();
-            }, 100);
         });
     });
 }

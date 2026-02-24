@@ -154,19 +154,28 @@ module.exports = class Request extends Readable {
 
     get #host() {
         const trust = this.app.get('trust proxy fn');
-        if(!trust) {
-            return this.get('host');
+        const isTrusted = !!(trust && trust(this.connection.remoteAddress, 0));
+        const rawHeader = (isTrusted && this.headers['x-forwarded-host']) || this.headers['host'];
+        let host = Array.isArray(rawHeader) ? rawHeader[0] : rawHeader;
+
+        if (typeof host !== 'string' || !host) return;
+        host = host.trim();
+
+        if (isTrusted) {
+            const commaIndex = host.indexOf(',');
+            if (commaIndex !== -1) {
+                // Note: X-Forwarded-Host is normally only ever a
+                //       single value, but this is to be safe.
+                host = host.substring(0, commaIndex).trimEnd();
+            }
         }
-        let val = this.headers['x-forwarded-host'];
-        if (!val || !trust(this.connection.remoteAddress, 0)) {
-            val = this.headers['host'];
-        } else if (val.indexOf(',') !== -1) {
-            // Note: X-Forwarded-Host is normally only ever a
-            //       single value, but this is to be safe.
-            val = val.substring(0, val.indexOf(',')).trimRight()
-        }
-        
-        return val ? val.split(':')[0] : undefined;
+
+        if (!host) return;
+
+        const offset = host[0] === '[' ? host.indexOf(']') + 1 : 0;
+        const portIndex = host.indexOf(':', offset);
+
+        return portIndex !== -1 ? host.substring(0, portIndex) : host;
     }
 
     get host() {
@@ -175,11 +184,7 @@ module.exports = class Request extends Readable {
     }
 
     get hostname() {
-        const host = this.#host;
-        if(!host) return this.headers['host'].split(':')[0];
-        const offset = host[0] === '[' ? host.indexOf(']') + 1 : 0;
-        const index = host.indexOf(':', offset);
-        return index !== -1 ? host.slice(0, index) : host;
+        return this.#host;
     }
 
     get httpVersion() {
