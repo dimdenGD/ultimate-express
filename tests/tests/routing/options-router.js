@@ -18,7 +18,7 @@ app.use((req, res, next) => {
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
-    res = await fetch('http://localhost:13333/router/test', { method: 'OPTIONS' });
+    let res = await fetch('http://localhost:13333/router/test', { method: 'OPTIONS' });
     console.log(await res.text(), res.status, res.headers.get('allow'));
 
     res = await fetch('http://localhost:13333/router/test2', { method: 'OPTIONS' });
