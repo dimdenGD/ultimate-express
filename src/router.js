@@ -192,7 +192,7 @@ module.exports = class Router extends EventEmitter {
                                     return; // can only optimize router whos parent is listening
                                 }
                                 for(let cbroute of callback._routes) {
-                                    if(!needsConversionToRegex(cbroute.path) && cbroute.path !== '/*' && supportedUwsMethods.includes(cbroute.method)) {
+                                    if(!needsConversionToRegex(cbroute.path) && cbroute.path !== '/*' && supportedUwsMethods.has(cbroute.method)) {
                                         let optimizedRouterPath = this._optimizeRoute(cbroute, callback._routes);
                                         if(optimizedRouterPath) {
                                             optimizedRouterPath = optimizedRouterPath.slice(0, -1);
