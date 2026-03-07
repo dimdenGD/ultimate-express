@@ -35,7 +35,7 @@ const methods = [
     'search', 'subscribe', 'unsubscribe', 'report', 'mkactivity', 'mkcalendar',
     'checkout', 'merge', 'm-search', 'notify', 'subscribe', 'unsubscribe', 'search'
 ];
-const supportedUwsMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE'];
+const supportedUwsMethods = new Set(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE']);
 
 const regExParam = /:(\w+)/g;
 
@@ -162,7 +162,7 @@ module.exports = class Router extends EventEmitter {
             routes.push(route);
             // normal routes optimization
             if(canBeOptimized(route.path) && route.pattern !== '/*' && !this.parent && this.get('case sensitive routing') && this.uwsApp) {
-                if(supportedUwsMethods.includes(method)) {
+                if(supportedUwsMethods.has(method)) {
                     const optimizedPath = this._optimizeRoute(route, this._routes);
                     if(optimizedPath) {
                         this._registerUwsRoute(route, optimizedPath);

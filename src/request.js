@@ -22,12 +22,12 @@ const proxyaddr = require("proxy-addr");
 const fresh = require("fresh");
 const { Readable } = require("stream");
 
-const discardedDuplicates = [
+const discardedDuplicates = new Set([
     "age", "authorization", "content-length", "content-type", "etag", "expires",
     "from", "host", "if-modified-since", "if-unmodified-since", "last-modified",
     "location", "max-forwards", "proxy-authorization", "referer", "retry-after",
     "server", "user-agent"
-];
+]);
 
 let key = 0;
 
@@ -389,7 +389,7 @@ module.exports = class Request extends Readable {
             let [key, value] = this.#rawHeadersEntries[index];   
             key = key.toLowerCase();
             if(this.#cachedHeaders[key]) {
-                if(discardedDuplicates.includes(key)) {
+                if(discardedDuplicates.has(key)) {
                     continue;
                 }
                 if(key === 'cookie') {
