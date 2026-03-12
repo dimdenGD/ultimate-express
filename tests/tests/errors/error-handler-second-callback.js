@@ -20,7 +20,7 @@ app.use((req, res, next) => {
     res.status(400).json({ error: 'test' });
 });
 
-app.get('/test3', (req, res) => {
+app.get('/test3', (req, res, next) => {
     next(new Error('test'));
 });
 
