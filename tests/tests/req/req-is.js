@@ -15,6 +15,12 @@ app.all('/test', (req, res) => {
     res.send('test');
 });
 
+app.all('/multi', (req, res) => {
+    console.log('multi-args:', req.is('html', 'json'));
+    console.log('array:', req.is(['html', 'json']));
+    res.send('ok');
+});
+
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
@@ -40,5 +46,13 @@ app.listen(13333, async () => {
         },
         body: 'Hello, World!'
     }).then(res => res.text());
+
+    // test multi-argument
+    await fetch('http://localhost:13333/multi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test: 1 })
+    }).then(res => res.text());
+
     process.exit(0);
 });
