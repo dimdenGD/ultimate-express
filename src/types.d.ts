@@ -48,7 +48,7 @@ declare module "ultimate-express" {
   type UltimateExpress = Omit<e.Express, 'listen'> & {
     readonly uwsApp: uWS.TemplatedApp;
     listen(port: number, callback?: (token: any) => void): uWS.TemplatedApp;
-    listen(host: string, port: number, callback?: (token: any) => void): uWS.TemplatedApp;
+    listen(port: number, host: string, callback?: (token: any) => void): uWS.TemplatedApp;
     listen(callback: (token: any) => void): uWS.TemplatedApp;
   };
 

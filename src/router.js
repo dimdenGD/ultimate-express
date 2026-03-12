@@ -35,7 +35,7 @@ const methods = [
     'search', 'subscribe', 'unsubscribe', 'report', 'mkactivity', 'mkcalendar',
     'checkout', 'merge', 'm-search', 'notify', 'subscribe', 'unsubscribe', 'search'
 ];
-const supportedUwsMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE'];
+const supportedUwsMethods = new Set(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE']);
 
 const regExParam = /:(\w+)/g;
 
@@ -162,7 +162,7 @@ module.exports = class Router extends EventEmitter {
             routes.push(route);
             // normal routes optimization
             if(canBeOptimized(route.path) && route.pattern !== '/*' && !this.parent && this.get('case sensitive routing') && this.uwsApp) {
-                if(supportedUwsMethods.includes(method)) {
+                if(supportedUwsMethods.has(method)) {
                     const optimizedPath = this._optimizeRoute(route, this._routes);
                     if(optimizedPath) {
                         this._registerUwsRoute(route, optimizedPath);
@@ -192,7 +192,7 @@ module.exports = class Router extends EventEmitter {
                                     return; // can only optimize router whos parent is listening
                                 }
                                 for(let cbroute of callback._routes) {
-                                    if(!needsConversionToRegex(cbroute.path) && cbroute.path !== '/*' && supportedUwsMethods.includes(cbroute.method)) {
+                                    if(!needsConversionToRegex(cbroute.path) && cbroute.path !== '/*' && supportedUwsMethods.has(cbroute.method)) {
                                         let optimizedRouterPath = this._optimizeRoute(cbroute, callback._routes);
                                         if(optimizedRouterPath) {
                                             optimizedRouterPath = optimizedRouterPath.slice(0, -1);
@@ -350,10 +350,10 @@ module.exports = class Router extends EventEmitter {
 
     _handleError(err, handler, request, response) {
         if(handler) {
-            return handler(err, request, response, () => {
+            return handler(err, request, response, (pass) => {
                 delete request._error;
                 delete request._errorKey;
-                return request.next();
+                return request.next(pass);
             });
         }
         console.error(err);
