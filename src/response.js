@@ -38,7 +38,8 @@ const etag = require("etag");
 const outgoingMessage = new http.OutgoingMessage();
 const symbols = Object.getOwnPropertySymbols(outgoingMessage);
 const kOutHeaders = symbols.find(s => s.toString() === 'Symbol(kOutHeaders)');
-const HIGH_WATERMARK = 128 * 1024;
+// Reduced from 128kb to ~16kb as recommended by uWS for proper backpressure handling
+const CHUNK_SIZE = 16 * 1024;
 
 class Socket extends EventEmitter {
     constructor(response) {
@@ -71,8 +72,7 @@ module.exports = class Response extends Writable {
     #socket = null;
     #ended = false;
     #pendingChunks = [];
-    #lastWriteChunkTime = 0;
-    #writeTimeout = null;
+    #backpressureActive = false;
     req;
     constructor(res, req, app) {
         super();
@@ -130,6 +130,65 @@ module.exports = class Response extends Writable {
         return this.#socket;
     }
 
+    /**
+     * Flushes pending chunks to the uWS response, respecting backpressure.
+     * When _res.write() returns false, we register onWritable to resume.
+     */
+    #flushPendingChunks() {
+        if (this.finished || this.aborted) {
+            return;
+        }
+
+        while (this.#pendingChunks.length > 0 && !this.#backpressureActive) {
+            // Concatenate chunks up to CHUNK_SIZE (~16kb as recommended by uWS)
+            let totalSize = 0;
+            const chunksToSend = [];
+            
+            while (this.#pendingChunks.length > 0 && totalSize < CHUNK_SIZE) {
+                const chunk = this.#pendingChunks[0];
+                const chunkSize = chunk.byteLength;
+                
+                if (totalSize + chunkSize <= CHUNK_SIZE || chunksToSend.length === 0) {
+                    chunksToSend.push(this.#pendingChunks.shift());
+                    totalSize += chunkSize;
+                } else {
+                    break;
+                }
+            }
+
+            if (chunksToSend.length === 0) {
+                break;
+            }
+
+            const buffer = chunksToSend.length === 1 
+                ? Buffer.from(chunksToSend[0])
+                : Buffer.concat(chunksToSend, totalSize);
+            
+            const ok = this._res.write(buffer);
+            
+            if (!ok) {
+                // Backpressure: uWS buffer is full, wait for onWritable
+                this.#backpressureActive = true;
+                this._res.onWritable((offset) => {
+                    if (this.finished || this.aborted) {
+                        return true;
+                    }
+                    this.#backpressureActive = false;
+                    this._res.cork(() => {
+                        this.#flushPendingChunks();
+                    });
+                    return true;
+                });
+                return;
+            }
+        }
+
+        // Emit drain only when queue is completely empty and no backpressure
+        if (this.#pendingChunks.length === 0 && !this.#backpressureActive) {
+            this.emit('drain');
+        }
+    }
+
     _write(chunk, encoding, callback) {
         if (this.aborted) {
             const err = new Error('Request aborted');
@@ -156,34 +215,14 @@ module.exports = class Response extends Writable {
             }
     
             if (this.chunkedTransfer) {
+                // Add chunk to pending queue
                 this.#pendingChunks.push(chunk);
-                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-                const now = performance.now();
-                // the first chunk is sent immediately (!this.#lastWriteChunkTime)
-                // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
-                // or if elapsed 50ms of last send (now - this.#lastWriteChunkTime > 50)
-                if (!this.#lastWriteChunkTime || size >= HIGH_WATERMARK || now - this.#lastWriteChunkTime > 50) {
-                    this._res.write(Buffer.concat(this.#pendingChunks, size));
-                    this.#pendingChunks = [];
-                    this.#lastWriteChunkTime = now;
-                    if(this.#writeTimeout) {
-                        clearTimeout(this.#writeTimeout);
-                        this.#writeTimeout = null;
-                    }
-                } else if(!this.#writeTimeout) {
-                    this.#writeTimeout = setTimeout(() => {
-                        this.#writeTimeout = null;
-                        if(!this.finished && !this.aborted) this._res.cork(() => {
-                            if(this.#pendingChunks.length) {
-                                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-                                this._res.write(Buffer.concat(this.#pendingChunks, size));
-                                this.#pendingChunks = [];
-                                this.#lastWriteChunkTime = performance.now();
-                            }
-                        });
-                    }, 50);
-                    this.#writeTimeout.unref();
+                
+                // Try to flush if backpressure is not active
+                if (!this.#backpressureActive) {
+                    this.#flushPendingChunks();
                 }
+                
                 this.writingChunk = false;
                 callback(null);
             } else {
@@ -280,6 +319,21 @@ module.exports = class Response extends Writable {
             });
             return;
         }
+        
+        // Wait for backpressure to clear and pending chunks to be flushed before ending
+        if(this.#backpressureActive || this.#pendingChunks.length > 0) {
+            this.once('drain', () => {
+                this.end(data, cb);
+            });
+            // If not under backpressure but have pending chunks, try to flush them
+            if(!this.#backpressureActive && this.#pendingChunks.length > 0) {
+                this._res.cork(() => {
+                    this.#flushPendingChunks();
+                });
+            }
+            return;
+        }
+        
         if(this.finished) {
             return;
         }
@@ -314,7 +368,6 @@ module.exports = class Response extends Writable {
                 if(this.#pendingChunks.length) {
                     this._res.write(Buffer.concat(this.#pendingChunks));
                     this.#pendingChunks = [];
-                    this.lastWriteChunkTime = 0;
                 }
                 if(data instanceof Buffer) {
                     data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
@@ -568,7 +621,7 @@ module.exports = class Response extends Writable {
         } else {
             // larger files or range requests are piped over response
             let opts = {
-                highWaterMark: HIGH_WATERMARK
+                highWaterMark: CHUNK_SIZE
             };
             if(ranged) {
                 opts.start = offset;
