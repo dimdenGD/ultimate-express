@@ -18,6 +18,7 @@ const cookie = require("cookie");
 const mime = require("mime-types");
 const vary = require("vary");
 const encodeUrl = require("encodeurl");
+const contentDisposition = require("content-disposition");
 const { 
     normalizeType, stringify, deprecated, UP_PATH_REGEXP, decode,
     containsDotFile, isPreconditionFailure, isRangeFresh, NullObject
@@ -724,8 +725,9 @@ module.exports = class Response extends Writable {
         return this.cookie(name, '', opts);
     }
     attachment(filename) {
-        this.headers['Content-Disposition'] = `attachment; filename="${filename}"`;
-        this.type(filename.split('.').pop());
+        const name = String(filename);
+        this.headers['Content-Disposition'] = contentDisposition(name);
+        this.type(name.split('.').pop());
         return this;
     }
     format(object) {
@@ -740,7 +742,7 @@ module.exports = class Response extends Writable {
         } else if(object.default) {
             object.default(this.req, this, this.req.next);
         } else {
-            this.status(406).send(this.app._generateErrorPage('Not Acceptable'));
+            this.status(406).send(this.app._generateErrorPage('Not Acceptable', this.statusCode, false));
         }
 
         return this;

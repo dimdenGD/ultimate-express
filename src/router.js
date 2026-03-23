@@ -39,6 +39,19 @@ const supportedUwsMethods = new Set(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'O
 
 const regExParam = /:(\w+)/g;
 
+function generateErrorPageHtml(err) {
+    return `<!DOCTYPE html>\n` +
+        `<html lang="en">\n` +
+        `<head>\n` +
+        `<meta charset="utf-8">\n` +
+        `<title>Error</title>\n` +
+        `</head>\n` +
+        `<body>\n` +
+        `<pre>${err?.stack ?? err}</pre>\n` +
+        `</body>\n` +
+        `</html>\n`;
+}
+
 module.exports = class Router extends EventEmitter {
     parent;
     listenCalled;
@@ -363,6 +376,13 @@ module.exports = class Router extends EventEmitter {
         this._sendErrorPage(request, response, err, true);
     }
 
+    _generateErrorPage(err, statusCode, checkEnv = false) {
+        if(checkEnv && this.get('env') === 'production') {
+            err = statusCode >= 400 ? (statuses.message[statusCode] ?? 'Internal Server Error') : 'Internal Server Error';
+        }
+        return generateErrorPageHtml(err);
+    }
+
     _extractParams(pattern, path) {
         if(path.endsWith('/')) {
             path = path.slice(0, -1);
@@ -647,22 +667,11 @@ module.exports = class Router extends EventEmitter {
     }
 
     _sendErrorPage(request, response, err, checkEnv = false) {
-        if(checkEnv && this.get('env') === 'production') {
-            err = response.statusCode >= 400 ? (statuses.message[response.statusCode] ?? 'Internal Server Error') : 'Internal Server Error';
-        }
+        err = this._generateErrorPage(err, response.statusCode, checkEnv);
         request.noEtag = true;
         response.setHeader('Content-Type', 'text/html; charset=utf-8');
         response.setHeader('X-Content-Type-Options', 'nosniff');
         response.setHeader('Content-Security-Policy', "default-src 'none'");
-        response.send(`<!DOCTYPE html>\n` +
-            `<html lang="en">\n` +
-            `<head>\n` +
-            `<meta charset="utf-8">\n` +
-            `<title>Error</title>\n` +
-            `</head>\n` +
-            `<body>\n` +
-            `<pre>${err?.stack ?? err}</pre>\n` +
-            `</body>\n` +
-            `</html>\n`);
+        response.send(err);
     }
 }
