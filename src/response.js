@@ -803,7 +803,8 @@ module.exports = class Response extends Writable {
             if(!path) path = this.req.get('Referer');
             if(!path) path = '/';
         }
-        return this.headers['location'] = encodeUrl(path);
+        this.headers['location'] = encodeUrl(path);
+        return this;
     }
     redirect(status, url, forceHtml = false) {
         if(typeof status !== 'number' && !url) {
