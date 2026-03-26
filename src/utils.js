@@ -340,6 +340,52 @@ function isRangeFresh(req, res) {
     return parseHttpDate(lastModified) <= parseHttpDate(ifRange);
 }
 
+function escapeHtml(str) {
+    const s = String(str);
+    const len = s.length;
+    let i = 0;
+
+    // Fast scan: find first char that needs escaping
+    for(; i < len; i++) {
+        const ch = s.charCodeAt(i);
+        if(ch === 0x26 || ch === 0x3C || ch === 0x3E || ch === 0x22 || ch === 0x27) {
+            break;
+        }
+    }
+
+    // No escaping needed
+    if(i === len) return s;
+
+    // Build escaped string from the first match onward
+    let escaped = s.substring(0, i);
+
+    for(; i < len; i++) {
+        const ch = s.charCodeAt(i);
+        switch(ch) {
+            case 0x26: // &
+                escaped += '&amp;';
+                break;
+            case 0x3C: // <
+                escaped += '&lt;';
+                break;
+            case 0x3E: // >
+                escaped += '&gt;';
+                break;
+            case 0x22: // "
+                escaped += '&quot;';
+                break;
+            case 0x27: // '
+                escaped += '&#39;';
+                break;
+            default:
+                escaped += s.charAt(i);
+                break;
+        }
+    }
+
+    return escaped;
+}
+
 // fast null object
 const NullObject = function() {};
 NullObject.prototype = Object.create(null);
@@ -366,5 +412,6 @@ module.exports = {
     findIndexStartingFrom,
     fastQueryParse,
     canBeOptimized,
+    escapeHtml,
     EMPTY_REGEX
 };

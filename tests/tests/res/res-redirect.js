@@ -28,6 +28,11 @@ app.get('/test6', (req, res) => {
     res.redirect(304, 'https://example.com/?test=%20 test %3F');
 });
 
+app.get('/xss', (req, res) => {
+    // HTML chars should be escaped in body
+    res.redirect('<script>alert(1)</script>');
+});
+
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
@@ -55,6 +60,10 @@ app.listen(13333, async () => {
     for(const response of responses) {
         console.log(response.status, response.headers.get('Location'), response.headers.get('Vary'), await response.text());
     }
+
+    const xss = await fetch('http://localhost:13333/xss', { redirect: 'manual', headers: { 'accept': 'text/html' } });
+    console.log('xss-body:', await xss.text());
+    console.log('xss-content-length:', xss.headers.get('content-length'));
 
     process.exit(0);
 });
