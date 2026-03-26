@@ -84,12 +84,9 @@ module.exports = class Request extends Readable {
         this._stack = [];
         this._paramStack = [];
         this.receivedData = false;
-        // reading ip is very slow in UWS, so its better to not do it unless truly needed
-        if(this.app.needsIpAfterResponse || this.key < 100) {
-            // if app needs ip after response, read it now because after response its not accessible
-            // also read it for first 100 requests to not error
-            this.rawIp = this._res.getRemoteAddress();
-        }
+        // reading ip and port is zero-cost in UWS v20.61.0
+        this.rawIpText = this._res.getRemoteAddressAsText();
+        this.cachedRemotePort = this._res.getRemotePort();
 
         const additionalMethods = this.app.get('body methods');
         // skip reading body for non-POST requests
@@ -101,16 +98,18 @@ module.exports = class Request extends Readable {
             (additionalMethods && additionalMethods.includes(this.method))
         ) {
             this.#bufferedData = Buffer.allocUnsafe(0);
-            this._res.onData((ab, isLast) => {
+            this._res.onDataV2((ab, maxRemainingBodyLength) => {
                 // make stream actually readable
                 this.receivedData = true;
-                if(isLast) {
+                if(maxRemainingBodyLength === 0n) {
                     this.#doneReadingData = true;
                 }
                 // instead of pushing data immediately, buffer it
                 // because writable streams cant handle the amount of data uWS gives (usually 512kb+)
-                const chunk = Buffer.from(ab);
-                this.#bufferedData = Buffer.concat([this.#bufferedData, chunk]);
+                if (ab) {
+                    const chunk = Buffer.from(ab);
+                    this.#bufferedData = Buffer.concat([this.#bufferedData, chunk]);
+                }
                 
                 if(this.#needsData) {
                     this.#needsData = false;
@@ -280,34 +279,10 @@ module.exports = class Request extends Readable {
         if(this.#cachedParsedIp !== null) {
             return this.#cachedParsedIp;
         }
-        const finished = this.res.finished;
-        if(finished) {
-            // mark app as one that needs ip after response
-            this.app.needsIpAfterResponse = true;
+        if(this.rawIpText.byteLength === 0) {
+            return this.#cachedParsedIp = undefined; // unix sockets
         }
-        if(!this.rawIp) {
-            if(finished) {
-                // fallback once
-                return '127.0.0.1';
-            }
-            this.rawIp = this._res.getRemoteAddress();
-        }
-        let ip = '';
-        if(this.rawIp.byteLength === 4) {
-            // ipv4
-            ip = new Uint8Array(this.rawIp).join('.');
-        } else if(this.rawIp.byteLength === 16) {
-            // ipv6
-            const dv = new DataView(this.rawIp);
-            for(let i = 0; i < 8; i++) {
-                ip += dv.getUint16(i * 2).toString(16).padStart(4, '0');
-                if(i < 7) {
-                    ip += ':';
-                }
-            }
-        } else {
-            ip = undefined; // unix sockets dont have ip
-        }
+        let ip = Buffer.from(this.rawIpText).toString();
         this.#cachedParsedIp = ip;
         return ip;
     }
@@ -315,6 +290,7 @@ module.exports = class Request extends Readable {
     get connection() {
         return {
             remoteAddress: this.parsedIp,
+            remotePort: this.cachedRemotePort,
             localPort: this.app.port,
             encrypted: this.app.ssl,
             end: (body) => this.res.end(body)
