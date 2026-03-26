@@ -264,7 +264,7 @@ module.exports = class Response extends Writable {
         return this;
     }
     sendStatus(code) {
-        return this.status(code).send(statuses.message[+code] ?? code.toString());
+        return this.status(code).type('txt').send(statuses.message[code] || String(code));
     }
     end(data, cb) {
         if(typeof data === 'function') {
