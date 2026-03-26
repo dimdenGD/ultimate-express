@@ -789,8 +789,13 @@ module.exports = class Response extends Writable {
         return this.send(body);
     }
     links(links) {
-        this.headers['link'] = Object.entries(links).map(([rel, url]) => `<${url}>; rel="${rel}"`).join(', ');
-        return this;
+        // this.headers['link'] = Object.entries(links).map(([rel, url]) => `<${url}>; rel="${rel}"`).join(', ');
+        // return this;
+        let link = this.get('Link') || '';
+        if(link) link += ', ';
+        return this.set('Link', link + Object.keys(links).map(function(rel){
+            return '<' + links[rel] + '>; rel="' + rel + '"';
+        }).join(', '));
     }
     location(path) {
         if(path === 'back') {
