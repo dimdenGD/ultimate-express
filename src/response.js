@@ -725,9 +725,10 @@ module.exports = class Response extends Writable {
         return this.cookie(name, '', opts);
     }
     attachment(filename) {
-        const name = String(filename);
-        this.headers['Content-Disposition'] = contentDisposition(name);
-        this.type(name.split('.').pop());
+        if(filename) {
+            this.type(Path.extname(filename));
+        }
+        this.set('Content-Disposition', contentDisposition(filename));
         return this;
     }
     format(object) {
