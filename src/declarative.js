@@ -1,6 +1,7 @@
 const acorn = require("acorn");
 const { stringify } = require("./utils.js");
 const uWS = require("uWebSockets.js");
+const http = require("http");
 
 const parser = acorn.Parser;
 
@@ -354,12 +355,11 @@ module.exports = function compileDeclarative(cb, app) {
             }
         }
 
-        // uws doesnt support status codes other than 200 currently
-        if(statusCode != 200) {
-            return false;
-        }
-
         let decRes = new uWS.DeclarativeResponse();
+
+        if(statusCode != 200) {
+            decRes = decRes.writeStatus(`${statusCode} ${http.STATUS_CODES[statusCode] || 'Unknown'}`);
+        }
 
         for(let header of headers) {
             if(header[0].toLowerCase() === 'content-length') {
