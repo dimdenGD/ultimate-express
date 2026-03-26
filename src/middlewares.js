@@ -266,10 +266,25 @@ function createBodyParser(defaultType, beforeReturn) {
             // reading data directly from uWS is faster than from a stream
             // if we are fast enough (not async), we can do it
             // otherwise we need to use a stream since it already started streaming it
-            if(!req.receivedData) {
-                req._res.onData((ab, isLast) => {
-                    onData(ab);
-                    if(isLast) {
+            if(!req.receivedData && !inflate) {
+                req._res.collectBody(options.limit, (ab) => {
+                    if(!ab) {
+                        return next(new Error('Request entity too large'));
+                    }
+                    const buf = Buffer.from(ab);
+                    if(options.verify) {
+                        try {
+                            options.verify(req, res, buf);
+                        } catch(e) {
+                            return next(e);
+                        }
+                    }
+                    beforeReturn(req, res, next, options, buf);
+                });
+            } else if(!req.receivedData) {
+                req._res.onDataV2((ab, maxRemainingBodyLength) => {
+                    if (ab) onData(ab);
+                    if(maxRemainingBodyLength === 0n) {
                         onEnd();
                     }
                 });
