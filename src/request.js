@@ -84,12 +84,7 @@ module.exports = class Request extends Readable {
         this._stack = [];
         this._paramStack = [];
         this.receivedData = false;
-        // reading ip is very slow in UWS, so its better to not do it unless truly needed
-        if(this.app.needsIpAfterResponse || this.key < 100) {
-            // if app needs ip after response, read it now because after response its not accessible
-            // also read it for first 100 requests to not error
-            this.rawIp = this._res.getRemoteAddress();
-        }
+        this.ipAddress = this._res.getRemoteAddressAsText();
 
         const additionalMethods = this.app.get('body methods');
         // skip reading body for non-POST requests
@@ -280,36 +275,11 @@ module.exports = class Request extends Readable {
         if(this.#cachedParsedIp !== null) {
             return this.#cachedParsedIp;
         }
-        const finished = this.res.finished;
-        if(finished) {
-            // mark app as one that needs ip after response
-            this.app.needsIpAfterResponse = true;
+        if(!this.ipAddress) {
+            this.ipAddress = this._res.getRemoteAddressAsText();
         }
-        if(!this.rawIp) {
-            if(finished) {
-                // fallback once
-                return '127.0.0.1';
-            }
-            this.rawIp = this._res.getRemoteAddress();
-        }
-        let ip = '';
-        if(this.rawIp.byteLength === 4) {
-            // ipv4
-            ip = new Uint8Array(this.rawIp).join('.');
-        } else if(this.rawIp.byteLength === 16) {
-            // ipv6
-            const dv = new DataView(this.rawIp);
-            for(let i = 0; i < 8; i++) {
-                ip += dv.getUint16(i * 2).toString(16).padStart(4, '0');
-                if(i < 7) {
-                    ip += ':';
-                }
-            }
-        } else {
-            ip = undefined; // unix sockets dont have ip
-        }
-        this.#cachedParsedIp = ip;
-        return ip;
+        this.#cachedParsedIp = this.ipAddress;
+        return this.ipAddress;
     }
 
     get connection() {
