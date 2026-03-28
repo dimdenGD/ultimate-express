@@ -59,6 +59,7 @@ For full table with other runtimes, check [here](https://github.com/dimdenGD/bun
 Other benchmarks:
  - [TechEmpower / FrameworkBenchmarks](https://www.techempower.com/benchmarks/#section=data-r23&test=plaintext&l=zik0sf-pa7)
  - [the-benchmarker / web-frameworks](https://web-frameworks-benchmark.netlify.app/result?l=javascript)
+ - [HttpArena](https://www.http-arena.com/leaderboard/)
 
 ### Performance on real-world application
 
