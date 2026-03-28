@@ -22,6 +22,7 @@ const ViewClass = require("./view.js");
 const path = require("path");
 const os = require("os");
 const { Worker } = require("worker_threads");
+const cluster = require('cluster');
 
 const cpuCount = os.cpus().length;
 
@@ -232,7 +233,7 @@ class Application extends Router {
         let fn = 'listen';
         let args = [];
         // 1 = exclusive port, 0 = shared port
-        let uwsOptions = 1;
+        let uwsOptions = cluster.isPrimary ? 1 : 0;
         if(typeof port !== 'number') {
             if(!isNaN(Number(port))) {
                 port = Number(port);
