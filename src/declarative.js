@@ -400,7 +400,7 @@ module.exports = function compileDeclarative(cb, app) {
         }
 
         if(!body.length) {
-            decRes = decRes.write(String(statusCode));
+            decRes = decRes.write(statuses.message[statusCode] || String(statusCode));
         }
 
         return decRes.end();
