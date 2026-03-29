@@ -9,6 +9,7 @@ app.get('/test', (req, res) => {
     console.log(req.connection.localPort);
     console.log(req.socket.remoteAddress.replace("0000:0000:0000:0000:0000:0000:0000:000", "::"));
     console.log(req.socket.localPort);
+    console.log(typeof req.connection.remotePort); // should be a number (it's change randomly on each run because it's assigned by the OS)
     res.send('test');
 });
 

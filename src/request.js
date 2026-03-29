@@ -315,6 +315,7 @@ module.exports = class Request extends Readable {
     get connection() {
         return {
             remoteAddress: this.parsedIp,
+            remotePort: this._res.getRemotePort(),
             localPort: this.app.port,
             encrypted: this.app.ssl,
             end: (body) => this.res.end(body)
