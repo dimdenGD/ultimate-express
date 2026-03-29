@@ -3,7 +3,7 @@
 const express = require("express");
 
 const app = express();
-const router = new express.Router();
+const router = express.Router();
 
 router.get('/:test', (req, res, next) => {
     console.log(req.url, req.params.test);

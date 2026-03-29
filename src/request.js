@@ -19,15 +19,16 @@ const accepts = require("accepts");
 const typeis = require("type-is");
 const parseRange = require("range-parser");
 const proxyaddr = require("proxy-addr");
+const { isIP } = require("node:net");
 const fresh = require("fresh");
 const { Readable } = require("stream");
 
-const discardedDuplicates = [
+const discardedDuplicates = new Set([
     "age", "authorization", "content-length", "content-type", "etag", "expires",
     "from", "host", "if-modified-since", "if-unmodified-since", "last-modified",
     "location", "max-forwards", "proxy-authorization", "referer", "retry-after",
     "server", "user-agent"
-];
+]);
 
 let key = 0;
 
@@ -153,19 +154,28 @@ module.exports = class Request extends Readable {
 
     get #host() {
         const trust = this.app.get('trust proxy fn');
-        if(!trust) {
-            return this.get('host');
+        const isTrusted = !!(trust && trust(this.connection.remoteAddress, 0));
+        const rawHeader = (isTrusted && this.headers['x-forwarded-host']) || this.headers['host'];
+        let host = Array.isArray(rawHeader) ? rawHeader[0] : rawHeader;
+
+        if (typeof host !== 'string' || !host) return;
+        host = host.trim();
+
+        if (isTrusted) {
+            const commaIndex = host.indexOf(',');
+            if (commaIndex !== -1) {
+                // Note: X-Forwarded-Host is normally only ever a
+                //       single value, but this is to be safe.
+                host = host.substring(0, commaIndex).trimEnd();
+            }
         }
-        let val = this.headers['x-forwarded-host'];
-        if (!val || !trust(this.connection.remoteAddress, 0)) {
-            val = this.headers['host'];
-        } else if (val.indexOf(',') !== -1) {
-            // Note: X-Forwarded-Host is normally only ever a
-            //       single value, but this is to be safe.
-            val = val.substring(0, val.indexOf(',')).trimRight()
-        }
-        
-        return val ? val.split(':')[0] : undefined;
+
+        if (!host) return;
+
+        const offset = host[0] === '[' ? host.indexOf(']') + 1 : 0;
+        const portIndex = host.indexOf(':', offset);
+
+        return portIndex !== -1 ? host.substring(0, portIndex) : host;
     }
 
     get host() {
@@ -174,11 +184,7 @@ module.exports = class Request extends Readable {
     }
 
     get hostname() {
-        const host = this.#host;
-        if(!host) return this.headers['host'].split(':')[0];
-        const offset = host[0] === '[' ? host.indexOf(']') + 1 : 0;
-        const index = host.indexOf(':', offset);
-        return index !== -1 ? host.slice(0, index) : host;
+        return this.#host;
     }
 
     get httpVersion() {
@@ -246,18 +252,28 @@ module.exports = class Request extends Readable {
         return this.protocol === 'https';
     }
 
+    #cachedSubdomains = null;
+
     get subdomains() {
-        let host = this.hostname;
-        let subdomains = host.split('.');
-        const so = this.app.get('subdomain offset');
-        if(so === 0) {
-            return subdomains.reverse();
+        if(this.#cachedSubdomains !== null) {
+            return this.#cachedSubdomains;
         }
-        return subdomains.slice(0, -so).reverse();
+
+        const hostname = this.hostname;
+        if(!hostname || isIP(hostname)) {
+            return this.#cachedSubdomains = [];
+        }
+
+        const offset = this.app.get('subdomain offset');
+        const parts = hostname.split('.');
+        const subdomains = parts.reverse().slice(offset);
+
+        return this.#cachedSubdomains = subdomains;
     }
 
     get xhr() {
-        return this.headers['x-requested-with'] === 'XMLHttpRequest';
+        const val = this.headers?.['x-requested-with'];
+        return typeof val === 'string' && val.toLowerCase() === 'xmlhttprequest';
     }
 
     get parsedIp() {
@@ -327,6 +343,12 @@ module.exports = class Request extends Readable {
     }
 
     get(field) {
+        if(!field) {
+            throw new TypeError('name argument is required to req.get');
+        }
+        if(typeof field !== 'string') {
+            throw new TypeError('name must be a string to req.get');
+        }
         field = field.toLowerCase();
         if(field === 'referrer' || field === 'referer') {
             const res = this.headers['referrer'];
@@ -355,19 +377,54 @@ module.exports = class Request extends Readable {
         return accepts(this).languages(...languages);
     }
 
-    is(type) {
-        return typeis(this, type);
+    acceptsEncoding(...args) {
+        deprecated('req.acceptsEncoding', 'req.acceptsEncodings');
+        return this.acceptsEncodings(...args);
+    }
+
+    acceptsCharset(...args) {
+        deprecated('req.acceptsCharset', 'req.acceptsCharsets');
+        return this.acceptsCharsets(...args);
+    }
+
+    acceptsLanguage(...args) {
+        deprecated('req.acceptsLanguage', 'req.acceptsLanguages');
+        return this.acceptsLanguages(...args);
+    }
+
+    is(types) {
+        if(Array.isArray(types)) {
+            return typeis(this, types);
+        }
+
+        if(arguments.length === 1) {
+            return typeis(this, [types]);
+        }
+
+        return typeis(this, [...arguments]);
     }
 
     param(name, defaultValue) {
         deprecated('req.param(name)', 'req.params, req.body, or req.query');
-        if(this.params[name]) {
-            return this.params[name];
+
+        if(name == null) return defaultValue;
+
+        if(this.params && Object.prototype.hasOwnProperty.call(this.params, name)) {
+            const value = this.params[name];
+            if(value != null) return value;
         }
-        if(this.body && this.body[name]) {
-            return this.body[name];
+
+        if(this.body && Object.prototype.hasOwnProperty.call(this.body, name)) {
+            const value = this.body[name];
+            if(value != null) return value;
         }
-        return this.query[name] ?? defaultValue;
+
+        if(this.query && Object.prototype.hasOwnProperty.call(this.query, name)) {
+            const value = this.query[name];
+            if(value != null) return value;
+        }
+
+        return defaultValue;
     }
 
     range(size, options) {
@@ -389,7 +446,7 @@ module.exports = class Request extends Readable {
             let [key, value] = this.#rawHeadersEntries[index];   
             key = key.toLowerCase();
             if(this.#cachedHeaders[key]) {
-                if(discardedDuplicates.includes(key)) {
+                if(discardedDuplicates.has(key)) {
                     continue;
                 }
                 if(key === 'cookie') {

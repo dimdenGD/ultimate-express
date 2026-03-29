@@ -35,9 +35,22 @@ const methods = [
     'search', 'subscribe', 'unsubscribe', 'report', 'mkactivity', 'mkcalendar',
     'checkout', 'merge', 'm-search', 'notify', 'subscribe', 'unsubscribe', 'search'
 ];
-const supportedUwsMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE'];
+const supportedUwsMethods = new Set(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE']);
 
 const regExParam = /:(\w+)/g;
+
+function generateErrorPageHtml(err) {
+    return `<!DOCTYPE html>\n` +
+        `<html lang="en">\n` +
+        `<head>\n` +
+        `<meta charset="utf-8">\n` +
+        `<title>Error</title>\n` +
+        `</head>\n` +
+        `<body>\n` +
+        `<pre>${err?.stack ?? err}</pre>\n` +
+        `</body>\n` +
+        `</html>\n`;
+}
 
 module.exports = class Router extends EventEmitter {
     parent;
@@ -162,7 +175,7 @@ module.exports = class Router extends EventEmitter {
             routes.push(route);
             // normal routes optimization
             if(canBeOptimized(route.path) && route.pattern !== '/*' && !this.parent && this.get('case sensitive routing') && this.uwsApp) {
-                if(supportedUwsMethods.includes(method)) {
+                if(supportedUwsMethods.has(method)) {
                     const optimizedPath = this._optimizeRoute(route, this._routes);
                     if(optimizedPath) {
                         this._registerUwsRoute(route, optimizedPath);
@@ -192,7 +205,7 @@ module.exports = class Router extends EventEmitter {
                                     return; // can only optimize router whos parent is listening
                                 }
                                 for(let cbroute of callback._routes) {
-                                    if(!needsConversionToRegex(cbroute.path) && cbroute.path !== '/*' && supportedUwsMethods.includes(cbroute.method)) {
+                                    if(!needsConversionToRegex(cbroute.path) && cbroute.path !== '/*' && supportedUwsMethods.has(cbroute.method)) {
                                         let optimizedRouterPath = this._optimizeRoute(cbroute, callback._routes);
                                         if(optimizedRouterPath) {
                                             optimizedRouterPath = optimizedRouterPath.slice(0, -1);
@@ -361,6 +374,13 @@ module.exports = class Router extends EventEmitter {
             response.statusCode = 500;
         }
         this._sendErrorPage(request, response, err, true);
+    }
+
+    _generateErrorPage(err, statusCode, checkEnv = false) {
+        if(checkEnv && this.get('env') === 'production') {
+            err = statusCode >= 400 ? (statuses.message[statusCode] ?? 'Internal Server Error') : 'Internal Server Error';
+        }
+        return generateErrorPageHtml(err);
     }
 
     _extractParams(pattern, path) {
@@ -647,22 +667,11 @@ module.exports = class Router extends EventEmitter {
     }
 
     _sendErrorPage(request, response, err, checkEnv = false) {
-        if(checkEnv && this.get('env') === 'production') {
-            err = response.statusCode >= 400 ? (statuses.message[response.statusCode] ?? 'Internal Server Error') : 'Internal Server Error';
-        }
+        err = this._generateErrorPage(err, response.statusCode, checkEnv);
         request.noEtag = true;
         response.setHeader('Content-Type', 'text/html; charset=utf-8');
         response.setHeader('X-Content-Type-Options', 'nosniff');
         response.setHeader('Content-Security-Policy', "default-src 'none'");
-        response.send(`<!DOCTYPE html>\n` +
-            `<html lang="en">\n` +
-            `<head>\n` +
-            `<meta charset="utf-8">\n` +
-            `<title>Error</title>\n` +
-            `</head>\n` +
-            `<body>\n` +
-            `<pre>${err?.stack ?? err}</pre>\n` +
-            `</body>\n` +
-            `</html>\n`);
+        response.send(err);
     }
 }
