@@ -1,6 +1,7 @@
 const acorn = require("acorn");
 const { stringify } = require("./utils.js");
 const uWS = require("uWebSockets.js");
+const statuses = require("statuses");
 
 const parser = acorn.Parser;
 
@@ -362,7 +363,11 @@ module.exports = function compileDeclarative(cb, app) {
         let decRes = new uWS.DeclarativeResponse();
 
         if(statusCode != 200) {
-            decRes = decRes.writeStatus(String(statusCode));
+            const statusMessage = statuses.message[statusCode] ?? '';
+            decRes = decRes.writeStatus(`${statusCode} ${statusMessage}`.trim());
+            if(!headers.some(header => header[0].toLowerCase() === 'content-type')) {
+                decRes = decRes.writeHeader('content-type','text/plain; charset=utf-8');
+            }
         }
 
         for(let header of headers) {
@@ -392,6 +397,10 @@ module.exports = function compileDeclarative(cb, app) {
             } else if(bodyPart.type === 'query') {
                 decRes = decRes.writeQueryValue(bodyPart.value);
             }
+        }
+
+        if(!body.length) {
+            decRes = decRes.write(String(statusCode));
         }
 
         return decRes.end();
