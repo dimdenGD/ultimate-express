@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const { patternToRegex, needsConversionToRegex, deprecated, findIndexStartingFrom, canBeOptimized, NullObject, EMPTY_REGEX } = require("./utils.js");
+const { patternToRegex, needsConversionToRegex, deprecated, findIndexStartingFrom, canBeOptimized, NullObject } = require("./utils.js");
 const Response = require("./response.js");
 const Request = require("./request.js");
 const { EventEmitter } = require("tseep");
@@ -109,7 +109,7 @@ module.exports = class Router extends EventEmitter {
 
     getFullMountpath(req) {
         if(!req._stack.length) {
-            return EMPTY_REGEX;
+            return null;
         }
         const fullStack = req._stack.join("");
         let fullMountpath = this._mountpathCache.get(fullStack);
@@ -141,7 +141,7 @@ module.exports = class Router extends EventEmitter {
             }
             return pattern === path;
         }
-        if(pattern === EMPTY_REGEX) {
+        if(pattern === null) {
             return true;
         }
         return pattern.test(path);
@@ -263,6 +263,7 @@ module.exports = class Router extends EventEmitter {
 
             // check if the paths match
             if(
+                r.pattern === null ||
                 (r.pattern instanceof RegExp && r.pattern.test(route.path)) ||
                 (typeof r.pattern === 'string' && (r.pattern === route.path || r.pattern === '/*'))
             ) {
@@ -409,7 +410,7 @@ module.exports = class Router extends EventEmitter {
             let path = req._originalPath;
             if(req._stack.length > 0) {
                 const fullMountpath = this.getFullMountpath(req);
-                if(fullMountpath !== EMPTY_REGEX) {
+                if(fullMountpath !== null) {
                     path = path.replace(fullMountpath, '');
                 } 
             }
@@ -506,7 +507,7 @@ module.exports = class Router extends EventEmitter {
         if(route.use) {
             req._stack.push(route.path);
             const fullMountpath = this.getFullMountpath(req);
-            req._opPath = fullMountpath !== EMPTY_REGEX ? req._originalPath.replace(fullMountpath, '') : req._originalPath;
+            req._opPath = fullMountpath !== null ? req._originalPath.replace(fullMountpath, '') : req._originalPath;
             if(req.endsWithSlash && req._opPath[req._opPath.length - 1] !== '/') {
                 if(strictRouting) {
                     req._opPath += '/';
@@ -526,9 +527,18 @@ module.exports = class Router extends EventEmitter {
                 if(thingamabob) {
                     if(thingamabob === 'route' || thingamabob === 'skipPop') {
                         if(route.use && thingamabob !== 'skipPop') {
-                            req._stack.pop();
-                            
-                            req._opPath = req._stack.length > 0 ? req._originalPath.replace(this.getFullMountpath(req), '') : req._originalPath;
+                            if(req._stack.length > 1){
+                                req._stack.pop();
+                                const fullMountpath = this.getFullMountpath(req);
+                                if (fullMountpath !== null){
+                                    req._opPath = req._originalPath.replace(fullMountpath, '');
+                                } else {
+                                    req._opPath = req._originalPath;
+                                }
+                            } else {
+                                req._stack = [];
+                                req._opPath = req._originalPath;
+                            }
                             if(strictRouting) {
                                 if(req.endsWithSlash && req._opPath[req._opPath.length - 1] !== '/') {
                                     req._opPath += '/';
