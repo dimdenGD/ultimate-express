@@ -253,11 +253,11 @@ class Application extends Router {
         }
         this.listenCalled = true;
         this.uwsApp[fn](...args);
-        return this.uwsApp;
+        return this;
     }
 
     address() {
-        return { port: this.port };
+        return this.port ? { port: this.port } : null;
     }
 
     path() {
