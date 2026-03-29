@@ -253,7 +253,7 @@ class Application extends Router {
         }
         this.listenCalled = true;
         this.uwsApp[fn](...args);
-        return this.uwsApp;
+        return this;
     }
 
     address() {
