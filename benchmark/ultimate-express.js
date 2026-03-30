@@ -6,4 +6,4 @@ app.set("etag", false);
 app.set("declarative responses", false);
 
 app.get('/', async (req, res) => res.send('Hello world'));
-app.listen(3000);
+app.listen(process.env.SOCKET || 3000);

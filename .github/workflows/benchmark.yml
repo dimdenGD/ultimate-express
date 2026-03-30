@@ -53,7 +53,7 @@ jobs:
       - name: Run wrk on ultimate-express
         run: |
           echo "Benchmarking ultimate-express..."
-          wrk -t 1 -c 200 -d 30 http://localhost:3000 > ultimate-express-benchmark.txt
+          wrk -t 1 -c 200 -d 30 -H "Host: localhost" --unix-socket /tmp/ultimate-express-benchmark.sock http://localhost/ > ultimate-express-benchmark.txt
           cat ultimate-express-benchmark.txt
           tmux kill-session -t ultimate-session
 
@@ -65,7 +65,7 @@ jobs:
       - name: Run wrk on express
         run: |
           echo "Benchmarking express..."
-          wrk -t 1 -c 200 -d 30 http://localhost:3001 > express-benchmark.txt
+          wrk -t 1 -c 200 -d 30 -H "Host: localhost" --unix-socket /tmp/express-benchmark.sock http://localhost/ > express-benchmark.txt
           cat express-benchmark.txt
           tmux kill-session -t express-session
 
