@@ -14,6 +14,12 @@ app.get('/test2', (req, res) => {
     res.send('ok');
 });
 
+app.get('/chaining', (req, res) => {
+    const ret = res.location('/foo');
+    console.log('location returns res:', ret === res);
+    res.send('ok');
+});
+
 app.listen(13333, async () => {
     console.log('Server is running on port 13333');
 
@@ -29,6 +35,9 @@ app.listen(13333, async () => {
         },
     });
     console.log(response3.headers.get('Location'));
+
+    const response4 = await fetch('http://localhost:13333/chaining');
+    await response4.text();
 
     process.exit(0);
 });

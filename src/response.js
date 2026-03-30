@@ -19,9 +19,9 @@ const mime = require("mime-types");
 const vary = require("vary");
 const encodeUrl = require("encodeurl");
 const contentDisposition = require("content-disposition");
-const { 
+const {
     normalizeType, stringify, deprecated, UP_PATH_REGEXP, decode,
-    containsDotFile, isPreconditionFailure, isRangeFresh, NullObject
+    containsDotFile, isPreconditionFailure, isRangeFresh, escapeHtml, NullObject
 } = require("./utils.js");
 const { Writable } = require("stream");
 const { isAbsolute } = require("path");
@@ -790,8 +790,13 @@ module.exports = class Response extends Writable {
         return this.send(body);
     }
     links(links) {
-        this.headers['link'] = Object.entries(links).map(([rel, url]) => `<${url}>; rel="${rel}"`).join(', ');
-        return this;
+        // this.headers['link'] = Object.entries(links).map(([rel, url]) => `<${url}>; rel="${rel}"`).join(', ');
+        // return this;
+        let link = this.get('Link') || '';
+        if(link) link += ', ';
+        return this.set('Link', link + Object.keys(links).map(function(rel){
+            return '<' + links[rel] + '>; rel="' + rel + '"';
+        }).join(', '));
     }
     location(path) {
         if(path === 'back') {
@@ -799,7 +804,8 @@ module.exports = class Response extends Writable {
             if(!path) path = this.req.get('Referer');
             if(!path) path = '/';
         }
-        return this.headers['location'] = encodeUrl(path);
+        this.headers['location'] = encodeUrl(path);
+        return this;
     }
     redirect(status, url, forceHtml = false) {
         if(typeof status !== 'number' && !url) {
@@ -808,6 +814,8 @@ module.exports = class Response extends Writable {
         }
         this.location(url);
         this.status(status);
+
+        const address = this.get('Location');
         let body;
         // Support text/{plain,html} by default
         if(forceHtml) {
@@ -820,18 +828,18 @@ module.exports = class Response extends Writable {
                 '<title>Redirecting</title>\n' +
                 '</head>\n' +
                 '<body>\n' +
-                `<pre>Redirecting to ${url.replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</pre>\n` +
+                `<pre>Redirecting to ${escapeHtml(address)}</pre>\n` +
                 '</body>\n' +
                 '</html>\n';
         } else {
             this.format({
                 text: () => {
                     this.set('Content-Type', 'text/plain; charset=UTF-8');
-                    body = statuses.message[status] + '. Redirecting to ' + url
+                    body = `${statuses.message[status]}. Redirecting to ${address}`;
                 },
                 html: () => {
                     this.set('Content-Type', 'text/html; charset=UTF-8');
-                    body = `<p>${statuses.message[status]}. Redirecting to ${url.replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</p>`;
+                    body = `<p>${statuses.message[status]}. Redirecting to ${escapeHtml(address)}</p>`;
                 },
                 default: () => {
                     this.set('Content-Type', 'text/plain; charset=UTF-8');
