@@ -22,6 +22,7 @@ const ViewClass = require("./view.js");
 const path = require("path");
 const os = require("os");
 const { Worker } = require("worker_threads");
+const cluster = require('cluster');
 
 const cpuCount = os.cpus().length;
 
@@ -222,18 +223,21 @@ class Application extends Router {
         }
         const onListen = socket => {
             if(!socket) {
-                let err = new Error('Failed to listen on port ' + port + '. No permission or address already in use.');
+                let err = new Error('listen EADDRINUSE: address already in use :::' + port);
+                err.code = 'EADDRINUSE';
                 throw err;
             }
             this.port = uWS.us_socket_local_port(socket);
-            if(callback) callback(this.port);
+            if(callback) callback();
         };
         let fn = 'listen';
         let args = [];
+        // 1 = exclusive port, 0 = shared port
+        let uwsOptions = cluster.isPrimary ? 1 : 0;
         if(typeof port !== 'number') {
             if(!isNaN(Number(port))) {
                 port = Number(port);
-                args.push(port, onListen);
+                args.push(port, uwsOptions, onListen);
                 if(host) {
                     args.unshift(host);
                 }
@@ -242,18 +246,18 @@ class Application extends Router {
                 args.push(onListen, port);
             }
         } else {
-            args.push(port, onListen);
+            args.push(port, uwsOptions, onListen);
             if(host) {
                 args.unshift(host);
             }
         }
         this.listenCalled = true;
         this.uwsApp[fn](...args);
-        return this.uwsApp;
+        return this;
     }
 
     address() {
-        return { port: this.port };
+        return this.port ? { port: this.port } : null;
     }
 
     path() {

@@ -264,7 +264,7 @@ module.exports = class Response extends Writable {
         return this;
     }
     sendStatus(code) {
-        return this.status(code).send(statuses.message[+code] ?? code.toString());
+        return this.status(code).type('txt').send(statuses.message[code] || String(code));
     }
     end(data, cb) {
         if(typeof data === 'function') {
@@ -725,9 +725,10 @@ module.exports = class Response extends Writable {
         return this.cookie(name, '', opts);
     }
     attachment(filename) {
-        const name = String(filename);
-        this.headers['Content-Disposition'] = contentDisposition(name);
-        this.type(name.split('.').pop());
+        if(filename) {
+            this.type(Path.extname(filename));
+        }
+        this.set('Content-Disposition', contentDisposition(filename));
         return this;
     }
     format(object) {

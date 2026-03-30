@@ -5,6 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "node tests/index.js",
+    "test:types": "tsd --files tests/types/*.test-d.ts",
     "dev": "node --inspect=9229 demo/index.js",
     "cover": "npm run cover:unit && npm run cover:report",
     "cover:unit": "nyc --silent npm run test",
@@ -105,8 +106,10 @@
     "response-time": "^2.3.4",
     "serve-index": "^1.9.2",
     "serve-static": "^2.2.1",
+    "supertest": "^7.2.2",
     "swagger-ui-express": "^5.0.1",
     "swig": "^1.4.2",
+    "tsd": "^0.31.2",
     "vhost": "^3.0.2"
   }
 }

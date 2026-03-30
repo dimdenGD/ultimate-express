@@ -7,9 +7,8 @@
         "strict": false,
         "baseUrl": "./",
         "paths": {
-            "*": [
-                "node_modules/*"
-            ]
+            "ultimate-express": ["src/types.d.ts"],
+            "*": ["node_modules/*"]
         }
     },
     "include": [

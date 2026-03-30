@@ -59,6 +59,7 @@ For full table with other runtimes, check [here](https://github.com/dimdenGD/bun
 Other benchmarks:
  - [TechEmpower / FrameworkBenchmarks](https://www.techempower.com/benchmarks/#section=data-r23&test=plaintext&l=zik0sf-pa7)
  - [the-benchmarker / web-frameworks](https://web-frameworks-benchmark.netlify.app/result?l=javascript)
+ - [HttpArena](https://www.http-arena.com/leaderboard/)
 
 ### Performance on real-world application
 
@@ -237,7 +238,7 @@ In general, basically all features and options are supported. Use [Express 4.x d
 - ✅ req.subdomains
 - ✅ req.xhr
 - 🚧 req.route (route implementation is different from Express)
-- 🚧 req.connection, req.socket (only `end()`, `encrypted`, `remoteAddress` and `localPort` are supported)
+- 🚧 req.connection, req.socket (only `end()`, `encrypted`, `remoteAddress`, `remotePort` and `localPort` are supported)
 - ✅ req.accepts()
 - ✅ req.acceptsCharsets()
 - ✅ req.acceptsEncodings()
@@ -333,6 +334,7 @@ Almost all middlewares that are compatible with Express are compatible with µEx
 - ✅ [swagger-ui-express](https://www.npmjs.com/package/swagger-ui-express)
 - ✅ [graphql-http](https://www.npmjs.com/package/graphql-http)
 - ✅ [better-sse](https://www.npmjs.com/package/better-sse)
+- ✅ [supertest](https://www.npmjs.com/package/supertest)
 
 Middlewares and modules that are confirmed to not work:
 

@@ -1,10 +1,11 @@
 const acorn = require("acorn");
 const { stringify } = require("./utils.js");
 const uWS = require("uWebSockets.js");
+const statuses = require("statuses");
 
 const parser = acorn.Parser;
 
-const allowedResMethods = ['set', 'header', 'setHeader', 'status', 'send', 'end', 'append'];
+const allowedResMethods = ['set', 'header', 'setHeader', 'sendStatus', 'status', 'send', 'end', 'append'];
 const allowedIdentifiers = ['query', 'params', ...allowedResMethods];
 const objKeyRegex = /[\s{\n]([A-Za-z-0-9_]+)(\s|\n)*?:/g;
 
@@ -203,6 +204,11 @@ module.exports = function compileDeclarative(cb, app) {
                     return false;
                 }
                 headers.push([call.arguments[0].value, call.arguments[1].value]);
+            } else if(call.obj.propertyName === 'sendStatus'){
+                if(call.arguments[0].type !== 'Literal') {  
+                    return false;
+                }
+                statusCode = call.arguments[0].value;
             }
         }
 
@@ -354,12 +360,15 @@ module.exports = function compileDeclarative(cb, app) {
             }
         }
 
-        // uws doesnt support status codes other than 200 currently
-        if(statusCode != 200) {
-            return false;
-        }
-
         let decRes = new uWS.DeclarativeResponse();
+
+        if(statusCode != 200) {
+            const statusMessage = statuses.message[statusCode] ?? '';
+            decRes = decRes.writeStatus(`${statusCode} ${statusMessage}`.trim());
+            if(!headers.some(header => header[0].toLowerCase() === 'content-type')) {
+                decRes = decRes.writeHeader('content-type','text/plain; charset=utf-8');
+            }
+        }
 
         for(let header of headers) {
             if(header[0].toLowerCase() === 'content-length') {
@@ -388,6 +397,10 @@ module.exports = function compileDeclarative(cb, app) {
             } else if(bodyPart.type === 'query') {
                 decRes = decRes.writeQueryValue(bodyPart.value);
             }
+        }
+
+        if(!body.length) {
+            decRes = decRes.write(statuses.message[statusCode] || String(statusCode));
         }
 
         return decRes.end();
