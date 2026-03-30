@@ -1,5 +1,5 @@
 declare module "ultimate-express" {
-  import e from "@types/express";
+  import e from "express";
   import uWS from "uWebSockets.js";
 
   type Settings = {
