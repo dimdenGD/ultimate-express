@@ -35,3 +35,6 @@ jobs:
 
       - name: Run tests
         run: npm run test
+
+      - name: Run type compatibility tests
+        run: npm run test:types
