@@ -39,7 +39,8 @@ const etag = require("etag");
 const outgoingMessage = new http.OutgoingMessage();
 const symbols = Object.getOwnPropertySymbols(outgoingMessage);
 const kOutHeaders = symbols.find(s => s.toString() === 'Symbol(kOutHeaders)');
-const HIGH_WATERMARK = 128 * 1024;
+const RESPONSE_HIGH_WATERMARK = outgoingMessage.writableHighWaterMark;
+const FILE_STREAM_HIGH_WATERMARK = 128 * 1024;
 
 class Socket extends EventEmitter {
     constructor(response) {
@@ -71,12 +72,16 @@ class Socket extends EventEmitter {
 module.exports = class Response extends Writable {
     #socket = null;
     #ended = false;
-    #pendingChunks = [];
-    #lastWriteChunkTime = 0;
-    #writeTimeout = null;
+    #responseDone = false;
+    #ending = false;
+    #endData = undefined;
+    #endWithoutBodyLength = null;
+    #hasBodyWrites = false;
     req;
     constructor(res, req, app) {
-        super();
+        super({
+            highWaterMark: RESPONSE_HIGH_WATERMARK
+        });
         this._req = req;
         this._res = res;
         this.headersSent = false;
@@ -88,7 +93,6 @@ module.exports = class Response extends Writable {
         this.statusText = undefined;
         this.chunkedTransfer = true;
         this.totalSize = 0;
-        this.writingChunk = false;
         this.headers = {
             'connection': 'keep-alive',
             'keep-alive': 'timeout=10'
@@ -108,19 +112,13 @@ module.exports = class Response extends Writable {
             }
         });
         this.body = undefined;
-        this.on('error', (err) => {
-            if(this.finished) {
-                return;
-            }
-            this._res.cork(() => {
-                this._res.close();
-                this.finished = true;
-                this.#socket?.emit('close');
-            });
+        this.once('prefinish', () => {
+            this.#ended = true;
         });
         this.once('close', () => {
-            this.#ended = true
-        })
+            this.#ended = true;
+            this.#socket?.emit('close');
+        });
     }
 
     get socket() {
@@ -131,95 +129,134 @@ module.exports = class Response extends Writable {
         return this.#socket;
     }
 
+    #prepareChunk(chunk) {
+        if(Buffer.isBuffer(chunk)) {
+            return chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
+        }
+        if(chunk instanceof ArrayBuffer) {
+            return chunk;
+        }
+        const buffer = Buffer.from(chunk);
+        return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+    }
+
+    #writeResponseHeaders(data, final) {
+        if(this.headersSent) {
+            return false;
+        }
+        this.writeHead(this.statusCode);
+        if(final) {
+            const etagFn = this.app.get('etag fn');
+            if(etagFn && data && !this.headers['etag'] && !this.req.noEtag) {
+                this.headers['etag'] = etagFn(data);
+            }
+        }
+        const fresh = final && this.req.fresh;
+        const statusMessage = this.statusText ?? statuses.message[this.statusCode] ?? '';
+        this._res.writeStatus(fresh ? '304 Not Modified' : `${this.statusCode} ${statusMessage}`.trim());
+        this.writeHeaders(typeof data === 'string');
+        return fresh;
+    }
+
     _write(chunk, encoding, callback) {
         if (this.aborted) {
             const err = new Error('Request aborted');
             err.code = 'ECONNABORTED';
-            return this.destroy(err);
+            callback(err);
+            return;
         }
-        if (this.finished) {
+        if (this.#responseDone) {
             const err = new Error('Response already finished');
-            return this.destroy(err);
+            callback(err);
+            return;
         }
 
-        this.writingChunk = true;
         this._res.cork(() => {
-            if (!this.headersSent) {
-                this.writeHead(this.statusCode);
-                const statusMessage = this.statusText ?? statuses.message[this.statusCode] ?? '';
-                this._res.writeStatus(`${this.statusCode} ${statusMessage}`.trim());
-                this.writeHeaders(typeof chunk === 'string');
-            }
-    
-            if (!Buffer.isBuffer(chunk) && !(chunk instanceof ArrayBuffer)) {
-                chunk = Buffer.from(chunk);
-                chunk = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
-            }
-    
-            if (this.chunkedTransfer) {
-                this.#pendingChunks.push(chunk);
-                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-                const now = performance.now();
-                // the first chunk is sent immediately (!this.#lastWriteChunkTime)
-                // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
-                // or if elapsed 50ms of last send (now - this.#lastWriteChunkTime > 50)
-                if (!this.#lastWriteChunkTime || size >= HIGH_WATERMARK || now - this.#lastWriteChunkTime > 50) {
-                    this._res.write(Buffer.concat(this.#pendingChunks, size));
-                    this.#pendingChunks = [];
-                    this.#lastWriteChunkTime = now;
-                    if(this.#writeTimeout) {
-                        clearTimeout(this.#writeTimeout);
-                        this.#writeTimeout = null;
-                    }
-                } else if(!this.#writeTimeout) {
-                    this.#writeTimeout = setTimeout(() => {
-                        this.#writeTimeout = null;
-                        if(!this.finished && !this.aborted) this._res.cork(() => {
-                            if(this.#pendingChunks.length) {
-                                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-                                this._res.write(Buffer.concat(this.#pendingChunks, size));
-                                this.#pendingChunks = [];
-                                this.#lastWriteChunkTime = performance.now();
-                            }
-                        });
-                    }, 50);
-                    this.#writeTimeout.unref();
-                }
-                this.writingChunk = false;
+            const fresh = this.#writeResponseHeaders(this.#ending ? this.#endData ?? chunk : chunk, this.#ending);
+            if(fresh) {
+                this._res.end();
+                this.#responseDone = true;
                 callback(null);
+                return;
+            }
+            this.#hasBodyWrites = true;
+            chunk = this.#prepareChunk(chunk);
+            if (this.chunkedTransfer) {
+                const ok = this._res.write(chunk);
+                if(ok) {
+                    callback(null);
+                } else {
+                    let handlerUsed = false;
+                    this._res.onWritable(() => {
+                        if(this.aborted || this.#responseDone || handlerUsed) {
+                            return true;
+                        }
+                        handlerUsed = true;
+                        callback(null);
+                        return true;
+                    });
+                }
             } else {
                 const lastOffset = this._res.getWriteOffset();
                 const [ok, done] = this._res.tryEnd(chunk, this.totalSize);
                 if (done) {
-                    super.end();
-                    this.finished = true;
-                    this.writingChunk = false;
-                    this.#socket?.emit('close');
+                    this.#responseDone = true;
                     callback(null);
                 } else if (!ok) {
                     this._res.ab = chunk;
                     this._res.abOffset = lastOffset;
                     let handlerUsed = false;
                     this._res.onWritable((offset) => {
-                        if (this.finished || handlerUsed) return true;
+                        if (this.aborted || this.#responseDone || handlerUsed) return true;
                         const [ok, done] = this._res.tryEnd(this._res.ab.slice(offset - this._res.abOffset), this.totalSize);
                         if (done) {
-                            this.finished = true;
-                            this.#socket?.emit('close');
+                            this.#responseDone = true;
                         }
                         if (ok) {
-                            this.writingChunk = false;
                             handlerUsed = true;
                             callback(null);
                         }
                         return ok;
                     });
                 } else {
-                    this.writingChunk = false;
                     callback(null);
                 }
             }
         });
+    }
+    _final(callback) {
+        if(this.aborted) {
+            const err = new Error('Request aborted');
+            err.code = 'ECONNABORTED';
+            callback(err);
+            return;
+        }
+        if(this.#responseDone) {
+            callback(null);
+            return;
+        }
+        this._res.cork(() => {
+            const fresh = this.#writeResponseHeaders(this.#endData, true);
+            if(fresh) {
+                this._res.end();
+            } else if(this.#endWithoutBodyLength !== null) {
+                this._res.endWithoutBody(this.#endWithoutBodyLength);
+            } else {
+                this._res.end();
+            }
+            this.#responseDone = true;
+            callback(null);
+        });
+    }
+    _destroy(err, callback) {
+        if(!this.#responseDone && !this.aborted) {
+            this._res.cork(() => {
+                this._res.close();
+            });
+        }
+        this.#responseDone = true;
+        this.finished = true;
+        callback(err);
     }
     writeHead(statusCode, statusMessage, headers) {
         this.statusCode = statusCode;
@@ -274,69 +311,41 @@ module.exports = class Response extends Writable {
         if(typeof cb !== 'function') {
             cb = undefined; // silence the error?
         }
-
-        if(this.writingChunk) {
-            this.once('drain', () => {
-                this.end(data, cb);
-            });
-            return;
-        }
         if(this.finished) {
-            return;
+            return this;
         }
-        this.writeHead(this.statusCode);
-        this._res.cork(() => {
-            if(!this.headersSent) {
-                const etagFn = this.app.get('etag fn');
-                if(etagFn && data && !this.headers['etag'] && !this.req.noEtag) {
-                    this.headers['etag'] = etagFn(data);
-                }
-                const fresh = this.req.fresh;
-                const statusMessage = this.statusText ?? statuses.message[this.statusCode] ?? '';
-                this._res.writeStatus(fresh ? '304 Not Modified' : `${this.statusCode} ${statusMessage}`.trim());
-                this.writeHeaders(true);
-                if(fresh) {
-                    this._res.end();
-                    this.finished = true;
-                    this.#socket?.emit('close');
-                    this.emit('finish');
-                    this.emit('close');
-                    cb && queueMicrotask(() => {
-                        this.#ended = true;
-                        cb();
-                    });
-                    return;
-                }
-            }
-            const contentLength = this.headers['content-length'];
-            if(!data && contentLength) {
-                this._res.endWithoutBody(contentLength.toString());
-            } else {
-                if(this.#pendingChunks.length) {
-                    this._res.write(Buffer.concat(this.#pendingChunks));
-                    this.#pendingChunks = [];
-                    this.lastWriteChunkTime = 0;
-                }
-                if(data instanceof Buffer) {
-                    data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
-                }
-                if(this.req.method === 'HEAD') {
-                    const length = Buffer.byteLength(data ?? '');
-                    this._res.endWithoutBody(length.toString());
-                } else {
-                    this._res.end(data);
-                }
-            }
-            
-            this.finished = true;
-            this.#socket?.emit('close');
-            this.emit('finish');
-            this.emit('close');
-            cb && queueMicrotask(() => {
-                this.#ended = true;
-                cb();
-            });
-        });
+        this.#ending = true;
+        if(data instanceof ArrayBuffer) {
+            data = Buffer.from(data);
+        }
+        this.#endData = data;
+        if(
+            data !== undefined &&
+            !this.headersSent &&
+            !this.#hasBodyWrites &&
+            !this.headers['content-length'] &&
+            !this.headers['transfer-encoding']
+        ) {
+            this.headers['content-length'] = String(Buffer.byteLength(data));
+        }
+        this.#endWithoutBodyLength = null;
+        if(this.req.method === 'HEAD') {
+            this.#endWithoutBodyLength = this.headers['content-length']
+                ? parseInt(this.headers['content-length'])
+                : (data !== undefined ? Buffer.byteLength(data) : 0);
+            data = undefined;
+        } else if(data === undefined && this.headers['content-length']) {
+            this.#endWithoutBodyLength = parseInt(this.headers['content-length']);
+        }
+        this.finished = true;
+        if(cb) {
+            this.once('finish', cb);
+        }
+        if(data === undefined) {
+            super.end();
+        } else {
+            super.end(data);
+        }
         return this;
     }
 
@@ -569,7 +578,7 @@ module.exports = class Response extends Writable {
         } else {
             // larger files or range requests are piped over response
             let opts = {
-                highWaterMark: HIGH_WATERMARK
+                highWaterMark: FILE_STREAM_HIGH_WATERMARK
             };
             if(ranged) {
                 opts.start = offset;
