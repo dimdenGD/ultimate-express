@@ -179,8 +179,15 @@ module.exports = class Response extends Writable {
                 callback(null);
                 return;
             }
+            const firstBodyWrite = !this.#hasBodyWrites;
             this.#hasBodyWrites = true;
             chunk = this.#prepareChunk(chunk);
+            if(this.#ending && firstBodyWrite) {
+                this._res.end(chunk);
+                this.#responseDone = true;
+                callback(null);
+                return;
+            }
             if (this.chunkedTransfer) {
                 const ok = this._res.write(chunk);
                 if(ok) {
@@ -318,6 +325,15 @@ module.exports = class Response extends Writable {
         if(data instanceof ArrayBuffer) {
             data = Buffer.from(data);
         }
+        const canFastEnd =
+            !cb &&
+            !this.headersSent &&
+            !this.#hasBodyWrites &&
+            !this.#socket &&
+            this.listenerCount('finish') === 0 &&
+            this.listenerCount('drain') === 0 &&
+            this.listenerCount('prefinish') === 1 &&
+            this.listenerCount('close') === 1;
         this.#endData = data;
         if(
             data !== undefined &&
@@ -336,6 +352,46 @@ module.exports = class Response extends Writable {
             data = undefined;
         } else if(data === undefined && this.headers['content-length']) {
             this.#endWithoutBodyLength = parseInt(this.headers['content-length']);
+        }
+        if(canFastEnd) {
+            this.finished = true;
+            this.#ended = true;
+            this._res.cork(() => {
+                const fresh = this.#writeResponseHeaders(this.#endData, true);
+                if(fresh) {
+                    this._res.end();
+                } else if(this.#endWithoutBodyLength !== null) {
+                    this._res.endWithoutBody(this.#endWithoutBodyLength);
+                } else if(!this.chunkedTransfer) {
+                    const chunk = this.#prepareChunk(data);
+                    const lastOffset = this._res.getWriteOffset();
+                    const [ok, done] = this._res.tryEnd(chunk, this.totalSize);
+                    if(done) {
+                        this.#responseDone = true;
+                        return;
+                    }
+                    this._res.ab = chunk;
+                    this._res.abOffset = lastOffset;
+                    this._res.onWritable((offset) => {
+                        if(this.aborted || this.#responseDone) {
+                            return true;
+                        }
+                        const [ok, done] = this._res.tryEnd(this._res.ab.slice(offset - this._res.abOffset), this.totalSize);
+                        if(done) {
+                            this.#responseDone = true;
+                        }
+                        return ok;
+                    });
+                } else if(data === undefined) {
+                    this._res.end();
+                } else if(Buffer.isBuffer(data) || ArrayBuffer.isView(data)) {
+                    this._res.end(data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength));
+                } else {
+                    this._res.end(data);
+                }
+                this.#responseDone = true;
+            });
+            return this;
         }
         this.finished = true;
         if(cb) {
