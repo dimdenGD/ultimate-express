@@ -13,24 +13,19 @@ async function sendRequest(method, url, arrayHeaders) {
         const path = '/' + url.split('/').slice(3).join('/');
 
         client.connect(parseInt(port), host, () => {
+            client.on('data', () => client.end());
+            client.on('end', resolve);
+
             let request = `${method} ${path} HTTP/1.1\r\n`;
             request += `Host: ${host}:${port}\r\n`;
-            
+
             for (const [key, value] of arrayHeaders) {
                 request += `${key}: ${value}\r\n`;
             }
             
             request += '\r\n';
             
-            client.write(request, (err) => {
-                client.destroy();
-                if (err) {
-                    return reject(err);
-                }
-                setTimeout(() => {
-                    resolve();
-                }, 100);
-            });
+            client.write(request);
         });
     });
 }

@@ -13,6 +13,9 @@ async function sendRequest(method, url, arrayHeaders) {
         const path = '/' + url.split('/').slice(3).join('/');
 
         client.connect(parseInt(port), host, () => {
+            client.on('data', () => client.end());
+            client.on('end', resolve);
+
             let request = `${method} ${path} HTTP/1.1\r\n`;
             request += `Host: ${host}:${port}\r\n`;
             
@@ -23,11 +26,6 @@ async function sendRequest(method, url, arrayHeaders) {
             request += '\r\n';
             
             client.write(request);
-
-            setTimeout(() => {
-                client.destroy();
-                resolve();
-            }, 100);
         });
     });
 }
