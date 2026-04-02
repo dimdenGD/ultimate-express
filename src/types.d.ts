@@ -19,7 +19,7 @@ declare module "ultimate-express" {
     export import response = e.response;
 
     export import static = e.static;
-    // export import query = e.query;
+    // export import query = e.query; 
 
     export import urlencoded = e.urlencoded;
 
