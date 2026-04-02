@@ -33,10 +33,16 @@ const discardedDuplicates = new Set([
 
 let key = 0;
 const EMPTY_BUFFER = Buffer.alloc(0);
-const HEADER_BAG_PROTOTYPE = Object.getPrototypeOf(new http.IncomingMessage(new Socket()).headersDistinct);
+const headersProbe = new http.IncomingMessage(new Socket());
+const HEADER_BAG_PROTOTYPE = Object.getPrototypeOf(headersProbe.headers);
+const DISTINCT_HEADER_BAG_PROTOTYPE = Object.getPrototypeOf(headersProbe.headersDistinct);
 
 function createHeaderBag() {
     return HEADER_BAG_PROTOTYPE === null ? Object.create(null) : {};
+}
+
+function createDistinctHeaderBag() {
+    return DISTINCT_HEADER_BAG_PROTOTYPE === null ? Object.create(null) : {};
 }
 
 module.exports = class Request extends Readable {
@@ -519,7 +525,7 @@ module.exports = class Request extends Readable {
         if(this.#cachedDistinctHeaders) {
             return this.#cachedDistinctHeaders;
         }
-        this.#cachedDistinctHeaders = createHeaderBag();
+        this.#cachedDistinctHeaders = createDistinctHeaderBag();
         this.#rawHeadersEntries.forEach((val) => {
             const [key, value] = val;
             if(!this.#cachedDistinctHeaders[key]) {

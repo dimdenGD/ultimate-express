@@ -285,11 +285,9 @@ module.exports = class Router extends EventEmitter {
         request.res = response;
         response.req = request;
         res.onAborted(() => {
-            const err = new Error('Connection closed');
-            err.code = 'ECONNRESET';
             response.aborted = true;
             response.finished = true;
-            response.destroy(err);
+            response.destroy();
         });
 
         return { request, response };
