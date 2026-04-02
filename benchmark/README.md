@@ -19,7 +19,7 @@ Scenarios:
 - `middlewares-100`
 - `nested-routers-3`
 - `static-250kb`
-- `ejs-render`
+- `art-render`
 - `post-urlencoded`
 - `compression-small-file`
 - `streaming-without-content-length`
