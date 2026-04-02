@@ -19,7 +19,8 @@ const accepts = require("accepts");
 const typeis = require("type-is");
 const parseRange = require("range-parser");
 const proxyaddr = require("proxy-addr");
-const { isIP } = require("node:net");
+const { isIP, Socket } = require("node:net");
+const http = require("http");
 const fresh = require("fresh");
 const { Readable } = require("stream");
 
@@ -31,6 +32,18 @@ const discardedDuplicates = new Set([
 ]);
 
 let key = 0;
+const EMPTY_BUFFER = Buffer.alloc(0);
+const headersProbe = new http.IncomingMessage(new Socket());
+const HEADER_BAG_PROTOTYPE = Object.getPrototypeOf(headersProbe.headers);
+const DISTINCT_HEADER_BAG_PROTOTYPE = Object.getPrototypeOf(headersProbe.headersDistinct);
+
+function createHeaderBag() {
+    return HEADER_BAG_PROTOTYPE === null ? Object.create(null) : {};
+}
+
+function createDistinctHeaderBag() {
+    return DISTINCT_HEADER_BAG_PROTOTYPE === null ? Object.create(null) : {};
+}
 
 module.exports = class Request extends Readable {
     #cachedQuery = null;
@@ -78,11 +91,11 @@ module.exports = class Request extends Readable {
         this._isOptions = this.method === 'OPTIONS';
         this._isHead = this.method === 'HEAD';
         this.params = {};
-        
-        this._matchedMethods = new Set();
-        this._gotParams = new Set();
-        this._stack = [];
-        this._paramStack = [];
+
+        this._matchedMethods = null;
+        this._gotParams = null;
+        this._stack = null;
+        this._paramStack = null;
         this.receivedData = false;
         // reading ip is very slow in UWS, so its better to not do it unless truly needed
         if(this.app.needsIpAfterResponse || this.key < 100) {
@@ -100,7 +113,7 @@ module.exports = class Request extends Readable {
             this.method === 'PATCH' || 
             (additionalMethods && additionalMethods.includes(this.method))
         ) {
-            this.#bufferedData = Buffer.allocUnsafe(0);
+            this.#bufferedData = EMPTY_BUFFER;
             this._res.onData((ab, isLast) => {
                 // make stream actually readable
                 this.receivedData = true;
@@ -121,9 +134,38 @@ module.exports = class Request extends Readable {
             this.receivedData = true;
             // For GET and other non-body methods, initialize bufferedData as empty buffer
             // to ensure pipe() works correctly
-            this.#bufferedData = Buffer.allocUnsafe(0);
+            this.#bufferedData = EMPTY_BUFFER;
             this.#doneReadingData = true;
         }
+    }
+
+    #getHeaderValue(field) {
+        if(this.#cachedHeaders) {
+            return this.#cachedHeaders[field];
+        }
+        let result;
+        for(let index = 0, len = this.#rawHeadersEntries.length; index < len; index++) {
+            let [key, value] = this.#rawHeadersEntries[index];
+            key = key.toLowerCase();
+            if(key !== field) {
+                continue;
+            }
+            if(result !== undefined) {
+                if(discardedDuplicates.has(key)) {
+                    continue;
+                }
+                if(key === 'cookie') {
+                    result += '; ' + value;
+                } else if(key === 'set-cookie') {
+                    result.push(value);
+                } else {
+                    result += ', ' + value;
+                }
+                continue;
+            }
+            result = key === 'set-cookie' ? [value] : value;
+        }
+        return result;
     }
 
     _read() {
@@ -144,7 +186,11 @@ module.exports = class Request extends Readable {
     }
 
     get baseUrl() {
-        let match = this._originalPath.match(patternToRegex(this._stack.join(""), true));
+        const stack = this._stack;
+        if(!stack?.length) {
+            return '';
+        }
+        let match = this._originalPath.match(patternToRegex(stack.join(""), true));
         return match ? match[0] : '';
     }
 
@@ -155,7 +201,7 @@ module.exports = class Request extends Readable {
     get #host() {
         const trust = this.app.get('trust proxy fn');
         const isTrusted = !!(trust && trust(this.connection.remoteAddress, 0));
-        const rawHeader = (isTrusted && this.headers['x-forwarded-host']) || this.headers['host'];
+        const rawHeader = (isTrusted && this.#getHeaderValue('x-forwarded-host')) || this.#getHeaderValue('host');
         let host = Array.isArray(rawHeader) ? rawHeader[0] : rawHeader;
 
         if (typeof host !== 'string' || !host) return;
@@ -226,7 +272,7 @@ module.exports = class Request extends Readable {
         if(!trust(this.connection.remoteAddress, 0)) {
             return proto;
         }
-        const header = this.headers['x-forwarded-proto'] || proto;
+        const header = this.#getHeaderValue('x-forwarded-proto') || proto;
         const index = header.indexOf(',');
 
         return index !== -1 ? header.slice(0, index).trim() : header.trim();
@@ -272,7 +318,7 @@ module.exports = class Request extends Readable {
     }
 
     get xhr() {
-        const val = this.headers?.['x-requested-with'];
+        const val = this.#getHeaderValue('x-requested-with');
         return typeof val === 'string' && val.toLowerCase() === 'xmlhttprequest';
     }
 
@@ -331,6 +377,13 @@ module.exports = class Request extends Readable {
             return false;
         }
         if((this.res.statusCode >= 200 && this.res.statusCode < 300) || this.res.statusCode === 304) {
+            if(!this.#cachedHeaders) {
+                const noneMatch = this.#getHeaderValue('if-none-match');
+                const modifiedSince = this.#getHeaderValue('if-modified-since');
+                if(!noneMatch && !modifiedSince) {
+                    return false;
+                }
+            }
             return fresh(this.headers, {
                 'etag': this.res.headers['etag'],
                 'last-modified': this.res.headers['last-modified'],
@@ -352,13 +405,13 @@ module.exports = class Request extends Readable {
         }
         field = field.toLowerCase();
         if(field === 'referrer' || field === 'referer') {
-            const res = this.headers['referrer'];
+            const res = this.#getHeaderValue('referrer');
             if(!res) {
-                return this.headers['referer'];
+                return this.#getHeaderValue('referer');
             }
             return res;
         } 
-        return this.headers[field];
+        return this.#getHeaderValue(field);
     }
     header = this.get
 
@@ -429,7 +482,7 @@ module.exports = class Request extends Readable {
     }
 
     range(size, options) {
-        const range = this.headers['range'];
+        const range = this.#getHeaderValue('range');
         if(!range) return;
         return parseRange(size, range, options);
     }
@@ -442,9 +495,9 @@ module.exports = class Request extends Readable {
         if(this.#cachedHeaders) {
             return this.#cachedHeaders;
         }
-        this.#cachedHeaders = {...new NullObject()}; // seems to be faster
+        this.#cachedHeaders = createHeaderBag();
         for (let index = 0, len = this.#rawHeadersEntries.length; index < len; index++) {
-            let [key, value] = this.#rawHeadersEntries[index];   
+            let [key, value] = this.#rawHeadersEntries[index];
             key = key.toLowerCase();
             if(this.#cachedHeaders[key]) {
                 if(discardedDuplicates.has(key)) {
@@ -472,7 +525,7 @@ module.exports = class Request extends Readable {
         if(this.#cachedDistinctHeaders) {
             return this.#cachedDistinctHeaders;
         }
-        this.#cachedDistinctHeaders = {...new NullObject()};
+        this.#cachedDistinctHeaders = createDistinctHeaderBag();
         this.#rawHeadersEntries.forEach((val) => {
             const [key, value] = val;
             if(!this.#cachedDistinctHeaders[key]) {

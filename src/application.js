@@ -191,21 +191,8 @@ class Application extends Router {
     #createRequestHandler() {
         this.uwsApp.any('/*', async (res, req) => {
             const { request, response } = this.handleRequest(res, req);
-
             const matchedRoute = await this._routeRequest(request, response);
-            if(!matchedRoute && !response.headersSent && !response.aborted) {
-                if(request._error) {
-                    return this._handleError(request._error, null, request, response);
-                }
-                if(request._isOptions && request._matchedMethods.size > 0) {
-                    const allowedMethods = Array.from(request._matchedMethods).join(',');
-                    response.setHeader('Allow', allowedMethods);
-                    response.send(allowedMethods);
-                    return;
-                }
-                response.status(404);
-                this._sendErrorPage(request, response, `Cannot ${request.method} ${request.path}`, false);
-            }
+            this._finishRequest(matchedRoute, request, response);
         });
     }
 
