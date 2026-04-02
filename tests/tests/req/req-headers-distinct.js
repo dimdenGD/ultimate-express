@@ -32,7 +32,9 @@ async function sendRequest(method, url, arrayHeaders) {
 
 const app = express();
 app.get("/test", (req, res) => {
-    console.log(req.headersDistinct);
+    // https://github.com/nodejs/node/blob/5ff1eab951cf9814e1706f2f179fd5a80bed4d0f/lib/_http_incoming.js#L131
+    // [Object: null prototype]
+    console.log({...req.headersDistinct});
     res.send("test");
 });
 
