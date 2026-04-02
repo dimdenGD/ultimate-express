@@ -126,4 +126,6 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: err.message });
 });
 
-expectAssignable<Server>(app.listen(0));
+const server = app.listen(3000);
+expectAssignable<Server>(server);
+server.close();
