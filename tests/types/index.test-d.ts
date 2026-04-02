@@ -4,6 +4,7 @@ import type {
   Request, Response, NextFunction,
   IRouter, RequestHandler, ErrorRequestHandler
 } from 'express';
+import type { Server } from 'http';
 
 const app = express();
 
@@ -124,3 +125,5 @@ app.use((_req, res) => res.status(404).json({ error: 'Not Found' }));
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: err.message });
 });
+
+expectAssignable<Server>(app.listen(0));
