@@ -6,7 +6,7 @@
   "scripts": {
     "test": "node tests/index.js",
     "test:types": "tsd --files tests/types/*.test-d.ts",
-    "dev": "node --inspect=9229 demo/index.js",
+    "benchmark:compare": "node benchmark/run.js",
     "cover": "npm run cover:unit && npm run cover:report",
     "cover:unit": "nyc --silent npm run test",
     "cover:report": "nyc report --reporter=html"
