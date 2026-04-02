@@ -22,12 +22,15 @@ async function sendRequest(method, url, arrayHeaders) {
             
             request += '\r\n';
             
-            client.write(request);
-
-            setTimeout(() => {
+            client.write(request, (err) => {
                 client.destroy();
-                resolve();
-            }, 100);
+                if (err) {
+                    return reject(err);
+                }
+                setTimeout(() => {
+                    resolve();
+                }, 100);
+            });
         });
     });
 }
