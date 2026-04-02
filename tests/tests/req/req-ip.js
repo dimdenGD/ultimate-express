@@ -8,8 +8,7 @@ app.get("/test2", (req, res) => {
     res.send(req.ip);
 });
 
-app.use(async (req, res, next) => {
-    await new Promise(resolve => setTimeout(resolve, 100));
+app.use((req, res, next) => {
     next();
 });
 

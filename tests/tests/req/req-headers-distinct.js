@@ -13,9 +13,12 @@ async function sendRequest(method, url, arrayHeaders) {
         const path = '/' + url.split('/').slice(3).join('/');
 
         client.connect(parseInt(port), host, () => {
+            client.on('data', () => client.end());
+            client.on('end', resolve);
+
             let request = `${method} ${path} HTTP/1.1\r\n`;
             request += `Host: ${host}:${port}\r\n`;
-            
+
             for (const [key, value] of arrayHeaders) {
                 request += `${key}: ${value}\r\n`;
             }
@@ -23,18 +26,15 @@ async function sendRequest(method, url, arrayHeaders) {
             request += '\r\n';
             
             client.write(request);
-
-            setTimeout(() => {
-                client.destroy();
-                resolve();
-            }, 100);
         });
     });
 }
 
 const app = express();
 app.get("/test", (req, res) => {
-    console.log(req.headersDistinct);
+    // https://github.com/nodejs/node/blob/5ff1eab951cf9814e1706f2f179fd5a80bed4d0f/lib/_http_incoming.js#L131
+    // [Object: null prototype]
+    console.log({...req.headersDistinct});
     res.send("test");
 });
 

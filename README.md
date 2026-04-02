@@ -24,7 +24,7 @@ Similar projects based on uWebSockets:
 
 ## Performance
 
-### Test results
+### Performance against Express
 
 Tested using [wrk](https://github.com/wg/wrk) (`-d 60 -t 1 -c 200`). Tested on Ubuntu 22.04, Node.js 20.17.0, AMD Ryzen 5 3600, 64GB RAM.
 
@@ -40,23 +40,6 @@ Tested using [wrk](https://github.com/wg/wrk) (`-d 60 -t 1 -c 200`). Tested on U
 | middlewares/compression-file (/small-file)    | 4.81k           | 14.92k           | 386 MB/sec         | 1.17 GB/sec         | **3.10X**        |
 
 ### Performance against other frameworks
-
-Tested using [bun-http-framework-benchmark](https://github.com/dimdenGD/bun-http-framework-benchmark). This table only includes Node.js results.
-For full table with other runtimes, check [here](https://github.com/dimdenGD/bun-http-framework-benchmark?tab=readme-ov-file#results).
-
-|  Framework           | Average        | Ping          | Query         | Body          |
-| -------------------- | -------------- | ------------- | ------------- | ------------- |
-| uws                  | 95,531.277     | 109,960.35    | 105,601.47    | 71,032.01     |
-| **ultimate-express (declarative)** | **86,794.997** | **108,546.44** | **105,869.75** | **45,968.8** |
-| hyper-express        | 68,959.92      | 82,547.21     | 71,685.51     | 52,647.04     |
-| **ultimate-express** | **60,839.75** | **68,938.53** | **66,173.86** | **47,406.86** |
-| h3                   | 35,423.263     | 41,243.68     | 34,429.26     | 30,596.85     |
-| fastify              | 33,094.62      | 40,147.67     | 40,076.35     | 19,059.84     |
-| hono                 | 26,576.02      | 36,215.35     | 34,656.12     | 8,856.59      |
-| koa                  | 24,045.08      | 28,202.12     | 24,590.84     | 19,342.28     |
-| express              | 10,411.313     | 11,245.57     | 10,598.74     | 9,389.63      |
-
-Other benchmarks:
  - [TechEmpower / FrameworkBenchmarks](https://www.techempower.com/benchmarks/#section=data-r23&test=plaintext&l=zik0sf-pa7)
  - [the-benchmarker / web-frameworks](https://web-frameworks-benchmark.netlify.app/result?l=javascript)
  - [HttpArena](https://www.http-arena.com/leaderboard/)

@@ -326,6 +326,14 @@ class Application extends Router {
             callback(err);
         }
     }
+
+    close(callback) {
+        if(this.listenCalled) {
+            this.uwsApp.close(callback);
+        } else {
+            if(callback) callback();
+        }
+    }
 }
 
 module.exports = function(options) {

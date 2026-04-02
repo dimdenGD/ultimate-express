@@ -5,3 +5,5 @@ processed.txt
 /.nyc_output
 /coverage
 .DS_Store
+benchmark_summary.md
+.vscode
