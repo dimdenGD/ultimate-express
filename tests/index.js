@@ -35,6 +35,7 @@ for (const testCategory of testCategories) {
             let testPath = path.join(__dirname, 'tests', testCategory, testName);
             let testCode = fs.readFileSync(testPath, 'utf8').replace(`const express = require("../../../src/index.js");`, 'const express = require("express");');
             fs.writeFileSync(testPath, testCode);
+            await new Promise(resolve => setTimeout(resolve, 50));
             let testDescription = testCode.split('\n')[0].slice(2).trim();
 
             const skip = testDescription.endsWith('OFF')
