@@ -323,8 +323,8 @@ function buildMarkdown(results) {
 
     const failures = [];
     for (const row of results) {
-        const speedup = row.express.ok && row.ultimate.ok && row.express.requestsPerSec > 0
-            ? `${(row.ultimate.requestsPerSec / row.express.requestsPerSec).toFixed(2)}x`
+    const speedup = row.express.ok && row.ultimate.ok && row.express.transferPerSecBytes > 0
+      ? `${(row.ultimate.transferPerSecBytes / row.express.transferPerSecBytes).toFixed(2)}x`
             : 'N/A';
         const expressReq = row.express.ok ? formatReqPerSec(row.express.requestsPerSec) : 'FAILED';
         const ultimateReq = row.ultimate.ok ? formatReqPerSec(row.ultimate.requestsPerSec) : 'FAILED';
