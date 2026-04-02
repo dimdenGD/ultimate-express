@@ -41,11 +41,44 @@ const symbols = Object.getOwnPropertySymbols(outgoingMessage);
 const kOutHeaders = symbols.find(s => s.toString() === 'Symbol(kOutHeaders)');
 const RESPONSE_HIGH_WATERMARK = outgoingMessage.writableHighWaterMark;
 const FILE_STREAM_HIGH_WATERMARK = 128 * 1024;
+const STATUS_200 = '200 OK';
+const outHeadersProxyHandler = {
+    set(target, prop, value) {
+        target.response.set(prop, value[1]);
+        return true;
+    },
+    get(target, prop) {
+        return target.headers[prop];
+    },
+    deleteProperty(target, prop) {
+        delete target.headers[prop];
+        return true;
+    },
+    has(target, prop) {
+        return prop in target.headers;
+    },
+    ownKeys(target) {
+        return Reflect.ownKeys(target.headers);
+    },
+    getOwnPropertyDescriptor(target, prop) {
+        const value = target.headers[prop];
+        if(value === undefined) {
+            return undefined;
+        }
+        return {
+            configurable: true,
+            enumerable: true,
+            writable: true,
+            value
+        };
+    }
+};
 
 class Socket extends EventEmitter {
     constructor(response) {
         super();
         this.response = response;
+        this.closed = false;
 
         this.on('error', (err) => {
             this.emit('close');
@@ -64,13 +97,18 @@ class Socket extends EventEmitter {
             return;
         }
         this.response.finished = true;
-        this.emit('close');
+        if(!this.closed) {
+            this.closed = true;
+            this.emit('close');
+        }
         this.response._res.close();
     }
 }
 
 module.exports = class Response extends Writable {
     #socket = null;
+    #locals = null;
+    #outHeaders = null;
     #ended = false;
     #responseDone = false;
     #ending = false;
@@ -86,7 +124,6 @@ module.exports = class Response extends Writable {
         this._res = res;
         this.headersSent = false;
         this.app = app;
-        this.locals = new NullObject();
         this.finished = false;
         this.aborted = false;
         this.statusCode = 200;
@@ -101,24 +138,7 @@ module.exports = class Response extends Writable {
             this.headers['x-powered-by'] = 'UltimateExpress';
         }
 
-        // support for node internal
-        this[kOutHeaders] = new Proxy(this.headers, {
-            set: (obj, prop, value) => {
-                this.set(prop, value[1]);
-                return true;
-            },
-            get: (obj, prop) => {
-                return obj[prop];
-            }
-        });
         this.body = undefined;
-        this.once('prefinish', () => {
-            this.#ended = true;
-        });
-        this.once('close', () => {
-            this.#ended = true;
-            this.#socket?.emit('close');
-        });
     }
 
     get socket() {
@@ -127,6 +147,32 @@ module.exports = class Response extends Writable {
             this.#socket = new Socket(this);
         }
         return this.#socket;
+    }
+
+    get locals() {
+        return this.#locals ?? (this.#locals = new NullObject());
+    }
+
+    set locals(value) {
+        this.#locals = value;
+    }
+
+    get [kOutHeaders]() {
+        return this.#outHeaders ?? (this.#outHeaders = new Proxy({
+            headers: this.headers,
+            response: this
+        }, outHeadersProxyHandler));
+    }
+
+    set [kOutHeaders](value) {
+        this.#outHeaders = value;
+    }
+
+    #closeSocket() {
+        if(this.#socket && !this.#socket.closed) {
+            this.#socket.closed = true;
+            this.#socket.emit('close');
+        }
     }
 
     #prepareChunk(chunk) {
@@ -144,7 +190,10 @@ module.exports = class Response extends Writable {
         if(this.headersSent) {
             return false;
         }
-        this.writeHead(this.statusCode);
+        const prototype = Object.getPrototypeOf(this);
+        if(this.writeHead !== prototype.writeHead) {
+            this.writeHead(this.statusCode);
+        }
         if(final) {
             const etagFn = this.app.get('etag fn');
             if(etagFn && data && !this.headers['etag'] && !this.req.noEtag) {
@@ -152,9 +201,13 @@ module.exports = class Response extends Writable {
             }
         }
         const fresh = final && this.req.fresh;
-        const statusMessage = this.statusText ?? statuses.message[this.statusCode] ?? '';
-        this._res.writeStatus(fresh ? '304 Not Modified' : `${this.statusCode} ${statusMessage}`.trim());
-        this.writeHeaders(typeof data === 'string');
+        this._res.writeStatus(fresh
+            ? '304 Not Modified'
+            : (this.statusCode === 200 && this.statusText === undefined
+                ? STATUS_200
+                : `${this.statusCode} ${(this.statusText ?? statuses.message[this.statusCode] ?? '')}`.trim())
+        );
+        this.writeHeaders();
         return fresh;
     }
 
@@ -174,6 +227,9 @@ module.exports = class Response extends Writable {
         this._res.cork(() => {
             const fresh = this.#writeResponseHeaders(this.#ending ? this.#endData ?? chunk : chunk, this.#ending);
             if(fresh) {
+                if(this.#ending) {
+                    this.#ended = true;
+                }
                 this._res.end();
                 this.#responseDone = true;
                 callback(null);
@@ -183,6 +239,7 @@ module.exports = class Response extends Writable {
             this.#hasBodyWrites = true;
             chunk = this.#prepareChunk(chunk);
             if(this.#ending && firstBodyWrite) {
+                this.#ended = true;
                 this._res.end(chunk);
                 this.#responseDone = true;
                 callback(null);
@@ -243,6 +300,7 @@ module.exports = class Response extends Writable {
             return;
         }
         this._res.cork(() => {
+            this.#ended = true;
             const fresh = this.#writeResponseHeaders(this.#endData, true);
             if(fresh) {
                 this._res.end();
@@ -261,6 +319,8 @@ module.exports = class Response extends Writable {
                 this._res.close();
             });
         }
+        this.#ended = true;
+        this.#closeSocket();
         this.#responseDone = true;
         this.finished = true;
         callback(err);
@@ -279,7 +339,7 @@ module.exports = class Response extends Writable {
         }
         return this;
     }
-    writeHeaders(utf8) {
+    writeHeaders() {
         for(const header in this.headers) {
             const value = this.headers[header];
             if(header === 'content-length') {
@@ -330,13 +390,16 @@ module.exports = class Response extends Writable {
             !this.headersSent &&
             !this.#hasBodyWrites &&
             !this.#socket &&
-            this.listenerCount('finish') === 0 &&
-            this.listenerCount('drain') === 0 &&
-            this.listenerCount('prefinish') === 1 &&
-            this.listenerCount('close') === 1;
+            (!this._events || (
+                this._events.finish === undefined &&
+                this._events.drain === undefined &&
+                this._events.prefinish === undefined &&
+                this._events.close === undefined
+            ));
         this.#endData = data;
         if(
             data !== undefined &&
+            !canFastEnd &&
             !this.headersSent &&
             !this.#hasBodyWrites &&
             !this.headers['content-length'] &&
@@ -382,6 +445,7 @@ module.exports = class Response extends Writable {
                         }
                         return ok;
                     });
+                    return;
                 } else if(data === undefined) {
                     this._res.end();
                 } else if(Buffer.isBuffer(data) || ArrayBuffer.isView(data)) {
