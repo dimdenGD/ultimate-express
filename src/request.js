@@ -19,7 +19,8 @@ const accepts = require("accepts");
 const typeis = require("type-is");
 const parseRange = require("range-parser");
 const proxyaddr = require("proxy-addr");
-const { isIP } = require("node:net");
+const { isIP, Socket } = require("node:net");
+const http = require("http");
 const fresh = require("fresh");
 const { Readable } = require("stream");
 
@@ -32,6 +33,11 @@ const discardedDuplicates = new Set([
 
 let key = 0;
 const EMPTY_BUFFER = Buffer.alloc(0);
+const HEADER_BAG_PROTOTYPE = Object.getPrototypeOf(new http.IncomingMessage(new Socket()).headersDistinct);
+
+function createHeaderBag() {
+    return HEADER_BAG_PROTOTYPE === null ? Object.create(null) : {};
+}
 
 module.exports = class Request extends Readable {
     #cachedQuery = null;
@@ -483,7 +489,7 @@ module.exports = class Request extends Readable {
         if(this.#cachedHeaders) {
             return this.#cachedHeaders;
         }
-        this.#cachedHeaders = {...new NullObject()}; // seems to be faster
+        this.#cachedHeaders = createHeaderBag();
         for (let index = 0, len = this.#rawHeadersEntries.length; index < len; index++) {
             let [key, value] = this.#rawHeadersEntries[index];
             key = key.toLowerCase();
@@ -513,7 +519,7 @@ module.exports = class Request extends Readable {
         if(this.#cachedDistinctHeaders) {
             return this.#cachedDistinctHeaders;
         }
-        this.#cachedDistinctHeaders = {...new NullObject()};
+        this.#cachedDistinctHeaders = createHeaderBag();
         this.#rawHeadersEntries.forEach((val) => {
             const [key, value] = val;
             if(!this.#cachedDistinctHeaders[key]) {
