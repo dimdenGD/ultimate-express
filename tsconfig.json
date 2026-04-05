@@ -5,10 +5,10 @@
         "allowJs": true,
         "checkJs": true,
         "strict": false,
-        "baseUrl": "./",
+        "types": ["node"],
         "paths": {
-            "ultimate-express": ["src/types.d.ts"],
-            "*": ["node_modules/*"]
+            "ultimate-express": ["./src/types.d.ts"],
+            "*": ["./node_modules/*"]
         }
     },
     "include": [
