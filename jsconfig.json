@@ -2,13 +2,13 @@
     "compilerOptions": {
         "module": "commonjs",
         "target": "ES2022",
+        "allowJs": true,
         "checkJs": true,
         "strict": false,
-        "baseUrl": "./",
+        "types": ["node"],
         "paths": {
-            "*": [
-                "node_modules/*"
-            ]
+            "ultimate-express": ["./src/types.d.ts"],
+            "*": ["./node_modules/*"]
         }
     },
     "include": [

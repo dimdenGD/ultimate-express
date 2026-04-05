@@ -69,6 +69,7 @@
   },
   "devDependencies": {
     "@codechecks/client": "^0.1.12",
+    "@types/node": "^25.5.2",
     "better-sse": "^0.16.1",
     "body-parser": "^2.2.2",
     "compression": "^1.8.1",
