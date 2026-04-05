@@ -33,7 +33,7 @@ const { sign } = require("cookie-signature");
 // since we create a ton of objects and dont send a ton of events, its better to use events here
 const { EventEmitter } = require("events");
 const http = require("http");
-const ms = require('ms');   
+const ms = require('ms');
 const etag = require("etag");
 
 const outgoingMessage = new http.OutgoingMessage();
@@ -77,8 +77,10 @@ module.exports = class Response extends Writable {
     req;
     constructor(res, req, app) {
         super();
-        this._req = req;
+        /** @type {import("uWebSockets.js").HttpResponse} */
         this._res = res;
+        /** @type {import("uWebSockets.js").HttpRequest} */
+        this._req = req;
         this.headersSent = false;
         this.app = app;
         this.locals = new NullObject();
@@ -150,12 +152,12 @@ module.exports = class Response extends Writable {
                 this._res.writeStatus(`${this.statusCode} ${statusMessage}`.trim());
                 this.writeHeaders(typeof chunk === 'string');
             }
-    
+
             if (!Buffer.isBuffer(chunk) && !(chunk instanceof ArrayBuffer)) {
                 chunk = Buffer.from(chunk);
                 chunk = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength);
             }
-    
+
             if (this.chunkedTransfer) {
                 this.#pendingChunks.push(chunk);
                 const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
@@ -327,7 +329,7 @@ module.exports = class Response extends Writable {
                     this._res.end(data);
                 }
             }
-            
+
             this.finished = true;
             this.#socket?.emit('close');
             this.emit('finish');
@@ -523,12 +525,12 @@ module.exports = class Response extends Writable {
                 let ranges = this.req.range(stat.size, {
                     combine: true
                 });
-    
+
                 // if-range
                 if(!isRangeFresh(this.req, this)) {
                     ranges = -2;
                 }
-    
+
                 if(ranges === -1) {
                     this.status(416);
                     this.headers['content-range'] = `bytes */${stat.size}`;
@@ -781,7 +783,7 @@ module.exports = class Response extends Writable {
             js = true;
         }
 
-        
+
         if(!this.headers['content-type']) {
             this.headers['content-type'] = `${js ? 'text/javascript' : 'application/json'}; charset=utf-8`;
             if(js) this.headers['X-Content-Type-Options'] = 'nosniff';
@@ -820,7 +822,7 @@ module.exports = class Response extends Writable {
         // Support text/{plain,html} by default
         if(forceHtml) {
             this.set('Content-Type', 'text/html; charset=UTF-8');
-            body = 
+            body =
                 '<!DOCTYPE html>\n' +
                 '<html lang="en">\n' +
                 '<head>\n' +

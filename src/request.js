@@ -48,7 +48,9 @@ module.exports = class Request extends Readable {
     noEtag;
     constructor(req, res, app) {
         super();
+        /** @type {import("uWebSockets.js").HttpResponse} */
         this._res = res;
+        /** @type {import("uWebSockets.js").HttpRequest} */
         this._req = req;
         this.readable = true;
         this._req.forEach((key, value) => {
@@ -101,10 +103,10 @@ module.exports = class Request extends Readable {
             (additionalMethods && additionalMethods.includes(this.method))
         ) {
             this.#bufferedData = Buffer.allocUnsafe(0);
-            this._res.onData((ab, isLast) => {
+            this._res.onDataV2((ab, maxRemainingBodyLength) => {
                 // make stream actually readable
                 this.receivedData = true;
-                if(isLast) {
+                if(maxRemainingBodyLength === 0n) {
                     this.#doneReadingData = true;
                 }
                 // instead of pushing data immediately, buffer it

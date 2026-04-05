@@ -267,9 +267,9 @@ function createBodyParser(defaultType, beforeReturn) {
             // if we are fast enough (not async), we can do it
             // otherwise we need to use a stream since it already started streaming it
             if(!req.receivedData) {
-                req._res.onData((ab, isLast) => {
+                req._res.onDataV2((ab, maxRemainingBodyLength) => {
                     onData(ab);
-                    if(isLast) {
+                    if(maxRemainingBodyLength === 0n) {
                         onEnd();
                     }
                 });
