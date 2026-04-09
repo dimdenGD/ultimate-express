@@ -98,14 +98,25 @@ module.exports = class Response extends Writable {
         }
 
         // support for node internal
-        this[kOutHeaders] = new Proxy(this.headers, {
-            set: (obj, prop, value) => {
-                this.set(prop, value[1]);
-                return true;
+        Object.defineProperty(this, kOutHeaders, {
+            get: () => {
+                const proxy = new Proxy(this.headers, {
+                    set: (obj, prop, value) => {
+                        this.set(prop, value[1]);
+                        return true;
+                    },
+                    get: (obj, prop) => {
+                        return obj[prop];
+                    }
+                });
+                Object.defineProperty(this, kOutHeaders, {
+                    value: proxy,
+                    writable: true,
+                    configurable: true
+                });
+                return proxy;
             },
-            get: (obj, prop) => {
-                return obj[prop];
-            }
+            configurable: true
         });
         this.body = undefined;
         this.on('error', (err) => {
