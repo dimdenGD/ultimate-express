@@ -1,6 +1,6 @@
 // must support server.close()
 
-const express = require("../../../src");
+const express = require("express");
 
 const app = express();
 
