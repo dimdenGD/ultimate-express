@@ -164,13 +164,17 @@ module.exports = class Response extends Writable {
                 }
                 if (!this.#flushScheduled) {
                     this.#flushScheduled = true;
-                    queueMicrotask(() => {
+                    setTimeout(() => {
                         this.#flushScheduled = false;
                         if (this.finished || this.aborted || !this.#pendingChunks.length) return;
-                        const size = this.#pendingChunks.reduce((acc, c) => acc + c.byteLength, 0);
-                        this._res.write(Buffer.concat(this.#pendingChunks, size));
-                        this.#pendingChunks = [];
-                    });
+                        this._res.cork(() => {
+                            if (this.#pendingChunks.length) {
+                                const s = this.#pendingChunks.reduce((acc, c) => acc + c.byteLength, 0);
+                                this._res.write(Buffer.concat(this.#pendingChunks, s));
+                                this.#pendingChunks = [];
+                            }
+                        });
+                    }, 0);
                 }
                 this.writingChunk = false;
                 callback(null);
