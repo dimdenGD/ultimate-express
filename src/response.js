@@ -72,8 +72,7 @@ module.exports = class Response extends Writable {
     #socket = null;
     #ended = false;
     #pendingChunks = [];
-    #lastWriteChunkTime = 0;
-    #writeTimeout = null;
+    #flushScheduled = false;
     req;
     constructor(res, req, app) {
         super();
@@ -158,32 +157,21 @@ module.exports = class Response extends Writable {
     
             if (this.chunkedTransfer) {
                 this.#pendingChunks.push(chunk);
-                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-                const now = performance.now();
-                // the first chunk is sent immediately (!this.#lastWriteChunkTime)
-                // the other chunks are sent when watermark is reached (size >= HIGH_WATERMARK) 
-                // or if elapsed 50ms of last send (now - this.#lastWriteChunkTime > 50)
-                if (!this.#lastWriteChunkTime || size >= HIGH_WATERMARK || now - this.#lastWriteChunkTime > 50) {
-                    this._res.write(Buffer.concat(this.#pendingChunks, size));
-                    this.#pendingChunks = [];
-                    this.#lastWriteChunkTime = now;
-                    if(this.#writeTimeout) {
-                        clearTimeout(this.#writeTimeout);
-                        this.#writeTimeout = null;
-                    }
-                } else if(!this.#writeTimeout) {
-                    this.#writeTimeout = setTimeout(() => {
-                        this.#writeTimeout = null;
-                        if(!this.finished && !this.aborted) this._res.cork(() => {
-                            if(this.#pendingChunks.length) {
-                                const size = this.#pendingChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
-                                this._res.write(Buffer.concat(this.#pendingChunks, size));
+                if (!this.#flushScheduled) {
+                    this.#flushScheduled = true;
+                    queueMicrotask(() => {
+                        this.#flushScheduled = false;
+                        if (this.finished || this.aborted || !this.#pendingChunks.length) return;
+                        this._res.cork(() => {
+                            if (this.#pendingChunks.length) {
+                                const buf = this.#pendingChunks.length === 1
+                                    ? this.#pendingChunks[0]
+                                    : Buffer.concat(this.#pendingChunks);
                                 this.#pendingChunks = [];
-                                this.#lastWriteChunkTime = performance.now();
+                                this._res.write(buf);
                             }
                         });
-                    }, 50);
-                    this.#writeTimeout.unref();
+                    });
                 }
                 this.writingChunk = false;
                 callback(null);
@@ -313,9 +301,11 @@ module.exports = class Response extends Writable {
                 this._res.endWithoutBody(contentLength.toString());
             } else {
                 if(this.#pendingChunks.length) {
-                    this._res.write(Buffer.concat(this.#pendingChunks));
+                    const buf = this.#pendingChunks.length === 1
+                        ? this.#pendingChunks[0]
+                        : Buffer.concat(this.#pendingChunks);
                     this.#pendingChunks = [];
-                    this.lastWriteChunkTime = 0;
+                    this._res.write(buf);
                 }
                 if(data instanceof Buffer) {
                     data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
