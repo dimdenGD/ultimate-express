@@ -157,20 +157,19 @@ module.exports = class Response extends Writable {
     
             if (this.chunkedTransfer) {
                 this.#pendingChunks.push(chunk);
+                const size = this.#pendingChunks.reduce((acc, c) => acc + c.byteLength, 0);
+                if (size >= HIGH_WATERMARK) {
+                    this._res.write(Buffer.concat(this.#pendingChunks, size));
+                    this.#pendingChunks = [];
+                }
                 if (!this.#flushScheduled) {
                     this.#flushScheduled = true;
                     queueMicrotask(() => {
                         this.#flushScheduled = false;
                         if (this.finished || this.aborted || !this.#pendingChunks.length) return;
-                        this._res.cork(() => {
-                            if (this.#pendingChunks.length) {
-                                const buf = this.#pendingChunks.length === 1
-                                    ? this.#pendingChunks[0]
-                                    : Buffer.concat(this.#pendingChunks);
-                                this.#pendingChunks = [];
-                                this._res.write(buf);
-                            }
-                        });
+                        const size = this.#pendingChunks.reduce((acc, c) => acc + c.byteLength, 0);
+                        this._res.write(Buffer.concat(this.#pendingChunks, size));
+                        this.#pendingChunks = [];
                     });
                 }
                 this.writingChunk = false;
