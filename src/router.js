@@ -494,8 +494,6 @@ module.exports = class Router extends EventEmitter {
             // on optimized routes, there can be more routes, so we have to use unoptimized routing and skip until we find route we stopped at
             return this._routeRequest(req, res, 0, this._routes, false, skipUntil);
         }
-        let callbackindex = 0;
-
         // avoid calling _preprocessRequest as async function as its slower
         // but it seems like calling it as async has unintended, but useful consequence of resetting max call stack size
         // so call it as async when the request has been through every 300 routes to reset it
@@ -521,6 +519,166 @@ module.exports = class Router extends EventEmitter {
                 req.path = '/';
             }
         }
+        // Handle preprocessRequest results before attempting sync loop
+        if(continueRoute === 'route') {
+            if(route.use) {
+                req._stack.pop();
+                req._opPath = req._stack.length > 0 ? req._originalPath.replace(this.getFullMountpath(req), '') : req._originalPath;
+                if(strictRouting) {
+                    if(req.endsWithSlash && req._opPath[req._opPath.length - 1] !== '/') {
+                        req._opPath += '/';
+                    }
+                }
+                req.url = req._opPath + req.urlQuery;
+                req.path = req._opPath;
+                if(req._opPath === '') {
+                    req.url = '/';
+                    req.path = '/';
+                }
+                if(!strictRouting && req.endsWithSlash && req._originalPath !== '/' && req._opPath[req._opPath.length - 1] === '/') {
+                    req._opPath = req._opPath.slice(0, -1);
+                }
+                if(req.app.parent && route.callbacks[0]?.constructor.name === 'Application') {
+                    req.app = req.app.parent;
+                }
+            }
+            req.routeCount++;
+            return this._routeRequest(req, res, routeIndex + 1, routes, skipCheck, skipUntil);
+        }
+        if(!continueRoute) {
+            return true;
+        }
+
+        // Synchronous dispatch via recursion to preserve AsyncLocalStorage context
+        return this._syncDispatch(req, res, route, routeIndex, 0, routes, skipCheck, skipUntil, strictRouting);
+    }
+
+    _syncDispatch(req, res, route, routeIndex, callbackIndex, routes, skipCheck, skipUntil, strictRouting) {
+        while(true) {
+            const callback = route.callbacks[callbackIndex++];
+            if(!callback) {
+                if(route.use) {
+                    req._stack.pop();
+                    req._opPath = req._stack.length > 0 ? req._originalPath.replace(this.getFullMountpath(req), '') : req._originalPath;
+                    if(strictRouting) {
+                        if(req.endsWithSlash && req._opPath[req._opPath.length - 1] !== '/') {
+                            req._opPath += '/';
+                        }
+                    }
+                    req.url = req._opPath + req.urlQuery;
+                    req.path = req._opPath;
+                    if(req._opPath === '') {
+                        req.url = '/';
+                        req.path = '/';
+                    }
+                    if(!strictRouting && req.endsWithSlash && req._originalPath !== '/' && req._opPath[req._opPath.length - 1] === '/') {
+                        req._opPath = req._opPath.slice(0, -1);
+                    }
+                    if(req.app.parent && route.callbacks[0]?.constructor.name === 'Application') {
+                        req.app = req.app.parent;
+                    }
+                }
+                req.routeCount++;
+                return this._routeRequest(req, res, routeIndex + 1, routes, skipCheck, skipUntil);
+            }
+
+            // Router instances require async handling
+            if(callback instanceof Router) {
+                return this._routeRequestAsync(req, res, route, routeIndex, callbackIndex - 1, routes, skipCheck, skipUntil, true, strictRouting);
+            }
+
+            if(req._error || callback.length === 4) {
+                if(req._error && callback.length === 4 && route.routeKey >= req._errorKey) {
+                    return this._handleError(req._error, callback, req, res);
+                }
+                continue;
+            }
+
+            if(req._isOptions && !route.all && route.method !== 'OPTIONS') {
+                req._matchedMethods.add(route.method);
+                if(route.gettable) {
+                    req._matchedMethods.add('HEAD');
+                }
+                continue;
+            }
+
+            if(!skipCheck && skipUntil && skipUntil.routeKey >= route.routeKey) {
+                continue;
+            }
+
+            try {
+                let syncResult;
+                let nextCalled = false;
+                const next = (thingamabob) => {
+                    nextCalled = true;
+                    // Execute next step inside next() call to preserve AsyncLocalStorage context
+                    syncResult = this._syncNext(req, res, route, routeIndex, callbackIndex, routes, skipCheck, skipUntil, strictRouting, thingamabob);
+                };
+                req.next = next;
+                const out = callback(req, res, next);
+
+                if(out instanceof Promise) {
+                    out.catch(err => {
+                        if(this.get("catch async errors")) {
+                            req._error = err;
+                            req._errorKey = route.routeKey;
+                            return req.next();
+                        } else {
+                            throw err;
+                        }
+                    });
+                    if(!nextCalled) {
+                        return this._routeRequestAsync(req, res, route, routeIndex, callbackIndex, routes, skipCheck, skipUntil, 'wait', strictRouting);
+                    }
+                }
+
+                if(!nextCalled) {
+                    return true;
+                }
+
+                return syncResult;
+            } catch(err) {
+                req._error = err;
+                req._errorKey = route.routeKey;
+            }
+        }
+    }
+
+    _syncNext(req, res, route, routeIndex, callbackIndex, routes, skipCheck, skipUntil, strictRouting, thingamabob) {
+        if(thingamabob) {
+            if(thingamabob === 'route' || thingamabob === 'skipPop') {
+                if(route.use && thingamabob !== 'skipPop') {
+                    req._stack.pop();
+                    req._opPath = req._stack.length > 0 ? req._originalPath.replace(this.getFullMountpath(req), '') : req._originalPath;
+                    if(strictRouting) {
+                        if(req.endsWithSlash && req._opPath[req._opPath.length - 1] !== '/') {
+                            req._opPath += '/';
+                        }
+                    }
+                    req.url = req._opPath + req.urlQuery;
+                    req.path = req._opPath;
+                    if(req._opPath === '') {
+                        req.url = '/';
+                        req.path = '/';
+                    }
+                    if(!strictRouting && req.endsWithSlash && req._originalPath !== '/' && req._opPath[req._opPath.length - 1] === '/') {
+                        req._opPath = req._opPath.slice(0, -1);
+                    }
+                    if(req.app.parent && route.callbacks[0]?.constructor.name === 'Application') {
+                        req.app = req.app.parent;
+                    }
+                }
+                req.routeCount++;
+                return this._routeRequest(req, res, routeIndex + 1, routes, skipCheck, skipUntil);
+            } else {
+                req._error = thingamabob;
+                req._errorKey = route.routeKey;
+            }
+        }
+        return this._syncDispatch(req, res, route, routeIndex, callbackIndex, routes, skipCheck, skipUntil, strictRouting);
+    }
+
+    _routeRequestAsync(req, res, route, routeIndex, callbackIndex, routes, skipCheck, skipUntil, continueRoute, strictRouting) {
         return new Promise((resolve) => {
             const next = async (thingamabob) => {
                 if(thingamabob) {
@@ -554,7 +712,7 @@ module.exports = class Router extends EventEmitter {
                         req._errorKey = route.routeKey;
                     }
                 }
-                const callback = route.callbacks[callbackindex++];
+                const callback = route.callbacks[callbackIndex++];
                 if(!callback) {
                     return next('route');
                 }
@@ -624,6 +782,8 @@ module.exports = class Router extends EventEmitter {
             req.next = next;
             if(continueRoute === 'route') {
                 next('route');
+            } else if(continueRoute === 'wait') {
+                // Callback already executed in sync loop, waiting for it to call next()
             } else if(continueRoute) {
                 next();
             } else {
