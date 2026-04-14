@@ -609,7 +609,11 @@ module.exports = class Router extends EventEmitter {
             try {
                 let syncResult;
                 let nextCalled = false;
+                let delegatedToAsync = false;
                 const next = (thingamabob) => {
+                    if(delegatedToAsync) {
+                        return req.next(thingamabob);
+                    }
                     nextCalled = true;
                     // Execute next step inside next() call to preserve AsyncLocalStorage context
                     syncResult = this._syncNext(req, res, route, routeIndex, callbackIndex, routes, skipCheck, skipUntil, strictRouting, thingamabob);
@@ -628,6 +632,7 @@ module.exports = class Router extends EventEmitter {
                         }
                     });
                     if(!nextCalled) {
+                        delegatedToAsync = true;
                         return this._routeRequestAsync(req, res, route, routeIndex, callbackIndex, routes, skipCheck, skipUntil, 'wait', strictRouting);
                     }
                 }
