@@ -34,6 +34,9 @@ for (const testCategory of testCategories) {
             }
             let testPath = path.join(__dirname, 'tests', testCategory, testName);
             let testCode = fs.readFileSync(testPath, 'utf8').replace(`const express = require("../../../src/index.js");`, 'const express = require("express");');
+            if(!testCode.includes(`const express = require("express")`)) {
+                throw new Error("Test code does not contain require express");
+            }
             fs.writeFileSync(testPath, testCode);
             let testDescription = testCode.split('\n')[0].slice(2).trim();
 
@@ -56,8 +59,11 @@ for (const testCategory of testCategories) {
                         timeout = setTimeout(() => timeoutFunc('express'), 60000);
                         let expressOutput = (await exec(`node ${testPath}`, {maxBuffer: 1024 * 1024 * 100})).stdout;
                         clearTimeout(timeout);
-
-                        fs.writeFileSync(testPath, testCode.replace(`const express = require("express");`, `const express = require("../../../src/index.js");`));
+                        const newCode = testCode.replace(`const express = require("express");`, `const express = require("../../../src/index.js");`);
+                        if(newCode === testCode) {
+                            throw new Error("Test code does not contain require express");
+                        }
+                        fs.writeFileSync(testPath, newCode);
                         timeout = setTimeout(() => timeoutFunc('ultimate-express'), 60000)
                         let uExpressOutput = (await exec(`node ${testPath}`, {maxBuffer: 1024 * 1024 * 100})).stdout;
                         clearTimeout(timeout);
