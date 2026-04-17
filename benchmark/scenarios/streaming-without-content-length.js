@@ -4,7 +4,7 @@ module.exports = {
     name: 'streaming/writable-no-content-length',
     path: '/stream-without-content-length',
     wrk: {
-        connections: 20
+        connections: 50
     },
     setup(app, express, context) {
         app.get('/stream-without-content-length', (req, res) => {

@@ -5,7 +5,7 @@ module.exports = {
     path: '/abc',
     wrk: {
         script: 'post-urlencoded.lua',
-        connections: 100
+        connections: 200
     },
     verify: {
         method: 'POST',

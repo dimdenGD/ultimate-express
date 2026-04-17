@@ -7,7 +7,7 @@ module.exports = {
     path: '/small-file',
     wrk: {
         script: 'compression-small-file.lua',
-        connections: 100
+        connections: 200
     },
     verify: {
         method: 'GET',

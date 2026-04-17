@@ -5,7 +5,7 @@ module.exports = {
     path: '/hash-body',
     wrk: {
         script: 'post-hash-body-4mb.lua',
-        connections: 25
+        connections: 50
     },
     verify: {
         method: 'POST',
