@@ -263,6 +263,9 @@ function formatBytesPerSec(bytes) {
 }
 
 async function runScenario(framework, scenarioName, scenario, durationSeconds) {
+    if (global.gc) {
+        global.gc();
+    }
     const { server, stderrRef } = startScenarioServer(framework, scenarioName);
 
     try {
