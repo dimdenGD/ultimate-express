@@ -41,6 +41,8 @@ module.exports = class Request extends Readable {
     #needsData = false;
     #doneReadingData = false;
     #bufferedData = null;
+    #readOffset = 0;
+    #writeOffset = 0;
     body;
     res;
     optimizedParams;
@@ -100,17 +102,26 @@ module.exports = class Request extends Readable {
             this.method === 'PATCH' || 
             (additionalMethods && additionalMethods.includes(this.method))
         ) {
-            this.#bufferedData = Buffer.allocUnsafe(0);
-            this._res.onData((ab, isLast) => {
+            this._res.onDataV2((ab, maxRemainingBodyLength) => {
                 // make stream actually readable
                 this.receivedData = true;
-                if(isLast) {
+                if(maxRemainingBodyLength === 0n) {
                     this.#doneReadingData = true;
                 }
-                // instead of pushing data immediately, buffer it
-                // because writable streams cant handle the amount of data uWS gives (usually 512kb+)
                 const chunk = Buffer.from(ab);
-                this.#bufferedData = Buffer.concat([this.#bufferedData, chunk]);
+                if(this.#bufferedData === null) {
+                    if(maxRemainingBodyLength === 0n) {
+                        this.#bufferedData = Buffer.from(chunk);
+                    } else {
+                        const totalSize = chunk.length + Number(maxRemainingBodyLength);
+                        this.#bufferedData = Buffer.allocUnsafe(totalSize);
+                        chunk.copy(this.#bufferedData, 0);
+                    }
+                    this.#writeOffset = chunk.length;
+                } else {
+                    chunk.copy(this.#bufferedData, this.#writeOffset);
+                    this.#writeOffset += chunk.length;
+                }
                 
                 if(this.#needsData) {
                     this.#needsData = false;
@@ -127,14 +138,16 @@ module.exports = class Request extends Readable {
     }
 
     _read() {
-        if(!this.receivedData || !this.#bufferedData) {
+        if(!this.receivedData || this.#bufferedData === null) {
             this.#needsData = true;
             return;
         }
-        if(this.#bufferedData.length > 0) {
+        const available = this.#writeOffset - this.#readOffset;
+        if(available > 0) {
             // push 128kb chunks
-            const chunk = this.#bufferedData.subarray(0, 1024 * 128);
-            this.#bufferedData = this.#bufferedData.subarray(1024 * 128);
+            const size = Math.min(available, 1024 * 128);
+            const chunk = this.#bufferedData.subarray(this.#readOffset, this.#readOffset + size);
+            this.#readOffset += size;
             this.push(chunk);
         } else if(this.#doneReadingData) {
             this.push(null);
