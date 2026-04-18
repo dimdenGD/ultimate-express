@@ -222,9 +222,7 @@ function createBodyParser(defaultType, beforeReturn) {
                 return next();
             }
 
-            const abs = [];
             let inflate;
-            let totalSize = 0;
             if(options.inflate) {
                 inflate = createInflate(req.headers['content-encoding']);
                 if(inflate === false) {
@@ -234,25 +232,7 @@ function createBodyParser(defaultType, beforeReturn) {
 
             req.bodyRead = true;
 
-            function onData(buf) {
-                if(!Buffer.isBuffer(buf)) {
-                    buf = Buffer.from(buf);
-                }
-                if(inflate) {
-                    buf = inflate.process(buf);
-                }
-
-                // shallow copy, to avoid shared references for large bodies.
-                abs.push(Buffer.from(buf));
-
-                totalSize += buf.length;
-                if(totalSize > options.limit) {
-                    return next(new Error('Request entity too large'));
-                }
-            }
-    
-            function onEnd() {
-                const buf = Buffer.concat(abs);
+            function onComplete(buf) {
                 if(options.verify) {
                     try {
                         options.verify(req, res, buf);
@@ -267,15 +247,66 @@ function createBodyParser(defaultType, beforeReturn) {
             // if we are fast enough (not async), we can do it
             // otherwise we need to use a stream since it already started streaming it
             if(!req.receivedData) {
-                req._res.onData((ab, isLast) => {
-                    onData(ab);
-                    if(isLast) {
-                        onEnd();
+                if(!inflate) {
+                    let bodyBuffer = null;
+                    let writeOffset = 0;
+                    req._res.onDataV2((ab, maxRemainingBodyLength) => {
+                        const chunk = Buffer.from(ab);
+                        if(bodyBuffer === null) {
+                            const totalSize = chunk.length + Number(maxRemainingBodyLength);
+                            if(totalSize > options.limit) {
+                                return next(new Error('Request entity too large'));
+                            }
+                            if(maxRemainingBodyLength === 0n) {
+                                bodyBuffer = Buffer.from(chunk);
+                            } else {
+                                bodyBuffer = Buffer.allocUnsafe(totalSize);
+                                chunk.copy(bodyBuffer, 0);
+                            }
+                            writeOffset = chunk.length;
+                        } else {
+                            chunk.copy(bodyBuffer, writeOffset);
+                            writeOffset += chunk.length;
+                        }
+                        if(maxRemainingBodyLength === 0n) {
+                            onComplete(bodyBuffer);
+                        }
+                    });
+                } else {
+                    const abs = [];
+                    let totalSize = 0;
+                    req._res.onDataV2((ab, maxRemainingBodyLength) => {
+                        let buf = Buffer.from(ab);
+                        buf = inflate.process(buf);
+                        abs.push(Buffer.from(buf));
+                        totalSize += buf.length;
+                        if(totalSize > options.limit) {
+                            return next(new Error('Request entity too large'));
+                        }
+                        if(maxRemainingBodyLength === 0n) {
+                            onComplete(Buffer.concat(abs, totalSize));
+                        }
+                    });
+                }
+            } else {
+                const abs = [];
+                let totalSize = 0;
+                req.on('data', (buf) => {
+                    if(!Buffer.isBuffer(buf)) {
+                        buf = Buffer.from(buf);
+                    }
+                    if(inflate) {
+                        buf = inflate.process(buf);
+                    }
+                    abs.push(Buffer.from(buf));
+                    totalSize += buf.length;
+                    if(totalSize > options.limit) {
+                        return next(new Error('Request entity too large'));
                     }
                 });
-            } else {
-                req.on('data', onData);
-                req.on('end', onEnd);
+                req.on('end', () => {
+                    onComplete(Buffer.concat(abs, totalSize));
+                });
             }
         }
     }
