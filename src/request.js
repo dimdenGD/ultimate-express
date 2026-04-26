@@ -109,19 +109,8 @@ module.exports = class Request extends Readable {
                     this.#doneReadingData = true;
                 }
                 const chunk = Buffer.from(ab);
-                if(this.#bufferedData === null) {
-                    if(maxRemainingBodyLength === 0n) {
-                        this.#bufferedData = Buffer.from(chunk);
-                    } else {
-                        const totalSize = chunk.length + Number(maxRemainingBodyLength);
-                        this.#bufferedData = Buffer.allocUnsafe(totalSize);
-                        chunk.copy(this.#bufferedData, 0);
-                    }
-                    this.#writeOffset = chunk.length;
-                } else {
-                    chunk.copy(this.#bufferedData, this.#writeOffset);
-                    this.#writeOffset += chunk.length;
-                }
+                const preferredCapacity = maxRemainingBodyLength === 0n ? chunk.length : 0;
+                this.#appendBufferedChunk(chunk, preferredCapacity);
                 
                 if(this.#needsData) {
                     this.#needsData = false;
@@ -504,5 +493,35 @@ module.exports = class Request extends Readable {
             res.push(val[0], val[1]);
         }
         return res;
+    }
+
+    #appendBufferedChunk(chunk, preferredCapacity = 0) {
+        const additionalSize = chunk.length;
+        const requiredSize = this.#writeOffset + additionalSize;
+        if(this.#bufferedData === null) {
+            this.#bufferedData = Buffer.allocUnsafe(Math.max(additionalSize, preferredCapacity || 0));
+            return;
+        }
+        if(requiredSize <= this.#bufferedData.length) {
+            return;
+        }
+
+        const unreadSize = this.#writeOffset - this.#readOffset;
+        if(this.#readOffset > 0) {
+            this.#bufferedData.copy(this.#bufferedData, 0, this.#readOffset, this.#writeOffset);
+            this.#readOffset = 0;
+            this.#writeOffset = unreadSize;
+        }
+
+        const nextRequiredSize = this.#writeOffset + additionalSize;
+        if(nextRequiredSize <= this.#bufferedData.length) {
+            return;
+        }
+
+        const nextBuffer = Buffer.allocUnsafe(Math.max(nextRequiredSize, this.#bufferedData.length * 2, preferredCapacity || 0));
+        this.#bufferedData.copy(nextBuffer, 0, 0, this.#writeOffset);
+        this.#bufferedData = nextBuffer;
+        chunk.copy(this.#bufferedData, this.#writeOffset);
+        this.#writeOffset += chunk.length;
     }
 }

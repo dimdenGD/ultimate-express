@@ -232,6 +232,36 @@ function createBodyParser(defaultType, beforeReturn) {
 
             req.bodyRead = true;
 
+            function appendChunk(state, chunk, maxSize, preferredCapacity = 0) {
+                const requiredSize = state.writeOffset + chunk.length;
+                if(requiredSize > maxSize) {
+                    return false;
+                }
+                if(state.buffer === null) {
+                    const capacity = Math.max(chunk.length, preferredCapacity || 0);
+                    state.buffer = Buffer.allocUnsafe(capacity);
+                } else if(requiredSize > state.buffer.length) {
+                    const capacity = Math.max(requiredSize, state.buffer.length * 2, preferredCapacity || 0);
+                    const nextBuffer = Buffer.allocUnsafe(capacity);
+                    state.buffer.copy(nextBuffer, 0, 0, state.writeOffset);
+                    state.buffer = nextBuffer;
+                }
+                chunk.copy(state.buffer, state.writeOffset);
+                state.writeOffset = requiredSize;
+                return true;
+            }
+
+            function getSafePreallocatedSize(chunkLength, maxRemainingBodyLength, maxSize) {
+                if(maxRemainingBodyLength <= 0n) {
+                    return chunkLength;
+                }
+                const maxAllowedRemaining = BigInt(maxSize - chunkLength);
+                if(maxRemainingBodyLength > maxAllowedRemaining) {
+                    return 0;
+                }
+                return chunkLength + Number(maxRemainingBodyLength);
+            }
+
             function onComplete(buf) {
                 if(options.verify) {
                     try {
@@ -248,28 +278,20 @@ function createBodyParser(defaultType, beforeReturn) {
             // otherwise we need to use a stream since it already started streaming it
             if(!req.receivedData) {
                 if(!inflate) {
-                    let bodyBuffer = null;
-                    let writeOffset = 0;
+                    const bodyState = {
+                        buffer: null,
+                        writeOffset: 0
+                    };
                     req._res.onDataV2((ab, maxRemainingBodyLength) => {
                         const chunk = Buffer.from(ab);
-                        if(bodyBuffer === null) {
-                            const totalSize = chunk.length + Number(maxRemainingBodyLength);
-                            if(totalSize > options.limit) {
-                                return next(new Error('Request entity too large'));
-                            }
-                            if(maxRemainingBodyLength === 0n) {
-                                bodyBuffer = Buffer.from(chunk);
-                            } else {
-                                bodyBuffer = Buffer.allocUnsafe(totalSize);
-                                chunk.copy(bodyBuffer, 0);
-                            }
-                            writeOffset = chunk.length;
-                        } else {
-                            chunk.copy(bodyBuffer, writeOffset);
-                            writeOffset += chunk.length;
+                        const preferredCapacity = bodyState.buffer === null
+                            ? getSafePreallocatedSize(chunk.length, maxRemainingBodyLength, options.limit)
+                            : 0;
+                        if(!appendChunk(bodyState, chunk, options.limit, preferredCapacity)) {
+                            return next(new Error('Request entity too large'));
                         }
                         if(maxRemainingBodyLength === 0n) {
-                            onComplete(bodyBuffer);
+                            onComplete(bodyState.buffer.subarray(0, bodyState.writeOffset));
                         }
                     });
                 } else {
