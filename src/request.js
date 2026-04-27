@@ -104,7 +104,7 @@ module.exports = class Request extends Readable {
             let chunks = null;
             let preAllocBuf = null;
             let offset = 0;
-            const MAX_PREALLOC = 10 * 1024 * 1024; // 10MB
+            const MAX_PREALLOC = 10 * 1024 * 1024; // 10 MB
 
             this._res.onDataV2((ab, maxRemainingBodyLength) => {
                 this.receivedData = true;
