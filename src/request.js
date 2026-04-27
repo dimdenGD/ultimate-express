@@ -100,17 +100,47 @@ module.exports = class Request extends Readable {
             this.method === 'PATCH' || 
             (additionalMethods && additionalMethods.includes(this.method))
         ) {
-            this.#bufferedData = Buffer.allocUnsafe(0);
-            this._res.onData((ab, isLast) => {
-                // make stream actually readable
+            this.#bufferedData = null;
+            let chunks = null;
+            let preAllocBuf = null;
+            let offset = 0;
+            const MAX_PREALLOC = 10 * 1024 * 1024; // 10 MB
+
+            this._res.onDataV2((ab, maxRemainingBodyLength) => {
                 this.receivedData = true;
+                const isLast = maxRemainingBodyLength === 0n;
+                
                 if(isLast) {
                     this.#doneReadingData = true;
                 }
-                // instead of pushing data immediately, buffer it
-                // because writable streams cant handle the amount of data uWS gives (usually 512kb+)
+                
                 const chunk = Buffer.from(ab);
-                this.#bufferedData = Buffer.concat([this.#bufferedData, chunk]);
+                
+                if(preAllocBuf === null && chunks === null) {
+                    const totalSize = chunk.length + Number(maxRemainingBodyLength);
+                    if(totalSize <= MAX_PREALLOC) {
+                        preAllocBuf = Buffer.allocUnsafe(totalSize);
+                        chunk.copy(preAllocBuf, 0);
+                        offset = chunk.length;
+                    } else {
+                        chunks = [chunk];
+                    }
+                } else if(preAllocBuf !== null) {
+                    chunk.copy(preAllocBuf, offset);
+                    offset += chunk.length;
+                } else {
+                    chunks.push(chunk);
+                }
+                
+                if(isLast) {
+                    if(preAllocBuf !== null) {
+                        this.#bufferedData = preAllocBuf;
+                    } else if(chunks !== null) {
+                        this.#bufferedData = Buffer.concat(chunks);
+                    } else {
+                        this.#bufferedData = Buffer.allocUnsafe(0);
+                    }
+                }
                 
                 if(this.#needsData) {
                     this.#needsData = false;

@@ -267,10 +267,40 @@ function createBodyParser(defaultType, beforeReturn) {
             // if we are fast enough (not async), we can do it
             // otherwise we need to use a stream since it already started streaming it
             if(!req.receivedData) {
-                req._res.onData((ab, isLast) => {
-                    onData(ab);
+                let preAllocBuf = null;
+                let offset = 0;
+                req._res.onDataV2((ab, maxRemainingBodyLength) => {
+                    const isLast = maxRemainingBodyLength === 0n;
+                    
+                    if(preAllocBuf === null && !inflate) {
+                        const totalSize = ab.byteLength + Number(maxRemainingBodyLength);
+                        if(totalSize <= options.limit) {
+                            preAllocBuf = Buffer.allocUnsafe(totalSize);
+                        }
+                    }
+                    
+                    if(preAllocBuf !== null) {
+                        const chunk = Buffer.from(ab);
+                        chunk.copy(preAllocBuf, offset);
+                        offset += chunk.length;
+                    } else {
+                        onData(ab);
+                    }
+                    
                     if(isLast) {
-                        onEnd();
+                        if(preAllocBuf !== null) {
+                            const buf = preAllocBuf;
+                            if(options.verify) {
+                                try {
+                                    options.verify(req, res, buf);
+                                } catch(e) {
+                                    return next(e);
+                                }
+                            }
+                            beforeReturn(req, res, next, options, buf);
+                        } else {
+                            onEnd();
+                        }
                     }
                 });
             } else {
