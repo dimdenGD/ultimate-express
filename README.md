@@ -12,6 +12,7 @@ To make sure µExpress matches behavior of Express in all cases, we run all test
 [![npm](https://img.shields.io/npm/v/ultimate-express?label=last+version)](https://npmjs.com/package/ultimate-express)
 [![Patreon](https://img.shields.io/badge/donate-Patreon-orange)](https://patreon.com/dimdendev)
 
+> Use `npm install ultimate-express@2.1.0` to install last version that supported Node.js v21, v20 and v19.
 > Use `npm install ultimate-express@node-v18` to install last version that supported Node.js v18.
 
 ## Difference from similar projects
