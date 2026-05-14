@@ -1,4 +1,5 @@
 // must support app.param() with deprecated callback syntax (function as first argument)
+// SKIP_V5: deprecated callback syntax removed in Express 5
 
 const express = require("express");
 
