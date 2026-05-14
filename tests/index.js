@@ -42,8 +42,14 @@ for (const testCategory of testCategories) {
             fs.writeFileSync(testPath, testCode);
             let testDescription = testCode.split('\n')[0].slice(2).trim();
 
-            const lastToken = testDescription.split(' ').pop();
-            const marker = ['SKIP_V4', 'SKIP_V5', 'OFF'].includes(lastToken) ? lastToken : null;
+            const secondLine = (testCode.split('\n')[1] || '').trim();
+            let marker = null;
+            let skipReason = null;
+            const markerMatch = secondLine.match(/^\/\/\s*(SKIP_V4|SKIP_V5|OFF)(?::\s*(.*))?$/);
+            if (markerMatch) {
+                marker = markerMatch[1];
+                skipReason = markerMatch[2] || null;
+            }
 
             await new Promise(resolve => {
                 test(testDescription, async (t) => {
@@ -70,7 +76,7 @@ for (const testCategory of testCategories) {
                             express4Output = await execTest(testPath);
                             clearTimeout(timeout);
                         } else {
-                            t.diagnostic('express4: SKIPPED');
+                            t.diagnostic(skipReason ? `express4: SKIPPED (${skipReason})` : 'express4: SKIPPED');
                         }
 
                         // Run with Express 5 (skip if SKIP_V5)
@@ -88,7 +94,7 @@ for (const testCategory of testCategories) {
                                 express5Error = e;
                             }
                         } else {
-                            t.diagnostic('express5: SKIPPED');
+                            t.diagnostic(skipReason ? `express5: SKIPPED (${skipReason})` : 'express5: SKIPPED');
                         }
 
                         // Run with ultimate-express
