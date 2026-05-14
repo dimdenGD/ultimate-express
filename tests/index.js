@@ -56,9 +56,26 @@ for (const testCategory of testCategories) {
                     };
 
                     try {
+                        // Run with Express 4
                         timeout = setTimeout(() => timeoutFunc('express'), 60000);
                         let expressOutput = (await exec(`node ${testPath}`, {maxBuffer: 1024 * 1024 * 100})).stdout;
                         clearTimeout(timeout);
+
+                        // Run with Express 5
+                        let express5Output = null;
+                        let express5Error = null;
+                        const express5Code = testCode.replace(`const express = require("express");`, `const express = require("express5");`);
+                        fs.writeFileSync(testPath, express5Code);
+                        try {
+                            timeout = setTimeout(() => timeoutFunc('express5'), 60000);
+                            express5Output = (await exec(`node ${testPath}`, {maxBuffer: 1024 * 1024 * 100})).stdout;
+                            clearTimeout(timeout);
+                        } catch(e) {
+                            clearTimeout(timeout);
+                            express5Error = e;
+                        }
+
+                        // Run with ultimate-express
                         const newCode = testCode.replace(`const express = require("express");`, `const express = require("../../../src/index.js");`);
                         if(newCode === testCode) {
                             throw new Error("Test code does not contain require express");
@@ -67,7 +84,18 @@ for (const testCategory of testCategories) {
                         timeout = setTimeout(() => timeoutFunc('ultimate-express'), 60000)
                         let uExpressOutput = (await exec(`node ${testPath}`, {maxBuffer: 1024 * 1024 * 100})).stdout;
                         clearTimeout(timeout);
+
+                        // Compare with Express 4 (strict)
                         assert.strictEqual(uExpressOutput, expressOutput);
+
+                        // Compare with Express 5 (diagnostic)
+                        if(express5Error) {
+                            t.diagnostic(`express5: ERROR - ${(express5Error.stderr || express5Error.message || String(express5Error)).split('\n')[0]}`);
+                        } else if(uExpressOutput === express5Output) {
+                            t.diagnostic('express5: PASS');
+                        } else {
+                            t.diagnostic('express5: MISMATCH');
+                        }
                     } catch (error) {
                         throw error;
                     } finally {
