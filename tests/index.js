@@ -10,6 +10,8 @@ const childProcess = require("node:child_process");
 const exec = require("util").promisify(childProcess.exec)
 const assert = require("node:assert");
 
+const TEST_TIMEOUT = 60000;
+
 const testPath = path.join(__dirname, 'tests');
 
 let testCategories = fs.readdirSync(testPath).sort((a, b) => parseInt(a) - parseInt(b));
@@ -40,11 +42,12 @@ for (const testCategory of testCategories) {
             fs.writeFileSync(testPath, testCode);
             let testDescription = testCode.split('\n')[0].slice(2).trim();
 
-            const skip = testDescription.endsWith('OFF')
+            const lastToken = testDescription.split(' ').pop();
+            const marker = ['SKIP_V4', 'SKIP_V5', 'OFF'].includes(lastToken) ? lastToken : null;
 
             await new Promise(resolve => {
                 test(testDescription, async (t) => {
-                    if (skip) {
+                    if (marker === 'OFF') {
                         t.skip();
                         return resolve();
                     }
@@ -55,24 +58,37 @@ for (const testCategory of testCategories) {
                         throw `${module} timed out`;
                     };
 
+                    let execTest = async (testPath) => {
+                        return (await exec(`node ${testPath}`, {maxBuffer: 1024 * 1024 * 100})).stdout
+                    }
+
                     try {
                         // Run with Express 4
-                        timeout = setTimeout(() => timeoutFunc('express'), 60000);
-                        let expressOutput = (await exec(`node ${testPath}`, {maxBuffer: 1024 * 1024 * 100})).stdout;
-                        clearTimeout(timeout);
+                        let express4Output = null;
+                        if (marker !== 'SKIP_V4') {
+                            timeout = setTimeout(() => timeoutFunc('express'), TEST_TIMEOUT);
+                            express4Output = await execTest(testPath);
+                            clearTimeout(timeout);
+                        } else {
+                            t.diagnostic('express4: SKIPPED');
+                        }
 
-                        // Run with Express 5
+                        // Run with Express 5 (skip if SKIP_V5)
                         let express5Output = null;
                         let express5Error = null;
-                        const express5Code = testCode.replace(`const express = require("express");`, `const express = require("express5");`);
-                        fs.writeFileSync(testPath, express5Code);
-                        try {
-                            timeout = setTimeout(() => timeoutFunc('express5'), 60000);
-                            express5Output = (await exec(`node ${testPath}`, {maxBuffer: 1024 * 1024 * 100})).stdout;
-                            clearTimeout(timeout);
-                        } catch(e) {
-                            clearTimeout(timeout);
-                            express5Error = e;
+                        if (marker !== 'SKIP_V5') {
+                            const express5Code = testCode.replace(`const express = require("express");`, `const express = require("express5");`);
+                            fs.writeFileSync(testPath, express5Code);
+                            try {
+                                timeout = setTimeout(() => timeoutFunc('express5'), TEST_TIMEOUT);
+                                express5Output = await execTest(testPath);
+                                clearTimeout(timeout);
+                            } catch(e) {
+                                clearTimeout(timeout);
+                                express5Error = e;
+                            }
+                        } else {
+                            t.diagnostic('express5: SKIPPED');
                         }
 
                         // Run with ultimate-express
@@ -81,20 +97,28 @@ for (const testCategory of testCategories) {
                             throw new Error("Test code does not contain require express");
                         }
                         fs.writeFileSync(testPath, newCode);
-                        timeout = setTimeout(() => timeoutFunc('ultimate-express'), 60000)
-                        let uExpressOutput = (await exec(`node ${testPath}`, {maxBuffer: 1024 * 1024 * 100})).stdout;
+                        timeout = setTimeout(() => timeoutFunc('ultimate-express'), TEST_TIMEOUT)
+                        let uExpressOutput = await execTest(testPath);
                         clearTimeout(timeout);
 
-                        // Compare with Express 4 (strict)
-                        assert.strictEqual(uExpressOutput, expressOutput);
-
-                        // Compare with Express 5 (diagnostic)
-                        if(express5Error) {
-                            t.diagnostic(`express5: ERROR - ${(express5Error.stderr || express5Error.message || String(express5Error)).split('\n')[0]}`);
-                        } else if(uExpressOutput === express5Output) {
-                            t.diagnostic('express5: PASS');
+                        // Compare outputs
+                        if (marker === 'SKIP_V4') {
+                            // Strict compare against Express 5
+                            assert.strictEqual(uExpressOutput, express5Output);
                         } else {
-                            t.diagnostic('express5: MISMATCH');
+                            // Strict compare against Express 4 (default + SKIP_V5)
+                            assert.strictEqual(uExpressOutput, express4Output);
+                        }
+
+                        // Compare with Express 5 (diagnostic, only when Express 5 ran)
+                        if (marker !== 'SKIP_V5' && marker !== 'SKIP_V4') {
+                            if(express5Error) {
+                                t.diagnostic(`express5: ERROR - ${(express5Error.stderr || express5Error.message || String(express5Error)).split('\n')[0]}`);
+                            } else if(uExpressOutput === express5Output) {
+                                t.diagnostic('express5: PASS');
+                            } else {
+                                t.diagnostic('express5: MISMATCH');
+                            }
                         }
                     } catch (error) {
                         throw error;
