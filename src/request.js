@@ -38,16 +38,14 @@ module.exports = class Request extends Readable {
     #cachedDistinctHeaders = null;
     #rawHeadersEntries = [];
     #cachedParsedIp = null;
-    #needsData = false;
-    #doneReadingData = false;
-    #bufferedData = null;
+    #paused = false;
     body;
     res;
     optimizedParams;
     _error;
     noEtag;
     constructor(req, res, app) {
-        super();
+        super({ highWaterMark: 128 * 1024 });
         this._res = res;
         this._req = req;
         this.readable = true;
@@ -100,46 +98,38 @@ module.exports = class Request extends Readable {
             this.method === 'PATCH' || 
             (additionalMethods && additionalMethods.includes(this.method))
         ) {
-            this.#bufferedData = Buffer.allocUnsafe(0);
             this._res.onData((ab, isLast) => {
-                // make stream actually readable
                 this.receivedData = true;
-                if(isLast) {
-                    this.#doneReadingData = true;
+                if(this.#responseEnded) {
+                    return;
                 }
-                // instead of pushing data immediately, buffer it
-                // because writable streams cant handle the amount of data uWS gives (usually 512kb+)
-                const chunk = Buffer.from(ab);
-                this.#bufferedData = Buffer.concat([this.#bufferedData, chunk]);
-                
-                if(this.#needsData) {
-                    this.#needsData = false;
-                    this._read();
+                // ab.slice(0) copies the ArrayBuffer; uWS neuters `ab` after this callback,
+                // so a Buffer.from(ab) view would corrupt data left in the Readable queue.
+                const chunk = Buffer.from(ab.slice(0));
+                const accepted = this.push(chunk);
+                // push() may synchronously end the response via a flowing-mode listener.
+                if(!accepted && !isLast && !this.#responseEnded) {
+                    this._res.pause();
+                    this.#paused = true;
+                }
+                if(isLast) {
+                    this.push(null);
                 }
             });
         } else {
             this.receivedData = true;
-            // For GET and other non-body methods, initialize bufferedData as empty buffer
-            // to ensure pipe() works correctly
-            this.#bufferedData = Buffer.allocUnsafe(0);
-            this.#doneReadingData = true;
+            this.push(null);
         }
     }
 
+    get #responseEnded() {
+        return this.res?.finished || this.res?.aborted;
+    }
+
     _read() {
-        if(!this.receivedData || !this.#bufferedData) {
-            this.#needsData = true;
-            return;
-        }
-        if(this.#bufferedData.length > 0) {
-            // push 128kb chunks
-            const chunk = this.#bufferedData.subarray(0, 1024 * 128);
-            this.#bufferedData = this.#bufferedData.subarray(1024 * 128);
-            this.push(chunk);
-        } else if(this.#doneReadingData) {
-            this.push(null);
-        } else {
-            this.#needsData = true;
+        if(this.#paused && !this.#responseEnded) {
+            this.#paused = false;
+            this._res.resume();
         }
     }
 
