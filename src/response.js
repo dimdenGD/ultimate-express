@@ -605,6 +605,11 @@ module.exports = class Response extends Writable {
         }
         return this;
     }
+    _isLenientHeaderValidation() {
+        // Node.js internal function for lenient header validation
+        // Returns true to allow more permissive header value validation
+        return true;
+    }
     header(field, value) {
         return this.set(field, value);
     }
