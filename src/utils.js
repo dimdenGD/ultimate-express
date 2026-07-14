@@ -52,14 +52,25 @@ function patternToRegex(pattern, isPrefix = false) {
     }
 
     let wildcardIndex = 0;
-    let regexPattern = pattern
-        .replaceAll('.', '\\.')
-        .replaceAll('-', '\\-')
-        .replaceAll(/(\*|\(.*?\))/g, (match) => `(?<_wc${wildcardIndex++}>${match.startsWith('(') ? match.slice(1, -1) : match.replaceAll('*', '.*')})`) // Convert * to .* and stuff in parentheses to capture group
-        .replace(/\/:(\w+)(\(.+?\))?\??/g, (match, param, regex) => {
-            const optional = match.endsWith('?');
-            return `\\/${optional ? '?' : ''}(?<${param}>${regex ? regex + '($|\\/)' : '[^/]+'})${optional ? '?' : ''}`;
-        }); // Convert :param to capture group
+    let regexPattern = '';
+    const captureGroupTest = /(\/|[.-]+):(\w+)(?:\((.+?)\))?\??/g;
+    let offset = 0;
+    while (true) {
+        const result = captureGroupTest.exec(pattern);
+        // Process last preceding part if matched, or final part if match ended
+        regexPattern += pattern.substring(offset, result?.index ?? pattern.length)
+            .replaceAll('.', '\\.')
+            .replaceAll('-', '\\-')
+            .replaceAll(/(\*|\(.*?\))/g, (match) => // Convert * to .* and stuff in parentheses to capture group
+                `(?<_wc${wildcardIndex++}>${match.startsWith('(') ? match.slice(1, -1) : match.replaceAll('*', '.*')})`
+        );
+        if (!result) break;
+        const [match, prefix, param, regex] = result;
+        const optional = match.endsWith('?');
+        // Convert :param to capture group
+        regexPattern += `${optional ? '(' : ''}${prefix}(?<${param}>${regex ? regex + '(?=$|\/)' : '[^/]+'})${optional ? ')?' : ''}`;
+        offset = result.index + match.length;
+    }
 
     return new RegExp(`^${regexPattern}${isPrefix ? '(?=$|\/)' : '$'}`);
 }
