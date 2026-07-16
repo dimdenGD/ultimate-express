@@ -1,4 +1,5 @@
 // must support app.delete() and app.del()
+// SKIP_V5: app.del() removed in Express 5
 
 const express = require("express");
 
