@@ -434,6 +434,7 @@ module.exports = class Router extends EventEmitter {
         }
         let match = pattern.exec(path);
         const obj = new NullObject();
+        const wildcardNames = pattern._wildcardNames || [];
         if(match?.groups) {
             for(let name in match.groups) {
                 const value = match.groups[name];
@@ -441,7 +442,11 @@ module.exports = class Router extends EventEmitter {
                     // In v5, unmatched optional params are omitted
                     continue;
                 }
-                obj[name] = value;
+                if(wildcardNames.includes(name)) {
+                    obj[name] = value.split('/');
+                } else {
+                    obj[name] = value;
+                }
             }
         }
         return obj;

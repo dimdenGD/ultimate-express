@@ -98,6 +98,7 @@ function patternToRegexV5(pattern, isPrefix = false) {
     let regexPattern = '';
     let i = 0;
     const len = pattern.length;
+    const wildcardNames = [];
 
     while(i < len) {
         const ch = pattern[i];
@@ -120,6 +121,7 @@ function patternToRegexV5(pattern, isPrefix = false) {
             if(!name) {
                 throw new Error('Wildcard must have a name in Express 5 path syntax. Use /*splat instead of /*');
             }
+            wildcardNames.push(name);
             // /*splat matches one or more segments after the slash
             regexPattern += `/(?<${name}>.+)`;
             continue;
@@ -137,6 +139,7 @@ function patternToRegexV5(pattern, isPrefix = false) {
                 if(!name) {
                     throw new Error('Wildcard must have a name in Express 5 path syntax. Use {*splat}');
                 }
+                wildcardNames.push(name);
                 // {*splat} matches zero or more path segments
                 // If preceded by /, the slash is already in regexPattern, so match optionally
                 if(regexPattern.endsWith('/') || regexPattern.endsWith('\\/')) {
@@ -173,7 +176,7 @@ function patternToRegexV5(pattern, isPrefix = false) {
                     while(gi < groupContent.length && /\w/.test(groupContent[gi])) {
                         paramName += groupContent[gi++];
                     }
-                    groupRegex += `(?<${paramName}>[^/]+)`;
+                    groupRegex += `(?<${paramName}>[^/.]+)`;
                 } else if(groupContent[gi] === '.') {
                     groupRegex += '\\.';
                     gi++;
@@ -196,17 +199,9 @@ function patternToRegexV5(pattern, isPrefix = false) {
             while(i < len && /\w/.test(pattern[i])) {
                 name += pattern[i++];
             }
-            // Look ahead: if followed by {, adjust the param regex to not consume the group delimiter
+            // Look ahead: if followed by {, make param non-greedy so the optional group can match
             if(i < len && pattern[i] === '{') {
-                // peek at the first char of the group to determine the delimiter
-                const delimiter = pattern[i + 1];
-                if(delimiter === '.') {
-                    regexPattern += `(?<${name}>[^/.]+)`;
-                } else if(delimiter === '/') {
-                    regexPattern += `(?<${name}>[^/]+)`;
-                } else {
-                    regexPattern += `(?<${name}>[^/]+?)`;
-                }
+                regexPattern += `(?<${name}>[^/]+?)`;
             } else {
                 regexPattern += `(?<${name}>[^/]+)`;
             }
@@ -225,7 +220,9 @@ function patternToRegexV5(pattern, isPrefix = false) {
         i++;
     }
 
-    return new RegExp(`^${regexPattern}${isPrefix ? '(?=$|/)' : '$'}`);
+    const regex = new RegExp(`^${regexPattern}${isPrefix ? '(?=$|/)' : '$'}`);
+    regex._wildcardNames = wildcardNames;
+    return regex;
 }
 
 function needsConversionToRegex(pattern) {
