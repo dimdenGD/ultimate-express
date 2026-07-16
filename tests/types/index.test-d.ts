@@ -8,6 +8,9 @@ import type { Server } from 'http';
 
 const app = express();
 
+const appV5 = express({ version: 5 });
+const appV4 = express({ version: 4 });
+
 // Common properties
 expectAssignable<string | string[]>(app.mountpath);
 expectAssignable<Record<string, any>>(app.locals);
