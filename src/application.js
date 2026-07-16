@@ -54,6 +54,12 @@ class FSWorker {
 class Application extends Router {
     constructor(settings = new NullObject()) {
         super(settings);
+        if(typeof settings.version !== 'undefined') {
+            if(settings.version !== 4 && settings.version !== 5) {
+                throw new Error('version must be 4 or 5');
+            }
+            this.settings['version'] = settings.version;
+        }
         if(!settings?.uwsOptions) {
             settings.uwsOptions = {};
         }
@@ -225,6 +231,9 @@ class Application extends Router {
             if(!socket) {
                 let err = new Error('listen EADDRINUSE: address already in use :::' + port);
                 err.code = 'EADDRINUSE';
+                if(this.isV5() && callback) {
+                    return callback(err);
+                }
                 throw err;
             }
             this.port = uWS.us_socket_local_port(socket);
