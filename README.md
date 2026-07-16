@@ -2,7 +2,7 @@
 
 The *Ultimate* Express. Fastest http server with **full** Express compatibility, based on µWebSockets.
 
-This library is a very fast re-implementation of Express.js 4.
+This library is a very fast re-implementation of Express.js that supports both **Express 4** and **Express 5** behavior.
 It is designed to be a drop-in replacement for Express.js, with the same API and functionality, while being much faster. It is not a fork of Express.js.  
 To make sure µExpress matches behavior of Express in all cases, we run all tests with Express first, and then with µExpress and compare results to make sure they match.  
 
@@ -92,6 +92,20 @@ app.listen(3000, () => {
 - This also applies to non-SSL HTTP too. Do not create http server manually, use `app.listen()` instead.
 - Node.JS max header size is 16384 bytes, while uWebSockets by default is 4096 bytes, so if you need longer headers set the env variable `UWS_HTTP_MAX_HEADERS_SIZE` to max byte count you need.
 
+## Express 5 mode
+
+µExpress supports both Express 4 and Express 5 behavior in the same package. By default, it behaves like Express 4. To enable Express 5 behavior, pass `version: 5` to the constructor:
+
+```js
+const express = require("ultimate-express");
+
+// Express 4 behavior (default)
+const app = express();
+
+// Express 5 behavior
+const app = express({ version: 5 });
+```
+
 ## Performance tips
 
 1. µExpress tries to optimize routing as much as possible, but it's only possible if:
@@ -132,7 +146,7 @@ const app = express({
 
 ## Compatibility
 
-In general, basically all features and options are supported. Use [Express 4.x documentation](https://expressjs.com/en/4x/api.html) for API reference.
+In general, basically all features and options are supported. Use [Express 4.x documentation](https://expressjs.com/en/4x/api.html) for API reference (default mode), or [Express 5.x migration guide](https://expressjs.com/en/guide/migrating-5) for v5 mode differences.
 
 ✅ - Full support (all features and options are supported)  
 🚧 - Partial support (some options are not supported)  
@@ -323,7 +337,7 @@ Almost all middlewares that are compatible with Express are compatible with µEx
 
 Middlewares and modules that are confirmed to not work:
 
-- ❌ [express-async-errors](https://npmjs.com/package/express-async-errors) - doesn't work, use `app.set('catch async errors', true)` instead.
+- ❌ [express-async-errors](https://npmjs.com/package/express-async-errors) - doesn't work, use `app.set('catch async errors', true)` instead, or use `version: 5` which handles async errors natively.
 
 ## Tested view engines
 
