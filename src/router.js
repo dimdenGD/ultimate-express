@@ -174,7 +174,7 @@ module.exports = class Router extends EventEmitter {
             }
             routes.push(route);
             // normal routes optimization
-            if(canBeOptimized(route.path) && route.pattern !== '/*' && !this.parent && this.get('case sensitive routing') && this.uwsApp) {
+            if(!route.complex && canBeOptimized(route.path) && !this.parent && this.get('case sensitive routing') && this.uwsApp) {
                 if(supportedUwsMethods.has(method)) {
                     const optimizedPath = this._optimizeRoute(route, this._routes);
                     if(optimizedPath) {
