@@ -247,7 +247,7 @@ module.exports = class Request extends Readable {
 
     set query(query) {
         if(this.app.isV5()) {
-            throw new Error('req.query is read-only in Express 5. Use a custom query parser middleware instead.');
+            return;
         }
         this.#cachedQuery = query;
     }

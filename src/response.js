@@ -791,12 +791,11 @@ module.exports = class Response extends Writable {
     }
     location(path) {
         if(path === 'back') {
-            if(this.app.isV5()) {
-                throw new Error('res.location("back") is no longer supported in Express 5. Use req.get("Referrer") || "/" instead.');
+            if(!this.app.isV5()) {
+                path = this.req.get('Referrer');
+                if(!path) path = this.req.get('Referer');
+                if(!path) path = '/';
             }
-            path = this.req.get('Referrer');
-            if(!path) path = this.req.get('Referer');
-            if(!path) path = '/';
         }
         this.headers['location'] = encodeUrl(path);
         return this;
