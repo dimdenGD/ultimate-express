@@ -28,7 +28,7 @@ function static(root, options) {
     if(typeof options.index === 'undefined') options.index = 'index.html';
     if(typeof options.redirect === 'undefined') options.redirect = true;
     if(typeof options.fallthrough === 'undefined') options.fallthrough = true;
-    if(typeof options.dotfiles === 'undefined') options.dotfiles = 'ignore_files';
+    if(typeof options.dotfiles === 'undefined') options.dotfiles = null;
     if(options.extensions) {
         if(typeof options.extensions !== 'string' && !Array.isArray(options.extensions)) {
             throw new Error('extensions must be a string or an array');
@@ -116,6 +116,10 @@ function static(root, options) {
         }
 
         options._stat = stat;
+
+        if(options.dotfiles === null) {
+            options.dotfiles = req.app.isV5() ? 'ignore' : 'ignore_files';
+        }
 
         return res.sendFile(_path, options, e => {
             if(e) {
@@ -216,7 +220,8 @@ function createBodyParser(defaultType, beforeReturn) {
             if(
                 req.method !== 'POST' &&
                 req.method !== 'PUT' &&
-                req.method !== 'PATCH' && 
+                req.method !== 'PATCH' &&
+                req.method !== 'QUERY' &&
                 (!additionalMethods || !additionalMethods.includes(req.method))
             ) {
                 return next();
@@ -331,7 +336,8 @@ const text = createBodyParser('text/plain', function(req, res, next, options, bu
 
 const urlencoded = createBodyParser('application/x-www-form-urlencoded', function(req, res, next, options, buf) {
     try {
-        if(options.extended) {
+        const extended = typeof options.extended !== 'undefined' ? options.extended : !req.app.isV5();
+        if(extended) {
             req.body = fastQueryParse(buf.toString(), options);
         } else {
             req.body = querystring.parse(buf.toString());

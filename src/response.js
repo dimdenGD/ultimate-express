@@ -243,7 +243,15 @@ module.exports = class Response extends Writable {
         this.writeHead(this.statusCode);
     }
     status(code) {
-        this.statusCode = parseInt(code);
+        if(this.app.isV5()) {
+            const statusCode = parseInt(code);
+            if(!Number.isInteger(statusCode) || statusCode < 100 || statusCode > 999) {
+                throw new RangeError(`Invalid status code: ${code}`);
+            }
+            this.statusCode = statusCode;
+        } else {
+            this.statusCode = parseInt(code);
+        }
         return this;
     }
     sendStatus(code) {
@@ -783,9 +791,11 @@ module.exports = class Response extends Writable {
     }
     location(path) {
         if(path === 'back') {
-            path = this.req.get('Referrer');
-            if(!path) path = this.req.get('Referer');
-            if(!path) path = '/';
+            if(!this.app.isV5()) {
+                path = this.req.get('Referrer');
+                if(!path) path = this.req.get('Referer');
+                if(!path) path = '/';
+            }
         }
         this.headers['location'] = encodeUrl(path);
         return this;
@@ -849,6 +859,9 @@ module.exports = class Response extends Writable {
     vary(field) {
         // checks for back-compat
         if (!field || (Array.isArray(field) && !field.length)) {
+            if(this.app.isV5()) {
+                throw new Error('field argument is required for res.vary()');
+            }
             deprecated('res.vary(): Provide a field name');
             return this;
         }

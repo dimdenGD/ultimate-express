@@ -9,10 +9,14 @@ const { spawn, spawnSync } = require('child_process');
 
 const SCENARIO_FILES = fs.readdirSync(path.join(__dirname, 'scenarios')).filter((file) => file.endsWith('.js')).map((file) => file.replace('.js', ''));
 
-const FRAMEWORKS = [
-    { id: 'express', label: 'Express', port: 3001 },
-    { id: 'ultimate-express', label: 'uExpress', port: 3000 }
+const ALL_FRAMEWORKS = [
+    { id: 'express', label: 'Express 4', port: 3001 },
+    { id: 'express5', label: 'Express 5', port: 3002 },
+    { id: 'ultimate-express', label: 'uExpress', port: 3000 },
+    { id: 'ultimate-express-v5', label: 'uExpress v5', port: 3003 }
 ];
+
+const DEFAULT_FRAMEWORKS = ['express', 'ultimate-express'];
 
 function parseArgs(argv) {
     const args = {};
@@ -155,7 +159,7 @@ function runHttpRequest(port, verifyConfig, timeoutMs = 30000) {
     });
 }
 
-async function validateScenarioResponses(scenarioName, scenario) {
+async function validateScenarioResponses(scenarioName, scenario, frameworks) {
     const verify = scenario.verify || {};
     let verifyBody = verify.body;
     if (verify.bodyRepeat && typeof verify.bodyRepeat === 'object') {
@@ -170,7 +174,7 @@ async function validateScenarioResponses(scenarioName, scenario) {
     };
     const results = {};
 
-    for (const framework of FRAMEWORKS) {
+    for (const framework of frameworks) {
         const { server, stderrRef } = startScenarioServer(framework, scenarioName);
         try {
             await waitForReady(framework.port);
@@ -180,23 +184,35 @@ async function validateScenarioResponses(scenarioName, scenario) {
         }
     }
 
-    const expressResult = results.express;
-    const ultimateResult = results['ultimate-express'];
-    const sameStatus = expressResult.statusCode === ultimateResult.statusCode;
-    const sameBodyHash = expressResult.bodyHash === ultimateResult.bodyHash;
+    // Compare all frameworks against the first one
+    const baseId = frameworks[0].id;
+    const baseResult = results[baseId];
+    const mismatches = [];
 
-    if (sameStatus && sameBodyHash) {
+    for (let i = 1; i < frameworks.length; i++) {
+        const fwId = frameworks[i].id;
+        const fwResult = results[fwId];
+        const sameStatus = baseResult.statusCode === fwResult.statusCode;
+        const sameBodyHash = baseResult.bodyHash === fwResult.bodyHash;
+        if (!sameStatus || !sameBodyHash) {
+            mismatches.push(
+                `${fwId}: status=${fwResult.statusCode}, hash=${fwResult.bodyHash}, size=${fwResult.bodySize}`
+            );
+        }
+    }
+
+    if (mismatches.length === 0) {
         return {
             ok: true,
-            message: `status ${expressResult.statusCode}, body sha256 ${expressResult.bodyHash.slice(0, 12)}`
+            message: `status ${baseResult.statusCode}, body sha256 ${baseResult.bodyHash.slice(0, 12)}`
         };
     }
 
     return {
         ok: false,
         message: [
-            `express: status=${expressResult.statusCode}, hash=${expressResult.bodyHash}, size=${expressResult.bodySize}`,
-            `ultimate-express: status=${ultimateResult.statusCode}, hash=${ultimateResult.bodyHash}, size=${ultimateResult.bodySize}`
+            `${baseId}: status=${baseResult.statusCode}, hash=${baseResult.bodyHash}, size=${baseResult.bodySize}`,
+            ...mismatches
         ].join(' | ')
     };
 }
@@ -313,42 +329,52 @@ async function runScenario(framework, scenarioName, scenario, durationSeconds) {
     }
 }
 
-function buildMarkdown(results) {
+function buildMarkdown(results, frameworks) {
     const lines = [];
     lines.push('<!-- benchmark-comment -->');
     lines.push('## Benchmark Comparison');
     lines.push('');
-    lines.push('| Test | Express req/sec | uExpress req/sec | Express throughput | uExpress throughput | uExpress speedup |');
-    lines.push('| --- | ---: | ---: | ---: | ---: | ---: |');
+
+    // Build header
+    const headerCols = ['Test'];
+    for (const fw of frameworks) {
+        headerCols.push(`${fw.label} req/sec`);
+        headerCols.push(`${fw.label} throughput`);
+    }
+    // Add speedup column (last framework vs first)
+    if (frameworks.length >= 2) {
+        headerCols.push(`${frameworks[frameworks.length - 1].label} speedup`);
+    }
+    lines.push(`| ${headerCols.join(' | ')} |`);
+    lines.push(`| ${headerCols.map(() => '---:').join(' | ')} |`);
 
     const failures = [];
     for (const row of results) {
-    const speedup = row.express.ok && row.ultimate.ok && row.express.transferPerSecBytes > 0
-      ? `${(row.ultimate.transferPerSecBytes / row.express.transferPerSecBytes).toFixed(2)}x`
-            : 'N/A';
-        const expressReq = row.express.ok ? formatReqPerSec(row.express.requestsPerSec) : 'FAILED';
-        const ultimateReq = row.ultimate.ok ? formatReqPerSec(row.ultimate.requestsPerSec) : 'FAILED';
-        const expressTransfer = row.express.ok ? formatBytesPerSec(row.express.transferPerSecBytes) : 'FAILED';
-        const ultimateTransfer = row.ultimate.ok ? formatBytesPerSec(row.ultimate.transferPerSecBytes) : 'FAILED';
-
-        if (!row.express.ok) {
-            failures.push({
-                scenario: row.name,
-                framework: 'express',
-                message: row.express.error
-            });
+        const cols = [row.name];
+        for (const fw of frameworks) {
+            const r = row.results[fw.id];
+            if (r && r.ok) {
+                cols.push(formatReqPerSec(r.requestsPerSec));
+                cols.push(formatBytesPerSec(r.transferPerSecBytes));
+            } else {
+                cols.push('FAILED');
+                cols.push('FAILED');
+                if (r && !r.ok) {
+                    failures.push({ scenario: row.name, framework: fw.id, message: r.error });
+                }
+            }
         }
-        if (!row.ultimate.ok) {
-            failures.push({
-                scenario: row.name,
-                framework: 'ultimate-express',
-                message: row.ultimate.error
-            });
+        // Speedup: last vs first
+        if (frameworks.length >= 2) {
+            const first = row.results[frameworks[0].id];
+            const last = row.results[frameworks[frameworks.length - 1].id];
+            if (first && first.ok && last && last.ok && first.transferPerSecBytes > 0) {
+                cols.push(`**${(last.transferPerSecBytes / first.transferPerSecBytes).toFixed(2)}x**`);
+            } else {
+                cols.push('N/A');
+            }
         }
-
-        lines.push(
-            `| ${row.name} | ${expressReq} | ${ultimateReq} | ${expressTransfer} | ${ultimateTransfer} | **${speedup}** |`
-        );
+        lines.push(`| ${cols.join(' | ')} |`);
     }
 
     if (failures.length > 0) {
@@ -373,6 +399,18 @@ async function main() {
     const requestedScenario = args.scenario;
     const scenarioList = requestedScenario ? [requestedScenario] : SCENARIO_FILES;
 
+    // Parse --frameworks flag (comma-separated list of framework ids)
+    const requestedFrameworks = args.frameworks
+        ? args.frameworks.split(',').map((s) => s.trim())
+        : DEFAULT_FRAMEWORKS;
+    const FRAMEWORKS = ALL_FRAMEWORKS.filter((fw) => requestedFrameworks.includes(fw.id));
+
+    if (FRAMEWORKS.length === 0) {
+        throw new Error(`No valid frameworks specified. Available: ${ALL_FRAMEWORKS.map((f) => f.id).join(', ')}`);
+    }
+
+    process.stdout.write(`Frameworks: ${FRAMEWORKS.map((f) => f.label).join(', ')}\n`);
+
     const results = [];
     for (const scenarioName of scenarioList) {
         const scenario = require(path.join(__dirname, 'scenarios', `${scenarioName}.js`));
@@ -380,7 +418,7 @@ async function main() {
         let validation = null;
 
         try {
-            validation = await validateScenarioResponses(scenarioName, scenario);
+            validation = await validateScenarioResponses(scenarioName, scenario, FRAMEWORKS);
             if (validation.ok) {
                 process.stdout.write(`[validation] PASS ${scenario.name}: ${validation.message}\n`);
             } else {
@@ -394,54 +432,37 @@ async function main() {
             process.stderr.write(`[validation] ERROR ${scenario.name}: ${validation.message}\n`);
         }
 
-        let expressResult;
-        try {
-            const successfulResult = await runScenario(FRAMEWORKS[0], scenarioName, scenario, durationSeconds);
-            expressResult = {
-                ok: true,
-                ...successfulResult
-            };
-        } catch (error) {
-            expressResult = {
-                ok: false,
-                error: error.stack || error.message || String(error)
-            };
-            process.stderr.write(`[benchmark] FAILED express/${scenarioName}\n${expressResult.error}\n`);
-        }
-
-        let ultimateResult;
-        try {
-            const successfulResult = await runScenario(FRAMEWORKS[1], scenarioName, scenario, durationSeconds);
-            ultimateResult = {
-                ok: true,
-                ...successfulResult
-            };
-        } catch (error) {
-            ultimateResult = {
-                ok: false,
-                error: error.stack || error.message || String(error)
-            };
-            process.stderr.write(`[benchmark] FAILED ultimate-express/${scenarioName}\n${ultimateResult.error}\n`);
+        const scenarioResults = {};
+        for (const framework of FRAMEWORKS) {
+            try {
+                const successfulResult = await runScenario(framework, scenarioName, scenario, durationSeconds);
+                scenarioResults[framework.id] = { ok: true, ...successfulResult };
+            } catch (error) {
+                const errorMessage = error.stack || error.message || String(error);
+                scenarioResults[framework.id] = { ok: false, error: errorMessage };
+                process.stderr.write(`[benchmark] FAILED ${framework.id}/${scenarioName}\n${errorMessage}\n`);
+            }
         }
 
         results.push({
             name: scenario.name,
             validation,
-            express: expressResult,
-            ultimate: ultimateResult
+            results: scenarioResults
         });
 
         process.stdout.write(`Done: ${scenario.name}\n`);
     }
 
-    const successfulRows = results.filter((row) => row.express.ok || row.ultimate.ok);
-    if (successfulRows.length === 0) {
+    const hasAnySuccess = results.some((row) =>
+        Object.values(row.results).some((r) => r.ok)
+    );
+    if (!hasAnySuccess) {
         throw new Error('All benchmark scenarios failed. No summary table generated.');
     }
 
     results.sort((a, b) => a.name.localeCompare(b.name));
 
-    const markdown = buildMarkdown(results);
+    const markdown = buildMarkdown(results, FRAMEWORKS);
     fs.writeFileSync(outputPath, markdown, 'utf8');
     process.stdout.write(markdown);
 }

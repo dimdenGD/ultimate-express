@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const { patternToRegex, deprecated, NullObject } = require("./utils.js");
+const { patternToRegex, patternToRegexV5, deprecated, NullObject } = require("./utils.js");
 const accepts = require("accepts");
 const typeis = require("type-is");
 const parseRange = require("range-parser");
@@ -95,7 +95,8 @@ module.exports = class Request extends Readable {
         if(
             this.method === 'POST' ||
             this.method === 'PUT' ||
-            this.method === 'PATCH' || 
+            this.method === 'PATCH' ||
+            this.method === 'QUERY' ||
             (additionalMethods && additionalMethods.includes(this.method))
         ) {
             this._res.onData((ab, isLast) => {
@@ -134,7 +135,8 @@ module.exports = class Request extends Readable {
     }
 
     get baseUrl() {
-        let match = this._originalPath.match(patternToRegex(this._stack.join(""), true));
+        const _toRegex = this.app.isV5() ? patternToRegexV5 : patternToRegex;
+        let match = this._originalPath.match(_toRegex(this._stack.join(""), true));
         return match ? match[0] : '';
     }
 
@@ -168,7 +170,29 @@ module.exports = class Request extends Readable {
         return portIndex !== -1 ? host.substring(0, portIndex) : host;
     }
 
+    get #hostWithPort() {
+        const trust = this.app.get('trust proxy fn');
+        const isTrusted = !!(trust && trust(this.connection.remoteAddress, 0));
+        const rawHeader = (isTrusted && this.headers['x-forwarded-host']) || this.headers['host'];
+        let host = Array.isArray(rawHeader) ? rawHeader[0] : rawHeader;
+
+        if (typeof host !== 'string' || !host) return;
+        host = host.trim();
+
+        if (isTrusted) {
+            const commaIndex = host.indexOf(',');
+            if (commaIndex !== -1) {
+                host = host.substring(0, commaIndex).trimEnd();
+            }
+        }
+
+        return host || undefined;
+    }
+
     get host() {
+        if(this.app.isV5()) {
+            return this.#hostWithPort;
+        }
         deprecated('req.host', 'req.hostname');
         return this.hostname;
     }
@@ -223,6 +247,9 @@ module.exports = class Request extends Readable {
     }
 
     set query(query) {
+        if(this.app.isV5()) {
+            return;
+        }
         this.#cachedQuery = query;
     }
     get query() {
@@ -396,6 +423,9 @@ module.exports = class Request extends Readable {
     }
 
     param(name, defaultValue) {
+        if(this.app.isV5()) {
+            throw new Error('req.param() has been removed. Use req.params, req.body, or req.query instead.');
+        }
         deprecated('req.param(name)', 'req.params, req.body, or req.query');
 
         if(name == null) return defaultValue;

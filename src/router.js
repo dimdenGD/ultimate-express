@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const { patternToRegex, needsConversionToRegex, deprecated, findIndexStartingFrom, canBeOptimized, NullObject, EMPTY_REGEX } = require("./utils.js");
+const { patternToRegex, patternToRegexV5, needsConversionToRegex, needsConversionToRegexV5, deprecated, findIndexStartingFrom, canBeOptimized, canBeOptimizedV5, NullObject, EMPTY_REGEX } = require("./utils.js");
 const Response = require("./response.js");
 const Request = require("./request.js");
 const { EventEmitter } = require("tseep");
@@ -33,7 +33,8 @@ const methods = [
     'post', 'put', 'delete', 'patch', 'options', 'head', 'trace', 'connect',
     'checkout', 'copy', 'lock', 'mkcol', 'move', 'purge', 'propfind', 'proppatch',
     'search', 'subscribe', 'unsubscribe', 'report', 'mkactivity', 'mkcalendar',
-    'checkout', 'merge', 'm-search', 'notify', 'subscribe', 'unsubscribe', 'search'
+    'checkout', 'merge', 'm-search', 'notify', 'subscribe', 'unsubscribe', 'search',
+    'query'
 ];
 const supportedUwsMethods = new Set(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE']);
 
@@ -103,8 +104,15 @@ module.exports = class Router extends EventEmitter {
     }
 
     del(path, ...callbacks) {
+        if(this.isV5()) {
+            throw new Error('app.del() has been removed. Use app.delete() instead.');
+        }
         deprecated('app.del', 'app.delete');
         return this.createRoute('DELETE', path, this, ...callbacks);
+    }
+
+    isV5() {
+        return this.get('version') >= 5;
     }
 
     getFullMountpath(req) {
@@ -114,7 +122,8 @@ module.exports = class Router extends EventEmitter {
         const fullStack = req._stack.join("");
         let fullMountpath = this._mountpathCache.get(fullStack);
         if(!fullMountpath) {
-            fullMountpath = patternToRegex(fullStack, true);
+            const _toRegex = this.isV5() ? patternToRegexV5 : patternToRegex;
+            fullMountpath = _toRegex(fullStack, true);
             this._mountpathCache.set(fullStack, fullMountpath);
         }
         return fullMountpath;
@@ -152,29 +161,40 @@ module.exports = class Router extends EventEmitter {
         callbacks = callbacks.flat();
         const paths = Array.isArray(path) ? path : [path];
         const routes = [];
+        const v5 = this.isV5();
+        const _needsConversion = v5 ? needsConversionToRegexV5 : needsConversionToRegex;
+        const _toRegex = v5 ? patternToRegexV5 : patternToRegex;
+        const _canBeOptimized = v5 ? canBeOptimizedV5 : canBeOptimized;
         for(let path of paths) {
             if(!this.get('strict routing') && typeof path === 'string' && path.endsWith('/') && path !== '/') {
                 path = path.slice(0, -1);
             }
             if(path === '*') {
-                path = '/*';
+                path = v5 ? '/{*splat}' : '/*';
             }
             const route = {
                 method: method === 'USE' ? 'ALL' : method,
                 path,
-                pattern: method === 'USE' || needsConversionToRegex(path) ? patternToRegex(path, method === 'USE') : path,
+                pattern: method === 'USE' || _needsConversion(path) ? _toRegex(path, method === 'USE') : path,
                 callbacks,
                 routeKey: routeKey++,
                 use: method === 'USE',
                 all: method === 'ALL' || method === 'USE',
                 gettable: method === 'GET' || method === 'HEAD',
+                v5,
             };
-            if(typeof route.path === 'string' && (route.path.includes(':') || route.path.includes('*') || (route.path.includes('(') && route.path.includes(')'))) && route.pattern instanceof RegExp) {
-                route.complex = true;
+            if(v5) {
+                if(typeof route.path === 'string' && (route.path.includes(':') || route.path.includes('*') || route.path.includes('{')) && route.pattern instanceof RegExp) {
+                    route.complex = true;
+                }
+            } else {
+                if(typeof route.path === 'string' && (route.path.includes(':') || route.path.includes('*') || (route.path.includes('(') && route.path.includes(')'))) && route.pattern instanceof RegExp) {
+                    route.complex = true;
+                }
             }
             routes.push(route);
             // normal routes optimization
-            if(!route.complex && canBeOptimized(route.path) && !this.parent && this.get('case sensitive routing') && this.uwsApp) {
+            if(!route.complex && _canBeOptimized(route.path) && !this.parent && this.get('case sensitive routing') && this.uwsApp) {
                 if(supportedUwsMethods.has(method)) {
                     const optimizedPath = this._optimizeRoute(route, this._routes);
                     if(optimizedPath) {
@@ -184,7 +204,7 @@ module.exports = class Router extends EventEmitter {
             }
             // router optimization
             if(
-                route.use && !needsConversionToRegex(path) && path !== '/*' && // must be predictable path
+                route.use && !_needsConversion(path) && path !== '/*' && // must be predictable path
                 this.get('case sensitive routing') && // uWS only supports case sensitive routing
                 callbacks.filter(c => c instanceof Router).length === 1 && // only 1 router can be optimized per route
                 callbacks[callbacks.length - 1] instanceof Router // the router must be the last callback
@@ -391,10 +411,42 @@ module.exports = class Router extends EventEmitter {
         const obj = new NullObject();
         if(match?.groups) {
             for(let name in match.groups) {
+                const value = match.groups[name];
+                if(value === undefined) {
+                    // In v5, unmatched params are omitted entirely
+                    continue;
+                }
                 if(name.startsWith('_wc')) {
-                    obj[name.slice(3)] = match.groups[name];
+                    obj[name.slice(3)] = value;
                 } else {
-                    obj[name] = match.groups[name];
+                    obj[name] = value;
+                }
+            }
+        }
+        return obj;
+    }
+
+    /**
+     * Express 5 variant: params have null prototype and wildcards are arrays.
+     */
+    _extractParamsV5(pattern, path) {
+        if(path.endsWith('/')) {
+            path = path.slice(0, -1);
+        }
+        let match = pattern.exec(path);
+        const obj = new NullObject();
+        const wildcardNames = pattern._wildcardNames || [];
+        if(match?.groups) {
+            for(let name in match.groups) {
+                const value = match.groups[name];
+                if(value === undefined) {
+                    // In v5, unmatched optional params are omitted
+                    continue;
+                }
+                if(wildcardNames.includes(name)) {
+                    obj[name] = value.split('/');
+                } else {
+                    obj[name] = value;
                 }
             }
         }
@@ -403,8 +455,15 @@ module.exports = class Router extends EventEmitter {
 
     _preprocessRequest(req, res, route) {
         req.route = route;
+        const v5 = route.v5;
         if(route.optimizedParams) {
-            req.params = {...req.optimizedParams};
+            if(v5) {
+                const obj = new NullObject();
+                Object.assign(obj, req.optimizedParams);
+                req.params = obj;
+            } else {
+                req.params = {...req.optimizedParams};
+            }
         } else if(route.complex) {
             let path = req._originalPath;
             if(req._stack.length > 0) {
@@ -413,14 +472,22 @@ module.exports = class Router extends EventEmitter {
                     path = path.replace(fullMountpath, '');
                 } 
             }
-            req.params = {...this._extractParams(route.pattern, path)};
+            if(v5) {
+                req.params = this._extractParamsV5(route.pattern, path);
+            } else {
+                req.params = {...this._extractParams(route.pattern, path)};
+            }
             if(req._paramStack.length > 0) {
                 for(let params of req._paramStack) {
                     req.params = {...params, ...req.params};
                 }
             }
         } else {
-            req.params = {};
+            if(v5) {
+                req.params = new NullObject();
+            } else {
+                req.params = {};
+            }
             if(req._paramStack.length > 0) {
                 for(let params of req._paramStack) {
                     req.params = {...params, ...req.params};
@@ -463,6 +530,9 @@ module.exports = class Router extends EventEmitter {
 
     param(name, fn) {
         if(typeof name === 'function') {
+            if(this.isV5()) {
+                throw new Error('app.param(fn) has been removed. Use app.param(name, fn) instead.');
+            }
             deprecated('app.param(callback)', 'app.param(name, callback)', true);
             this._paramFunction = name;
         } else {
@@ -605,7 +675,7 @@ module.exports = class Router extends EventEmitter {
                         const out = callback(req, res, next);
                         if(out instanceof Promise) {
                             out.catch(err => {
-                                if(this.get("catch async errors")) {
+                                if(this.isV5() || this.get("catch async errors")) {
                                     req._error = err;
                                     req._errorKey = route.routeKey;
                                     return next();

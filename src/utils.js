@@ -75,6 +75,156 @@ function patternToRegex(pattern, isPrefix = false) {
     return new RegExp(`^${regexPattern}${isPrefix ? '(?=$|\/)' : '$'}`);
 }
 
+/**
+ * Express 5 path-to-regexp v8 style parser.
+ * Supports:
+ *   - /:param (named parameters)
+ *   - /*splat (named wildcard, captures remaining segments as array-ready)
+ *   - /{*splat} (named wildcard that also matches root /)
+ *   - /:file{.:ext} (optional groups with braces)
+ *   - Escaped special chars with backslash
+ * Does NOT support:
+ *   - Unnamed wildcards (/* without name)
+ *   - Regex chars in path (+, (), [], ?)
+ */
+function patternToRegexV5(pattern, isPrefix = false) {
+    if(pattern instanceof RegExp) {
+        return pattern;
+    }
+    if(isPrefix && pattern === '') {
+        return EMPTY_REGEX;
+    }
+
+    let regexPattern = '';
+    let i = 0;
+    const len = pattern.length;
+    const wildcardNames = [];
+
+    while(i < len) {
+        const ch = pattern[i];
+
+        // Escaped character
+        if(ch === '\\' && i + 1 < len) {
+            regexPattern += '\\' + pattern[i + 1];
+            i += 2;
+            continue;
+        }
+
+        // Named wildcard: /*name or /{*name}
+        if(ch === '/' && i + 1 < len && pattern[i + 1] === '*') {
+            // /*splat
+            i += 2; // skip /*
+            let name = '';
+            while(i < len && /\w/.test(pattern[i])) {
+                name += pattern[i++];
+            }
+            if(!name) {
+                throw new Error('Wildcard must have a name in Express 5 path syntax. Use /*splat instead of /*');
+            }
+            wildcardNames.push(name);
+            // /*splat matches one or more segments after the slash
+            regexPattern += `/(?<${name}>.+)`;
+            continue;
+        }
+
+        if(ch === '{') {
+            // Check for {*name} (root-matching wildcard)
+            if(pattern[i + 1] === '*') {
+                i += 2; // skip {*
+                let name = '';
+                while(i < len && pattern[i] !== '}') {
+                    name += pattern[i++];
+                }
+                i++; // skip }
+                if(!name) {
+                    throw new Error('Wildcard must have a name in Express 5 path syntax. Use {*splat}');
+                }
+                wildcardNames.push(name);
+                // {*splat} matches zero or more path segments
+                // If preceded by /, the slash is already in regexPattern, so match optionally
+                if(regexPattern.endsWith('/') || regexPattern.endsWith('\\/')) {
+                    // Remove trailing slash from pattern and make the whole /... optional
+                    regexPattern = regexPattern.slice(0, regexPattern.endsWith('\\/') ? -2 : -1);
+                    regexPattern += `(?:/(?<${name}>.+))?/?`;
+                } else {
+                    regexPattern += `(?<${name}>.*)`;
+                }
+                continue;
+            }
+
+            // Optional group: {.:ext} or {/subpath}
+            i++; // skip {
+            let groupContent = '';
+            let braceDepth = 1;
+            while(i < len && braceDepth > 0) {
+                if(pattern[i] === '{') braceDepth++;
+                else if(pattern[i] === '}') {
+                    braceDepth--;
+                    if(braceDepth === 0) break;
+                }
+                groupContent += pattern[i++];
+            }
+            i++; // skip closing }
+
+            // Parse the optional group content (may contain :param)
+            let groupRegex = '';
+            let gi = 0;
+            while(gi < groupContent.length) {
+                if(groupContent[gi] === ':') {
+                    gi++; // skip :
+                    let paramName = '';
+                    while(gi < groupContent.length && /\w/.test(groupContent[gi])) {
+                        paramName += groupContent[gi++];
+                    }
+                    groupRegex += `(?<${paramName}>[^/.]+)`;
+                } else if(groupContent[gi] === '.') {
+                    groupRegex += '\\.';
+                    gi++;
+                } else if(groupContent[gi] === '/') {
+                    groupRegex += '/';
+                    gi++;
+                } else {
+                    groupRegex += groupContent[gi].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    gi++;
+                }
+            }
+            regexPattern += `(?:${groupRegex})?`;
+            continue;
+        }
+
+        // Named parameter :param
+        if(ch === ':') {
+            i++; // skip :
+            let name = '';
+            while(i < len && /\w/.test(pattern[i])) {
+                name += pattern[i++];
+            }
+            // Look ahead: if followed by {, make param non-greedy so the optional group can match
+            if(i < len && pattern[i] === '{') {
+                regexPattern += `(?<${name}>[^/]+?)`;
+            } else {
+                regexPattern += `(?<${name}>[^/]+)`;
+            }
+            continue;
+        }
+
+        // Literal characters (escape regex special chars)
+        if('.+?^${}()|[]'.includes(ch)) {
+            regexPattern += '\\' + ch;
+        } else if(ch === '*') {
+            // Bare * without name — error in v5
+            throw new Error('Wildcard must have a name in Express 5 path syntax. Use /*splat instead of /*');
+        } else {
+            regexPattern += ch;
+        }
+        i++;
+    }
+
+    const regex = new RegExp(`^${regexPattern}${isPrefix ? '(?=$|/)' : '$'}`);
+    regex._wildcardNames = wildcardNames;
+    return regex;
+}
+
 function needsConversionToRegex(pattern) {
     if(pattern instanceof RegExp) {
         return false;
@@ -90,6 +240,16 @@ function needsConversionToRegex(pattern) {
         pattern.includes('}') ||
         pattern.includes('[') ||
         pattern.includes(']');
+}
+
+function needsConversionToRegexV5(pattern) {
+    if(pattern instanceof RegExp) {
+        return false;
+    }
+    
+    return pattern.includes('*') ||
+        pattern.includes(':') ||
+        pattern.includes('{');
 }
 
 function canBeOptimized(pattern) {
@@ -109,6 +269,20 @@ function canBeOptimized(pattern) {
         pattern.includes('}') ||
         pattern.includes('[') ||
         pattern.includes(']')
+    ) {
+        return false;
+    }
+    return true;
+}
+
+function canBeOptimizedV5(pattern) {
+    if(pattern instanceof RegExp) {
+        return false;
+    }
+    if(
+        pattern.includes('*') ||
+        pattern.includes('{') ||
+        pattern.includes(':')
     ) {
         return false;
     }
@@ -190,7 +364,8 @@ const defaultSettings = {
     'view cache': () => process.env.NODE_ENV === 'production',
     'x-powered-by': true,
     'case sensitive routing': true,
-    'declarative responses': true
+    'declarative responses': true,
+    'version': 4
 };
 
 function compileTrust(val) {
@@ -404,7 +579,9 @@ NullObject.prototype = Object.create(null);
 module.exports = {
     removeDuplicateSlashes,
     patternToRegex,
+    patternToRegexV5,
     needsConversionToRegex,
+    needsConversionToRegexV5,
     acceptParams,
     normalizeType,
     stringify,
@@ -423,6 +600,7 @@ module.exports = {
     findIndexStartingFrom,
     fastQueryParse,
     canBeOptimized,
+    canBeOptimizedV5,
     escapeHtml,
     EMPTY_REGEX
 };

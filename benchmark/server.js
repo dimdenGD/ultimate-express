@@ -30,8 +30,22 @@ function resolveFramework(frameworkName) {
         return require('express');
     }
 
+    if (frameworkName === 'express5') {
+        return require('express5');
+    }
+
     if (frameworkName === 'ultimate-express') {
         return require('../src/index');
+    }
+
+    if (frameworkName === 'ultimate-express-v5') {
+        const ue = require('../src/index');
+        const wrapped = function(options) {
+            return ue({ ...options, version: 5 });
+        };
+        // Copy static properties (Router, json, static, etc.)
+        Object.assign(wrapped, ue);
+        return wrapped;
     }
 
     throw new Error(`Unknown framework: ${frameworkName}`);
