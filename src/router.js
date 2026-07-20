@@ -33,7 +33,8 @@ const methods = [
     'post', 'put', 'delete', 'patch', 'options', 'head', 'trace', 'connect',
     'checkout', 'copy', 'lock', 'mkcol', 'move', 'purge', 'propfind', 'proppatch',
     'search', 'subscribe', 'unsubscribe', 'report', 'mkactivity', 'mkcalendar',
-    'checkout', 'merge', 'm-search', 'notify', 'subscribe', 'unsubscribe', 'search'
+    'checkout', 'merge', 'm-search', 'notify', 'subscribe', 'unsubscribe', 'search',
+    'query'
 ];
 const supportedUwsMethods = new Set(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE']);
 

@@ -95,7 +95,8 @@ module.exports = class Request extends Readable {
         if(
             this.method === 'POST' ||
             this.method === 'PUT' ||
-            this.method === 'PATCH' || 
+            this.method === 'PATCH' ||
+            this.method === 'QUERY' ||
             (additionalMethods && additionalMethods.includes(this.method))
         ) {
             this._res.onData((ab, isLast) => {

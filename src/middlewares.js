@@ -220,7 +220,8 @@ function createBodyParser(defaultType, beforeReturn) {
             if(
                 req.method !== 'POST' &&
                 req.method !== 'PUT' &&
-                req.method !== 'PATCH' && 
+                req.method !== 'PATCH' &&
+                req.method !== 'QUERY' &&
                 (!additionalMethods || !additionalMethods.includes(req.method))
             ) {
                 return next();
