@@ -38,8 +38,21 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y wrk
 
-      - name: Run benchmark suite
-        run: npm run benchmark:compare -- --duration 20 --output benchmark_summary.md
+      - name: Run benchmark suite (Express 4 vs uExpress)
+        run: npm run benchmark:compare -- --duration 20 --output benchmark_v4.md
+
+      - name: Run benchmark suite (Express 5 vs uExpress v5)
+        run: npm run benchmark:compare -- --duration 20 --frameworks express5,ultimate-express-v5 --output benchmark_v5.md
+
+      - name: Combine benchmark results
+        run: |
+          echo '<!-- benchmark-comment -->' > benchmark_summary.md
+          echo '' >> benchmark_summary.md
+          cat benchmark_v4.md | grep -v '<!-- benchmark-comment -->' >> benchmark_summary.md
+          echo '' >> benchmark_summary.md
+          echo '## Express 5 Benchmark' >> benchmark_summary.md
+          echo '' >> benchmark_summary.md
+          cat benchmark_v5.md | grep -v '<!-- benchmark-comment -->' >> benchmark_summary.md
 
       - name: Upload benchmark markdown artifact
         uses: actions/upload-artifact@v4
