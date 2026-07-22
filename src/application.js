@@ -210,6 +210,7 @@ class Application extends Router {
     }
 
     listen(port, host, callback) {
+        this._compileOptimizedRoutes();
         this.#createRequestHandler();
         // support listen(callback)
         if(!callback && typeof port === 'function') {

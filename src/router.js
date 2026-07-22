@@ -173,70 +173,6 @@ module.exports = class Router extends EventEmitter {
                 route.complex = true;
             }
             routes.push(route);
-            // normal routes optimization
-            if(!route.complex && canBeOptimized(route.path) && !this.parent && this.get('case sensitive routing') && this.uwsApp) {
-                if(supportedUwsMethods.has(method)) {
-                    const optimizedPath = this._optimizeRoute(route, this._routes);
-                    if(optimizedPath) {
-                        this._registerUwsRoute(route, optimizedPath);
-                    }
-                }
-            }
-            // router optimization
-            if(
-                route.use && !needsConversionToRegex(path) && path !== '/*' && // must be predictable path
-                this.get('case sensitive routing') && // uWS only supports case sensitive routing
-                callbacks.filter(c => c instanceof Router).length === 1 && // only 1 router can be optimized per route
-                callbacks[callbacks.length - 1] instanceof Router // the router must be the last callback
-            ) {
-                let callbacksBeforeRouter = [];
-                for(let callback of callbacks) {
-                    if(callback instanceof Router) {
-                        // get optimized path to router
-                        let optimizedPathToRouter = this._optimizeRoute(route, this._routes);
-                        if(!optimizedPathToRouter) {
-                            break;
-                        }
-                        optimizedPathToRouter = optimizedPathToRouter.slice(0, -1); // remove last element, which is the router itself
-                        if(optimizedPathToRouter) {
-                            // wait for routes in router to be registered
-                            const t = setTimeout(() => {
-                                if(!this.listenCalled) {
-                                    return; // can only optimize router whos parent is listening
-                                }
-                                for(let cbroute of callback._routes) {
-                                    if(!needsConversionToRegex(cbroute.path) && cbroute.path !== '/*' && supportedUwsMethods.has(cbroute.method)) {
-                                        let optimizedRouterPath = this._optimizeRoute(cbroute, callback._routes);
-                                        if(optimizedRouterPath) {
-                                            optimizedRouterPath = optimizedRouterPath.slice(0, -1);
-                                            const optimizedPath = [...optimizedPathToRouter, {
-                                                // fake route to update req._opPath and req.url
-                                                ...route,
-                                                callbacks: [
-                                                    (req, res, next) => {
-                                                        next('skipPop');
-                                                    }
-                                                ]
-                                            }, ...optimizedRouterPath];
-                                            this._registerUwsRoute({
-                                                ...cbroute,
-                                                path: route.path + cbroute.path,
-                                                pattern: route.path + cbroute.path,
-                                                optimizedRouter: true
-                                            }, optimizedPath);
-                                        }
-                                    }
-                                }
-                            }, 100);
-                            t.unref();
-                        }
-                        // only 1 router can be optimized per route
-                        break;
-                    } else {
-                        callbacksBeforeRouter.push(route);
-                    }
-                }
-            }
         }
         this._routes.push(...routes);
 
@@ -252,6 +188,9 @@ module.exports = class Router extends EventEmitter {
             const r = routes[i];
             if(r.routeKey > route.routeKey) {
                 break;
+            }
+            if(r === route) {
+                continue;
             }
             // if the methods are not the same, and its not an all method, skip it
             if(!r.all && r.method !== route.method) {
@@ -277,6 +216,69 @@ module.exports = class Router extends EventEmitter {
         return optimizedPath;
     }
 
+    _compileOptimizedRoutes() {
+        if(!this.uwsApp || !this.get('case sensitive routing')) {
+            return;
+        }
+
+        // pathPrefix/chainPrefix accumulate across nested sole-callback mounts
+        const walk = (router, pathPrefix, chainPrefix) => {
+            for(let route of router._routes) {
+                if(route.use) {
+                    // only sole-callback mounts
+                    if(
+                        !route.complex && canBeOptimized(route.path) && route.path !== '/*' &&
+                        route.callbacks.length === 1 && route.callbacks[0] instanceof Router
+                    ) {
+                        let pathToMount = router._optimizeRoute(route, router._routes);
+                        if(!pathToMount) {
+                            continue;
+                        }
+                        pathToMount = pathToMount.slice(0, -1);
+                        walk(
+                            route.callbacks[0],
+                            pathPrefix + route.path,
+                            [...chainPrefix, ...pathToMount, {
+                                ...route,
+                                callbacks: [],
+                                keepMount: true
+                            }]
+                        );
+                    }
+                } else if(!route.complex && canBeOptimized(route.path) && supportedUwsMethods.has(route.method)) {
+                    let leafPath = router._optimizeRoute(route, router._routes);
+                    if(!leafPath) {
+                        continue;
+                    }
+                    // param route earlier in the same router would steal this static path
+                    if(leafPath.length > 1) {
+                        const shadow = leafPath[leafPath.length - 2];
+                        if(
+                            shadow && !shadow.use &&
+                            shadow.method === route.method &&
+                            shadow.path !== route.path &&
+                            shadow.pattern instanceof RegExp
+                        ) {
+                            continue;
+                        }
+                    }
+                    if(pathPrefix) {
+                        this._registerUwsRoute({
+                            ...route,
+                            path: pathPrefix + route.path,
+                            pattern: pathPrefix + route.path,
+                            optimizedRouter: true
+                        }, [...chainPrefix, ...leafPath]);
+                    } else {
+                        this._registerUwsRoute(route, leafPath);
+                    }
+                }
+            }
+        };
+
+        walk(this, '', []);
+    }
+
     handleRequest(res, req) {
         const request = new this._request(req, res, this);
         const response = new this._response(res, request, this);
@@ -300,7 +302,7 @@ module.exports = class Router extends EventEmitter {
         } else if(method === 'delete') {
             method = 'del';
         }
-        if(!route.optimizedRouter && route.path.includes(":")) {
+        if(route.path.includes(":")) {
             route.optimizedParams = route.path.match(regExParam).map(p => p.slice(1));
         }
         let fn = async (res, req) => {
@@ -311,7 +313,8 @@ module.exports = class Router extends EventEmitter {
                     request.optimizedParams[route.optimizedParams[i]] = req.getParameter(i);
                 }
             }
-            const matchedRoute = await this._routeRequest(request, response, 0, optimizedPath, true, route);
+            const skipUntil = optimizedPath.length ? optimizedPath[optimizedPath.length - 1] : route;
+            const matchedRoute = await this._routeRequest(request, response, 0, optimizedPath, true, skipUntil);
             if(!matchedRoute && !response.headersSent && !response.aborted) {
                 if(request._error) {
                     return this._handleError(request._error, null, request, response);
@@ -524,8 +527,8 @@ module.exports = class Router extends EventEmitter {
         return new Promise((resolve) => {
             const next = async (thingamabob) => {
                 if(thingamabob) {
-                    if(thingamabob === 'route' || thingamabob === 'skipPop') {
-                        if(route.use && thingamabob !== 'skipPop') {
+                    if(thingamabob === 'route') {
+                        if(route.use && !route.keepMount) {
                             req._stack.pop();
                             
                             req._opPath = req._stack.length > 0 ? req._originalPath.replace(this.getFullMountpath(req), '') : req._originalPath;
