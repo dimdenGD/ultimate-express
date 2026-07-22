@@ -40,7 +40,10 @@ class FSWorker {
             if(message.err) {
                 workerTasks[message.key].reject(new Error(message.err));
             } else {
-                workerTasks[message.key].resolve(message.data);
+                // worker transfers file contents as an ArrayBuffer; wrap it in a Buffer (zero-copy) so
+                // consumers get the same type as fs.readFile. A bare ArrayBuffer is rejected by wrapped
+                // res.end() implementations (e.g. express-session calls Buffer.byteLength on the chunk).
+                workerTasks[message.key].resolve(message.data instanceof ArrayBuffer ? Buffer.from(message.data) : message.data);
             }
             delete workerTasks[message.key];
         });
