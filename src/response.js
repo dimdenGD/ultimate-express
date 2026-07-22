@@ -679,7 +679,8 @@ module.exports = class Response extends Writable {
             this.send(str);
         });
 
-        this.app.render(view, options, done);
+        // use req.app like express does, so mounted sub-apps resolve views with their own settings
+        this.req.app.render(view, options, done);
     }
     cookie(name, value, options) {
         const opt = {...(options ?? {})}; // create a new ref because we change original object (https://github.com/dimdenGD/ultimate-express/issues/68)

@@ -241,7 +241,9 @@ module.exports = class Router extends EventEmitter {
                             [...chainPrefix, ...pathToMount, {
                                 ...route,
                                 callbacks: [],
-                                keepMount: true
+                                keepMount: true,
+                                // mounted sub-apps become req.app during their dispatch, like express
+                                mountApp: route.callbacks[0].constructor.name === 'Application' ? route.callbacks[0] : undefined
                             }]
                         );
                     }
@@ -495,6 +497,7 @@ module.exports = class Router extends EventEmitter {
                 return false;
             }
             // on optimized routes, there can be more routes, so we have to use unoptimized routing and skip until we find route we stopped at
+            req.app = this; // restore app in case the optimized path swapped it to a mounted sub-app
             return this._routeRequest(req, res, 0, this._routes, false, skipUntil);
         }
         let callbackindex = 0;
@@ -507,6 +510,11 @@ module.exports = class Router extends EventEmitter {
         
         const strictRouting = this.get('strict routing');
         if(route.use) {
+            if(route.mountApp) {
+                // optimized chain: normal dispatch swaps req.app when it enters a mounted Application,
+                // but the compiled mount route has no callback to do it, so swap it here
+                req.app = route.mountApp;
+            }
             req._stack.push(route.path);
             const fullMountpath = this.getFullMountpath(req);
             req._opPath = fullMountpath !== EMPTY_REGEX ? req._originalPath.replace(fullMountpath, '') : req._originalPath;
