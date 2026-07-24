@@ -315,7 +315,13 @@ module.exports = class Router extends EventEmitter {
                     request.optimizedParams[route.optimizedParams[i]] = req.getParameter(i);
                 }
             }
-            const skipUntil = optimizedPath.length ? optimizedPath[optimizedPath.length - 1] : route;
+            // for a route optimized through a mounted router, falling back to normal routing must resume
+            // after the mount in the parent (like normal dispatch does), not after the router's leaf route.
+            // the leaf can have a lower routeKey than the parent's own middlewares (e.g. when the router is
+            // required from another module), which would otherwise let a pre-mount error handler catch an
+            // error thrown inside the router.
+            const mount = optimizedPath.find(r => r.keepMount);
+            const skipUntil = mount ?? (optimizedPath.length ? optimizedPath[optimizedPath.length - 1] : route);
             const matchedRoute = await this._routeRequest(request, response, 0, optimizedPath, true, skipUntil);
             if(!matchedRoute && !response.headersSent && !response.aborted) {
                 if(request._error) {
@@ -498,6 +504,12 @@ module.exports = class Router extends EventEmitter {
             }
             // on optimized routes, there can be more routes, so we have to use unoptimized routing and skip until we find route we stopped at
             req.app = this; // restore app in case the optimized path swapped it to a mounted sub-app
+            // an error that propagated out of a mounted router's optimized chain is attributed to the mount
+            // (like normal dispatch does when a sub-router returns an error), so parent error handlers declared
+            // before the mount don't catch it - the router's leaf can have a lower routeKey than those handlers
+            if(req._error && skipUntil && skipUntil.keepMount && skipUntil.routeKey > req._errorKey) {
+                req._errorKey = skipUntil.routeKey;
+            }
             return this._routeRequest(req, res, 0, this._routes, false, skipUntil);
         }
         let callbackindex = 0;
