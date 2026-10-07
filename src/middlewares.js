@@ -141,6 +141,17 @@ function createInflate(contentEncoding) {
     }
 }
 
+// the error body-parser gives for a body over the limit, so the error handler answers 413 and not 500
+function entityTooLarge(fields) {
+    const err = new Error('request entity too large');
+    err.name = 'PayloadTooLargeError';
+    err.expose = true;
+    err.statusCode = 413;
+    err.status = 413;
+    err.type = 'entity.too.large';
+    return Object.assign(err, fields);
+}
+
 function createBodyParser(defaultType, beforeReturn) {
     return function(options) {
         if(typeof options !== 'object') {
@@ -206,7 +217,7 @@ function createBodyParser(defaultType, beforeReturn) {
 
             // skip reading too large body
             if(length && +length > options.limit) {
-                return next(new Error('Request entity too large'));
+                return next(entityTooLarge({ expected: +length, length: +length, limit: options.limit }));
             }
 
 
@@ -257,7 +268,7 @@ function createBodyParser(defaultType, beforeReturn) {
                 if(totalSize > options.limit) {
                     finished = true;
                     abs.length = 0;
-                    return next(new Error('Request entity too large'));
+                    return next(entityTooLarge({ limit: options.limit, received: totalSize }));
                 }
             }
 

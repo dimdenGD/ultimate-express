@@ -381,7 +381,11 @@ module.exports = class Router extends EventEmitter {
             });
         }
         console.error(err);
-        if(response.statusCode === 200) {
+        // as finalhandler: an error carrying an HTTP status answers with it
+        const errorStatus = [err?.status, err?.statusCode].find(s => typeof s === 'number' && s >= 400 && s < 600);
+        if(errorStatus !== undefined) {
+            response.statusCode = errorStatus;
+        } else if(response.statusCode === 200) {
             response.statusCode = 500;
         }
         this._sendErrorPage(request, response, err, true);
