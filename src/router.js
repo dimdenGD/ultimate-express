@@ -264,7 +264,7 @@ module.exports = class Router extends EventEmitter {
                             continue;
                         }
                     }
-                    if(pathPrefix) {
+                    if(router !== this) {
                         this._registerUwsRoute({
                             ...route,
                             path: pathPrefix + route.path,
