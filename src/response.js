@@ -21,7 +21,8 @@ const encodeUrl = require("encodeurl");
 const contentDisposition = require("content-disposition");
 const {
     normalizeType, stringify, deprecated, UP_PATH_REGEXP, decode,
-    containsDotFile, isPreconditionFailure, isRangeFresh, escapeHtml, NullObject
+    containsDotFile, isPreconditionFailure, isRangeFresh, escapeHtml, NullObject,
+    HTTP_TOKEN_REGEXP, INVALID_HEADER_CHAR_REGEXP
 } = require("./utils.js");
 const { Writable } = require("stream");
 const { isAbsolute } = require("path");
@@ -40,6 +41,21 @@ const outgoingMessage = new http.OutgoingMessage();
 const symbols = Object.getOwnPropertySymbols(outgoingMessage);
 const kOutHeaders = symbols.find(s => s.toString() === 'Symbol(kOutHeaders)');
 const HIGH_WATERMARK = 128 * 1024;
+
+function codedTypeError(message, code) {
+    const err = new TypeError(message);
+    err.code = code;
+    return err;
+}
+
+function validateHeader(name, value) {
+    if(typeof name !== 'string' || !HTTP_TOKEN_REGEXP.test(name)) {
+        throw codedTypeError(`Header name must be a valid HTTP token ["${name}"]`, 'ERR_INVALID_HTTP_TOKEN');
+    }
+    if(INVALID_HEADER_CHAR_REGEXP.test(value)) {
+        throw codedTypeError(`Invalid character in header content ["${name}"]`, 'ERR_INVALID_CHAR');
+    }
+}
 
 class Socket extends EventEmitter {
     constructor(response) {
@@ -205,6 +221,9 @@ module.exports = class Response extends Writable {
         });
     }
     writeHead(statusCode, statusMessage, headers) {
+        if(typeof statusMessage === 'string' && INVALID_HEADER_CHAR_REGEXP.test(statusMessage)) {
+            throw codedTypeError('Invalid character in statusMessage', 'ERR_INVALID_CHAR');
+        }
         this.statusCode = statusCode;
         if(typeof statusMessage === 'string') {
             this.statusText = statusMessage;
@@ -593,16 +612,13 @@ module.exports = class Response extends Writable {
         if(this.headersSent) {
             throw new Error('Cannot set headers after they are sent to the client');
         }
-        if(typeof field !== 'string') {
-            throw new TypeError('Header name must be a valid HTTP token');
-        } else {
-            field = field.toLowerCase();
-            if(Array.isArray(value)) {
-                this.headers[field] = value;
-                return this;
-            }
-            this.headers[field] = String(value);
+        validateHeader(field, value);
+        field = field.toLowerCase();
+        if(Array.isArray(value)) {
+            this.headers[field] = value;
+            return this;
         }
+        this.headers[field] = String(value);
         return this;
     }
     _isLenientHeaderValidation() {
@@ -643,6 +659,7 @@ module.exports = class Response extends Writable {
         return this;
     }
     append(field, value) {
+        validateHeader(field, value);
         field = field.toLowerCase();
         const old = this.headers[field];
         if(old) {

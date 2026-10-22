@@ -1,5 +1,5 @@
 const acorn = require("acorn");
-const { stringify } = require("./utils.js");
+const { stringify, HTTP_TOKEN_REGEXP, INVALID_HEADER_CHAR_REGEXP } = require("./utils.js");
 const uWS = require("uWebSockets.js");
 const statuses = require("statuses");
 
@@ -372,6 +372,9 @@ module.exports = function compileDeclarative(cb, app) {
 
         for(let header of headers) {
             if(header[0].toLowerCase() === 'content-length') {
+                return false;
+            }
+            if(!HTTP_TOKEN_REGEXP.test(header[0]) || INVALID_HEADER_CHAR_REGEXP.test(header[1])) {
                 return false;
             }
             decRes = decRes.writeHeader(header[0], header[1]);

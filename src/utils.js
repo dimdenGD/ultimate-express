@@ -401,6 +401,9 @@ function escapeHtml(str) {
 const NullObject = function() {};
 NullObject.prototype = Object.create(null);
 
+const HTTP_TOKEN_REGEXP = /^[\^_`a-zA-Z\-0-9!#$%&'*+.|~]+$/;
+const INVALID_HEADER_CHAR_REGEXP = /[\r\n\0]/;
+
 module.exports = {
     removeDuplicateSlashes,
     patternToRegex,
@@ -424,5 +427,7 @@ module.exports = {
     fastQueryParse,
     canBeOptimized,
     escapeHtml,
-    EMPTY_REGEX
+    EMPTY_REGEX,
+    HTTP_TOKEN_REGEXP,
+    INVALID_HEADER_CHAR_REGEXP
 };
