@@ -2,11 +2,15 @@ import { expectType, expectAssignable } from 'tsd';
 import express from 'ultimate-express';
 import type {
   Request, Response, NextFunction,
-  IRouter, RequestHandler, ErrorRequestHandler
+  IRouter, RequestHandler, ErrorRequestHandler, Application
 } from 'express';
-import type { Server } from 'http';
+import type { Server, RequestListener } from 'http';
 
 const app = express();
+
+expectAssignable<Application>(app);
+expectAssignable<RequestListener>(app);
+expectAssignable<object>(app.listen(3000, (token: any) => {}).uwsApp);
 
 // Common properties
 expectAssignable<string | string[]>(app.mountpath);
