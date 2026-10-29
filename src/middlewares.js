@@ -258,7 +258,16 @@ function createBodyParser(defaultType, beforeReturn) {
                     buf = Buffer.from(buf);
                 }
                 if(inflate) {
-                    buf = inflate.process(buf);
+                    try {
+                        buf = inflate.process(buf);
+                    } catch(err) {
+                        inflate.instance.on('error', () => {});
+                        finished = true;
+                        abs.length = 0;
+                        err.expose = true;
+                        err.status = err.statusCode = 400;
+                        return next(err);
+                    }
                 }
 
                 // shallow copy, to avoid shared references for large bodies.
