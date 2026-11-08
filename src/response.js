@@ -88,6 +88,7 @@ module.exports = class Response extends Writable {
     #socket = null;
     #ended = false;
     #pendingCallback = null;
+    #endAfterWrite = null;
     req;
     constructor(res, req, app) {
         super();
@@ -183,6 +184,7 @@ module.exports = class Response extends Writable {
                         this.#pendingCallback = null;
                         this.writingChunk = false;
                         if (cb) cb(null);
+                        this.#continueEnd();
                         return true;
                     });
                 }
@@ -210,6 +212,7 @@ module.exports = class Response extends Writable {
                             this.writingChunk = false;
                             handlerUsed = true;
                             callback(null);
+                            this.#continueEnd();
                         }
                         return ok;
                     });
@@ -219,6 +222,13 @@ module.exports = class Response extends Writable {
                 }
             }
         });
+    }
+    // Runs an end() that waited for a chunk, once no chunk is being written (the write callback may start the next one)
+    #continueEnd() {
+        if (this.writingChunk || !this.#endAfterWrite) return;
+        const end = this.#endAfterWrite;
+        this.#endAfterWrite = null;
+        end();
     }
     writeHead(statusCode, statusMessage, headers) {
         if(typeof statusMessage === 'string' && INVALID_HEADER_CHAR_REGEXP.test(statusMessage)) {
@@ -278,9 +288,8 @@ module.exports = class Response extends Writable {
         }
 
         if(this.writingChunk) {
-            this.once('drain', () => {
-                this.end(data, cb);
-            });
+            // Node emits 'drain' only after a write() that returned false, so wait for the pending chunk itself
+            this.#endAfterWrite = () => this.end(data, cb);
             return;
         }
         if(this.finished) {
